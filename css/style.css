@@ -1276,3 +1276,37 @@ tbody tr:hover {
     touch-action: manipulation;
   }
 }
+
+.sales-compact-page {
+  gap: 16px;
+}
+
+.sales-compact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.sales-fast-form,
+.sales-fast-side {
+  display: grid;
+  gap: 16px;
+}
+
+@media (max-width: 992px) {
+  .sales-compact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .sales-compact-page {
+    gap: 12px;
+  }
+
+  .sales-fast-form,
+  .sales-fast-side {
+    gap: 12px;
+  }
+}

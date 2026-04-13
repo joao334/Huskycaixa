@@ -4,7 +4,7 @@
   }
 
   .hero-panel {
-    grid-template-columns: 1fr 0.88fr;
+    grid-template-columns: 1fr 0.9fr;
   }
 
   .cards-grid.metrics-grid,
@@ -22,7 +22,7 @@
   .despesas-main-grid,
   .clientes-main-grid,
   .comprovantes-main-grid {
-    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
   }
 }
 
@@ -32,7 +32,7 @@
   }
 
   .content-area {
-    padding: 20px 18px 36px;
+    padding: 20px 18px 34px;
   }
 
   .topbar {
@@ -106,18 +106,21 @@
   }
 
   .sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
-  width: min(86vw, 320px);
-  height: 100vh;
-  transform: translateX(-105%);
-  transition: transform 0.28s ease;
-  z-index: 120;
-  padding: 20px 14px;
-}
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    width: min(86vw, 320px);
+    height: 100vh;
+    transform: translateX(-110%);
+    transition: transform 0.28s ease;
+    z-index: 9999 !important;
+    padding: 20px 14px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
 
   .sidebar.is-open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
 
   .mobile-menu-btn {
@@ -128,7 +131,7 @@
 
   .content-area {
     width: 100%;
-    padding: 16px 14px 30px;
+    padding: 16px 14px 28px;
   }
 
   .topbar-left,
@@ -159,6 +162,7 @@
 
   .panel,
   .hero-panel,
+  .hero-panel-compact,
   .login-brand-card,
   .login-form-card {
     border-radius: 22px;
@@ -177,19 +181,19 @@
 @media (max-width: 768px) {
   body {
     background:
-      radial-gradient(circle at top left, rgba(159, 199, 227, 0.14), transparent 34%),
-      linear-gradient(180deg, #fcfaf7 0%, #f5ede4 100%);
+      radial-gradient(circle at top left, rgba(45, 111, 155, 0.08), transparent 22%),
+      linear-gradient(180deg, #fcfaf7 0%, #f3e8dd 100%);
   }
 
   .login-page-wrapper {
-    padding: 10px;
+    padding: 8px;
     align-items: stretch;
   }
 
   .login-page-layout {
     width: 100%;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 0;
   }
 
   .login-brand-side {
@@ -201,11 +205,11 @@
   }
 
   .login-form-card {
-    min-height: calc(100vh - 20px);
+    min-height: calc(100vh - 16px);
     justify-content: center;
-    padding: 22px 16px;
-    gap: 14px;
-    border-radius: 20px;
+    padding: 18px 14px;
+    gap: 12px;
+    border-radius: 18px;
   }
 
   .login-form-header {
@@ -214,12 +218,24 @@
 
   .login-form-header h2 {
     font-size: 24px;
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
-  .login-form-header p {
-    font-size: 13px;
-    line-height: 1.5;
+  .login-form-header p,
+  .login-divider,
+  .login-status-boxes,
+  .login-feature-card p,
+  .page-heading p,
+  .hero-content p,
+  .panel-header p,
+  .panel-subsection-header p,
+  .metric-card small,
+  .quick-link-card p,
+  .summary-card p,
+  .catalog-mini-content p,
+  .product-preview-content p,
+  .sync-badge span:last-child {
+    display: none !important;
   }
 
   .login-inline-actions,
@@ -243,7 +259,8 @@
   .form-actions,
   .summary-action-list,
   .date-filter-bar {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 8px;
   }
 
   .app-pattern {
@@ -251,12 +268,20 @@
   }
 
   .content-area {
-    padding: 12px 10px 26px;
+    padding: 10px 8px 20px;
   }
 
   .topbar {
-    margin-bottom: 14px;
-    gap: 10px;
+    margin-bottom: 12px;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    width: 100%;
+    gap: 8px;
+    align-items: stretch;
   }
 
   .topbar-left {
@@ -265,34 +290,29 @@
 
   .page-heading {
     width: 100%;
+    gap: 4px;
   }
 
   .page-heading h1,
-  .page-heading h2 {
-    font-size: 24px;
-    margin-top: 10px;
-    line-height: 1.1;
-  }
-
-  .page-heading p {
-    font-size: 13px;
-    line-height: 1.5;
-    max-width: 100%;
+  .page-heading h2,
+  .hero-content h2 {
+    font-size: 22px;
+    margin-top: 6px;
+    line-height: 1.04;
   }
 
   .eyebrow {
-    font-size: 10px;
-    padding: 7px 11px;
+    font-size: 9px;
+    min-height: 24px;
+    padding: 0 10px;
   }
 
-  .hero-panel {
-    padding: 18px 14px;
-    gap: 14px;
-  }
-
-  .hero-panel .hero-content p {
-    font-size: 13px;
-    line-height: 1.55;
+  .hero-panel,
+  .hero-panel-compact {
+    grid-template-columns: 1fr;
+    padding: 14px 12px;
+    gap: 10px;
+    border-radius: 18px;
   }
 
   .hero-mascot,
@@ -302,20 +322,21 @@
 
   .metric-card {
     min-height: auto;
-    padding: 16px;
-    gap: 10px;
+    padding: 14px 12px;
+    gap: 8px;
+    border-radius: 18px;
   }
 
   .metric-card strong {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .metric-label {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .panel {
-    padding: 16px 14px;
+    padding: 14px 12px;
     border-radius: 18px;
   }
 
@@ -324,42 +345,46 @@
   .section-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
+    margin-bottom: 10px;
   }
 
   .panel-header h3,
   .panel-subsection-header h4 {
-    font-size: 17px;
-  }
-
-  .panel-header p,
-  .panel-subsection-header p {
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 16px;
   }
 
   .panel-subsection {
-    padding: 14px;
-    border-radius: 16px;
+    padding: 12px;
+    border-radius: 14px;
   }
 
   .summary-line,
   .status-row,
   .pix-proof-card {
-    padding: 13px 14px;
+    padding: 11px 12px;
     border-radius: 14px;
   }
 
   .summary-line,
-  .status-row {
+  .status-row,
+  .pix-proof-card {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
   }
 
+  .summary-line span,
+  .status-row span,
+  .pix-proof-card p {
+    font-size: 11px;
+  }
+
   .summary-line strong,
-  .status-row strong {
-    font-size: 15px;
+  .status-row strong,
+  .pix-proof-card strong {
+    font-size: 13px;
+    text-align: left;
   }
 
   .btn,
@@ -371,19 +396,19 @@
   .toolbar-grid input,
   .toolbar-grid select,
   .date-filter-bar input {
-    min-height: 48px;
+    min-height: 44px;
   }
 
   .btn {
     width: 100%;
-    padding: 0 14px;
-    font-size: 14px;
-    border-radius: 13px;
+    padding: 0 12px;
+    font-size: 13px;
+    border-radius: 12px;
   }
 
   .btn-small {
     width: 100%;
-    min-height: 40px;
+    min-height: 38px;
     font-size: 12px;
   }
 
@@ -396,29 +421,40 @@
     width: 100%;
   }
 
+  .sync-badge {
+    width: 100%;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: 12px;
+  }
+
   .form-group label {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .form-group input,
   .form-group select,
   .form-group textarea {
-    padding: 13px 14px;
-    border-radius: 13px;
+    padding: 11px 12px;
+    border-radius: 12px;
     font-size: 14px;
+  }
+
+  .form-group textarea {
+    min-height: 90px;
   }
 
   .checkbox-card {
     min-height: auto;
-    padding: 12px 14px;
+    padding: 10px 12px;
+    border-radius: 12px;
   }
 
   .sale-item-row {
     grid-template-columns: 1fr;
     gap: 10px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid var(--border);
     border-radius: 14px;
     margin-bottom: 10px;
   }
@@ -450,7 +486,7 @@
   .summary-card,
   .status-box,
   .catalog-mini-card {
-    padding: 14px;
+    padding: 12px;
   }
 
   .quick-link-card h4,
@@ -459,21 +495,14 @@
     font-size: 15px;
   }
 
-  .quick-link-card p,
-  .catalog-mini-content p,
-  .product-preview-content p,
-  .pix-proof-card p {
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
   .catalog-mini-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: 74px minmax(0, 1fr);
     gap: 10px;
   }
 
   .catalog-mini-image {
-    min-height: 120px;
+    min-height: 74px;
+    border-radius: 14px;
   }
 
   .product-preview-image {
@@ -481,7 +510,7 @@
   }
 
   .product-preview-content {
-    padding: 14px;
+    padding: 12px;
     gap: 8px;
   }
 
@@ -492,8 +521,13 @@
   }
 
   .receipt-preview,
-  .print-receipt-template {
-    padding: 14px;
+  .print-receipt-template,
+  .upload-preview-box,
+  .chart-area,
+  .alert-list-card {
+    padding: 12px;
+    border-radius: 14px;
+    min-height: auto;
   }
 
   .receipt-header,
@@ -510,9 +544,9 @@
   }
 
   .tag {
-    min-height: 28px;
-    padding: 0 10px;
-    font-size: 11px;
+    min-height: 26px;
+    padding: 0 9px;
+    font-size: 10px;
   }
 
   .table-wrapper {
@@ -520,7 +554,7 @@
   }
 
   table {
-    min-width: 600px;
+    min-width: 520px;
   }
 
   thead th,
@@ -538,17 +572,18 @@
 
 @media (max-width: 560px) {
   .content-area {
-    padding: 10px 8px 22px;
+    padding: 8px 6px 16px;
   }
 
   .sidebar {
-    width: min(90vw, 300px);
+    width: min(88vw, 300px);
     padding: 18px 12px;
   }
 
   .sidebar-top,
-  .sidebar-bottom {
-    gap: 14px;
+  .sidebar-bottom,
+  .sidebar-nav {
+    gap: 10px;
   }
 
   .brand-box {
@@ -581,10 +616,10 @@
   }
 
   .nav-item {
-    min-height: 44px;
+    min-height: 42px;
     padding: 0 12px;
     border-radius: 12px;
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .topbar {
@@ -592,97 +627,8 @@
   }
 
   .page-heading h1,
-  .page-heading h2 {
-    font-size: 22px;
-  }
-
-  .page-heading p {
-    font-size: 12px;
-  }
-
-  .hero-panel,
-  .panel,
-  .login-form-card {
-    padding: 14px 12px;
-  }
-
-  .metric-card {
-    padding: 14px;
-  }
-
-  .metric-card strong {
-    font-size: 20px;
-  }
-
-  .panel-header h3,
-  .panel-subsection-header h4 {
-    font-size: 16px;
-  }
-
-  .panel-header p,
-  .panel-subsection-header p,
-  .summary-line span,
-  .status-row span,
-  .status-row strong,
-  .summary-line strong,
-  .alert-list li,
-  tbody td {
-    font-size: 12px;
-  }
-
-  .sync-badge {
-    font-size: 12px;
-    padding: 0 12px;
-    border-radius: 14px;
-  }
-
-  .btn {
-    font-size: 13px;
-    min-height: 46px;
-  }
-
-  .mobile-menu-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-  }
-
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    font-size: 14px;
-  }
-
-  .status-list,
-  .alert-list,
-  .report-list,
-  .pix-proof-preview-list {
-    gap: 10px;
-  }
-
-  .pix-proof-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  table {
-    min-width: 520px;
-  }
-}
-
-@media (max-width: 420px) {
-  .content-area {
-    padding: 8px 7px 18px;
-  }
-
-  .sidebar {
-    width: min(92vw, 290px);
-    padding: 16px 10px;
-  }
-
-  .page-heading h1,
-  .page-heading h2 {
+  .page-heading h2,
+  .hero-content h2 {
     font-size: 20px;
   }
 
@@ -692,6 +638,68 @@
 
   .panel,
   .hero-panel,
+  .hero-panel-compact,
+  .login-form-card {
+    padding: 12px 10px;
+  }
+
+  .panel-header h3,
+  .panel-subsection-header h4 {
+    font-size: 15px;
+  }
+
+  .sync-badge {
+    font-size: 12px;
+    padding: 0 12px;
+    border-radius: 12px;
+  }
+
+  .btn {
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  .mobile-menu-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .status-list,
+  .alert-list,
+  .report-list,
+  .pix-proof-preview-list {
+    gap: 10px;
+  }
+
+  table {
+    min-width: 500px;
+  }
+}
+
+@media (max-width: 420px) {
+  .content-area {
+    padding: 8px 6px 14px;
+  }
+
+  .sidebar {
+    width: min(92vw, 290px);
+    padding: 16px 10px;
+  }
+
+  .page-heading h1,
+  .page-heading h2,
+  .hero-content h2 {
+    font-size: 19px;
+  }
+
+  .metric-card strong {
+    font-size: 17px;
+  }
+
+  .panel,
+  .hero-panel,
+  .hero-panel-compact,
   .login-form-card {
     border-radius: 16px;
     padding: 12px 10px;
@@ -707,17 +715,17 @@
   }
 
   .btn {
-    min-height: 44px;
-    font-size: 13px;
+    min-height: 42px;
+    font-size: 12px;
   }
 
   .eyebrow {
     font-size: 9px;
-    padding: 6px 10px;
+    padding: 0 9px;
   }
 
   table {
-    min-width: 480px;
+    min-width: 460px;
   }
 }
 
@@ -743,271 +751,5 @@
   .toolbar-grid select,
   .date-filter-bar input {
     font-size: 16px;
-  }
-}
-
-/* ===== HUSKY MOBILE CLEAN PATCH ===== */
-
-@media (max-width: 768px) {
-  .topbar {
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .topbar-left,
-  .topbar-right {
-    width: 100%;
-    gap: 10px;
-  }
-
-  .sync-badge {
-    width: 100%;
-    justify-content: center;
-    min-height: 40px;
-    padding: 0 12px;
-  }
-
-  .cards-grid.metrics-grid,
-  .metrics-grid-secondary,
-  .quick-links-grid,
-  .content-grid.two-columns,
-  .sales-side-column,
-  .products-side-column,
-  .estoque-side-column,
-  .despesas-side-column,
-  .clientes-side-column,
-  .comprovantes-side-column {
-    gap: 12px;
-  }
-
-  .sales-main-grid,
-  .products-main-grid,
-  .estoque-main-grid,
-  .despesas-main-grid,
-  .clientes-main-grid,
-  .comprovantes-main-grid {
-    gap: 12px;
-  }
-
-  .sidebar {
-    width: min(86vw, 310px);
-  }
-
-  .sidebar-top,
-  .sidebar-bottom,
-  .sidebar-nav {
-    gap: 10px;
-  }
-
-  .brand-box,
-  .operator-box,
-  .cloud-box {
-    padding: 12px;
-    border-radius: 14px;
-  }
-
-  .nav-item {
-    min-height: 42px;
-    border-radius: 12px;
-    font-size: 13px;
-  }
-
-  .operator-avatar {
-    width: 40px;
-    height: 40px;
-  }
-
-  .table-wrapper table {
-    min-width: 560px;
-  }
-}
-
-@media (max-width: 480px) {
-  .content-area {
-    padding: 10px 8px 20px;
-  }
-
-  .topbar {
-    margin-bottom: 12px;
-  }
-
-  .page-heading h1,
-  .hero-content h2 {
-    font-size: 22px;
-  }
-
-  .table-wrapper table {
-    min-width: 520px;
-  }
-}
-
-/* ===== HUSKY MOBILE VISUAL REWORK ===== */
-
-:root {
-  --primary: #2d6f9b;
-  --primary-dark: #1f577c;
-  --primary-soft: #e7f1f8;
-  --beige: #ead8c4;
-  --beige-soft: #f7efe7;
-  --text: #183247;
-  --text-soft: #6d7d88;
-  --surface: rgba(255, 255, 255, 0.94);
-  --surface-strong: #ffffff;
-  --border: rgba(45, 111, 155, 0.12);
-  --shadow-soft: 0 10px 24px rgba(24, 50, 71, 0.08);
-  --shadow-strong: 0 18px 40px rgba(24, 50, 71, 0.12);
-}
-
-body {
-  background:
-    radial-gradient(circle at top left, rgba(45, 111, 155, 0.08), transparent 26%),
-    radial-gradient(circle at bottom right, rgba(234, 216, 196, 0.32), transparent 24%),
-    linear-gradient(180deg, #fcf9f6 0%, #f3e8dd 100%);
-  color: var(--text);
-}
-
-.hero-panel,
-.hero-panel-compact {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.96), rgba(247,240,233,0.96)),
-    linear-gradient(135deg, rgba(45,111,155,0.04), rgba(234,216,196,0.12));
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-strong);
-}
-
-.panel,
-.metric-card,
-.quick-link-card,
-.summary-card,
-.status-box,
-.catalog-mini-card,
-.product-preview-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
-}
-
-.metric-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.metric-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary), var(--beige));
-}
-
-.metric-card strong,
-.page-heading h1,
-.hero-content h2,
-.panel-header h3 {
-  color: var(--text);
-}
-
-.page-heading p,
-.hero-content p,
-.panel-header p,
-.panel-subsection-header p,
-.metric-card small,
-.quick-link-card p,
-.summary-card p,
-.catalog-mini-content p,
-.product-preview-content p,
-.summary-line span,
-.status-row span {
-  color: var(--text-soft);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  box-shadow: 0 10px 24px rgba(45, 111, 155, 0.22);
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--primary-dark);
-  border: 1px solid rgba(45, 111, 155, 0.18);
-}
-
-.btn-danger {
-  background: linear-gradient(135deg, #c45c5c, #a54444);
-}
-
-.sync-badge {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(45,111,155,0.12);
-}
-
-.summary-line,
-.status-row,
-.pix-proof-card {
-  background: rgba(255,255,255,0.9);
-  border: 1px solid rgba(45,111,155,0.08);
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea,
-.toolbar-grid input,
-.toolbar-grid select {
-  background: rgba(255,255,255,0.98);
-  border: 1px solid rgba(45,111,155,0.12);
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus,
-.toolbar-grid input:focus,
-.toolbar-grid select:focus {
-  border-color: rgba(45,111,155,0.34);
-  box-shadow: 0 0 0 4px rgba(45,111,155,0.1);
-}
-
-.sidebar {
-  background:
-    radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 20%),
-    linear-gradient(180deg, #163348 0%, #244f6f 100%);
-}
-
-.nav-item.active {
-  background: linear-gradient(135deg, rgba(234,216,196,0.25), rgba(255,255,255,0.14));
-  border: 1px solid rgba(255,255,255,0.12);
-}
-
-.login-form-card {
-  background: rgba(255,255,255,0.95);
-}
-
-.login-brand-card {
-  background: linear-gradient(135deg, rgba(22,51,72,0.96), rgba(36,79,111,0.95));
-}
-
-/* animações suaves */
-.hero-panel,
-.hero-panel-compact,
-.panel,
-.metric-card,
-.quick-link-card,
-.catalog-mini-card,
-.product-preview-card {
-  animation: huskyFadeUp 0.45s ease both;
-}
-
-.metric-card:nth-child(2) { animation-delay: 0.04s; }
-.metric-card:nth-child(3) { animation-delay: 0.08s; }
-.metric-card:nth-child(4) { animation-delay: 0.12s; }
-
-@keyframes huskyFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

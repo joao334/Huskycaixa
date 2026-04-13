@@ -15,7 +15,6 @@
   </div>
 
   <div class="app-shell">
-    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
         <a href="home.html" class="brand-box">
@@ -56,11 +55,10 @@
           </div>
         </div>
 
-        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+        <button type="button" class="btn btn-danger btn-full" id="btn-logout" data-action="logout">Sair</button>
       </div>
     </aside>
 
-    <!-- CONTEÚDO -->
     <div class="content-area">
       <header class="topbar">
         <div class="topbar-left">
@@ -69,9 +67,9 @@
           </button>
 
           <div class="page-heading">
-            <span class="eyebrow">Operação comercial</span>
+            <span class="eyebrow">Caixa rápido</span>
             <h1>Vendas</h1>
-            <p>Cadastre pedidos, anexe comprovantes Pix, finalize e imprima comprovantes.</p>
+            <p>Registre pedidos de forma simples e rápida.</p>
           </div>
         </div>
 
@@ -82,64 +80,41 @@
           </div>
 
           <div class="topbar-actions">
-            <button type="button" id="btn-new-sale-top" class="btn btn-primary">Novo pedido</button>
+            <button type="button" id="btn-new-sale-top" class="btn btn-primary">Nova venda</button>
             <button type="button" id="btn-print-current-top" class="btn btn-secondary">Imprimir</button>
           </div>
         </div>
       </header>
 
-      <main class="main-content">
-        <!-- HERO -->
-        <section class="hero-panel hero-panel-compact">
-          <div class="hero-content">
-            <span class="eyebrow">Pedidos e pagamentos</span>
-            <h2>Gestão de vendas da Husky</h2>
-            <p>
-              Registre cada pedido com status, forma de pagamento, comprovante Pix,
-              total da venda, impressão de recibo e finalização do pedido.
-            </p>
-          </div>
-
-          <div class="hero-actions">
-            <button type="button" id="btn-new-sale-hero" class="btn btn-primary">Criar nova venda</button>
-            <a href="comprovantes.html" class="btn btn-secondary">Abrir comprovantes</a>
-          </div>
-        </section>
-
-        <!-- MÉTRICAS -->
+      <main class="main-content sales-compact-page">
         <section class="cards-grid metrics-grid">
           <article class="metric-card">
-            <span class="metric-label">Vendas hoje</span>
+            <span class="metric-label">Hoje</span>
             <strong id="sales-today-total">R$ 0,00</strong>
-            <small>Total vendido no dia</small>
           </article>
 
           <article class="metric-card">
-            <span class="metric-label">Pedidos pendentes</span>
+            <span class="metric-label">Pendentes</span>
             <strong id="sales-pending-count">0</strong>
-            <small>Aguardando ação</small>
           </article>
 
           <article class="metric-card">
-            <span class="metric-label">Pedidos finalizados</span>
+            <span class="metric-label">Finalizados</span>
             <strong id="sales-finished-count">0</strong>
-            <small>Concluídos com sucesso</small>
           </article>
 
           <article class="metric-card">
             <span class="metric-label">Pix sem comprovante</span>
             <strong id="sales-pix-missing-count">0</strong>
-            <small>Precisam de conferência</small>
           </article>
         </section>
 
-        <!-- FORM + RESUMO -->
-        <section class="content-grid sales-main-grid">
-          <article class="panel sales-form-panel">
+        <section class="sales-compact-grid">
+          <article class="panel sales-fast-form">
             <div class="panel-header">
               <div>
-                <h3>Cadastro de venda</h3>
-                <p>Preencha o pedido e finalize no sistema.</p>
+                <h3>Nova venda</h3>
+                <p>Preencha o essencial.</p>
               </div>
               <span class="tag" id="sale-mode-tag">Novo pedido</span>
             </div>
@@ -150,17 +125,17 @@
 
               <div class="form-grid cols-3">
                 <div class="form-group">
-                  <label for="sale-order-number">Número do pedido</label>
-                  <input type="text" id="sale-order-number" placeholder="Gerado automaticamente" readonly />
+                  <label for="sale-order-number">Pedido</label>
+                  <input type="text" id="sale-order-number" placeholder="Automático" readonly />
                 </div>
 
                 <div class="form-group">
-                  <label for="sale-date">Data da venda</label>
+                  <label for="sale-date">Data</label>
                   <input type="date" id="sale-date" />
                 </div>
 
                 <div class="form-group">
-                  <label for="sale-time">Horário</label>
+                  <label for="sale-time">Hora</label>
                   <input type="time" id="sale-time" />
                 </div>
               </div>
@@ -182,7 +157,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="sale-delivery-type">Tipo de entrega</label>
+                  <label for="sale-delivery-type">Entrega</label>
                   <select id="sale-delivery-type">
                     <option value="Retirada">Retirada</option>
                     <option value="Entrega">Entrega</option>
@@ -192,13 +167,13 @@
               </div>
 
               <div class="form-group">
-                <label for="sale-delivery-address">Endereço / observação de entrega</label>
-                <textarea id="sale-delivery-address" rows="3" placeholder="Rua, número, complemento, referência ou observações"></textarea>
+                <label for="sale-delivery-address">Observação / endereço</label>
+                <textarea id="sale-delivery-address" rows="3" placeholder="Endereço ou observações"></textarea>
               </div>
 
               <div class="form-grid cols-3">
                 <div class="form-group">
-                  <label for="sale-payment-method">Forma de pagamento</label>
+                  <label for="sale-payment-method">Pagamento</label>
                   <select id="sale-payment-method">
                     <option value="Pix">Pix</option>
                     <option value="Dinheiro">Dinheiro</option>
@@ -209,7 +184,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="sale-payment-status">Status do pagamento</label>
+                  <label for="sale-payment-status">Status pagamento</label>
                   <select id="sale-payment-status">
                     <option value="Aguardando pagamento">Aguardando pagamento</option>
                     <option value="Pago">Pago</option>
@@ -219,7 +194,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="sale-order-status">Status do pedido</label>
+                  <label for="sale-order-status">Status pedido</label>
                   <select id="sale-order-status">
                     <option value="Pendente">Pendente</option>
                     <option value="Em produção">Em produção</option>
@@ -233,10 +208,10 @@
               <div class="panel-subsection">
                 <div class="panel-subsection-header">
                   <div>
-                    <h4>Itens do pedido</h4>
-                    <p>Adicione um ou mais produtos à venda.</p>
+                    <h4>Itens</h4>
+                    <p>Adicione os produtos.</p>
                   </div>
-                  <button type="button" id="btn-add-sale-item" class="btn btn-secondary">Adicionar item</button>
+                  <button type="button" id="btn-add-sale-item" class="btn btn-secondary btn-small">Adicionar item</button>
                 </div>
 
                 <div id="sale-items-container" class="sale-items-container">
@@ -281,38 +256,38 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="sale-extra-fee">Acréscimo / taxa</label>
+                  <label for="sale-extra-fee">Acréscimo</label>
                   <input type="number" id="sale-extra-fee" placeholder="0,00" />
                 </div>
 
                 <div class="form-group">
-                  <label for="sale-shipping-fee">Taxa de entrega</label>
+                  <label for="sale-shipping-fee">Entrega</label>
                   <input type="number" id="sale-shipping-fee" placeholder="0,00" />
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="sale-notes">Observações do pedido</label>
-                <textarea id="sale-notes" rows="4" placeholder="Detalhes adicionais do pedido"></textarea>
+                <label for="sale-notes">Observações</label>
+                <textarea id="sale-notes" rows="3" placeholder="Detalhes do pedido"></textarea>
               </div>
 
               <div class="panel-subsection payment-proof-subsection">
                 <div class="panel-subsection-header">
                   <div>
                     <h4>Comprovante Pix</h4>
-                    <p>Anexe imagem ou PDF do comprovante e vincule à venda finalizada.</p>
+                    <p>Anexe quando necessário.</p>
                   </div>
                 </div>
 
                 <div class="form-grid cols-2">
                   <div class="form-group">
-                    <label for="sale-pix-proof">Upload do comprovante</label>
+                    <label for="sale-pix-proof">Arquivo</label>
                     <input type="file" id="sale-pix-proof" accept="image/*,.pdf" />
                   </div>
 
                   <div class="form-group">
-                    <label for="sale-pix-proof-note">Observação do comprovante</label>
-                    <input type="text" id="sale-pix-proof-note" placeholder="Ex.: pagamento recebido às 14:32" />
+                    <label for="sale-pix-proof-note">Observação</label>
+                    <input type="text" id="sale-pix-proof-note" placeholder="Ex.: recebido às 14:32" />
                   </div>
                 </div>
 
@@ -322,20 +297,19 @@
               </div>
 
               <div class="form-actions sticky-form-actions">
-                <button type="button" id="btn-save-sale" class="btn btn-primary">Salvar venda</button>
-                <button type="button" id="btn-update-sale" class="btn btn-secondary">Editar venda</button>
-                <button type="button" id="btn-finish-sale" class="btn btn-secondary">Finalizar pedido</button>
-                <button type="button" id="btn-cancel-sale" class="btn btn-danger">Cancelar pedido</button>
+                <button type="button" id="btn-save-sale" class="btn btn-primary">Salvar</button>
+                <button type="button" id="btn-update-sale" class="btn btn-secondary">Editar</button>
+                <button type="button" id="btn-finish-sale" class="btn btn-secondary">Finalizar</button>
+                <button type="button" id="btn-cancel-sale" class="btn btn-danger">Cancelar</button>
               </div>
             </form>
           </article>
 
-          <aside class="sales-side-column">
-            <article class="panel sales-summary-panel">
+          <aside class="sales-fast-side">
+            <article class="panel">
               <div class="panel-header">
                 <div>
-                  <h3>Resumo do pedido</h3>
-                  <p>Cálculo automático da venda.</p>
+                  <h3>Resumo</h3>
                 </div>
               </div>
 
@@ -345,7 +319,7 @@
                   <strong id="sale-subtotal">R$ 0,00</strong>
                 </div>
                 <div class="summary-line">
-                  <span>Custo estimado</span>
+                  <span>Custo</span>
                   <strong id="sale-cost">R$ 0,00</strong>
                 </div>
                 <div class="summary-line">
@@ -353,7 +327,7 @@
                   <strong id="sale-discount-total">R$ 0,00</strong>
                 </div>
                 <div class="summary-line">
-                  <span>Acréscimo / taxa</span>
+                  <span>Acréscimo</span>
                   <strong id="sale-extra-total">R$ 0,00</strong>
                 </div>
                 <div class="summary-line">
@@ -361,41 +335,40 @@
                   <strong id="sale-shipping-total">R$ 0,00</strong>
                 </div>
                 <div class="summary-line total-line">
-                  <span>Total da venda</span>
+                  <span>Total</span>
                   <strong id="sale-total">R$ 0,00</strong>
                 </div>
                 <div class="summary-line">
-                  <span>Lucro previsto</span>
+                  <span>Lucro</span>
                   <strong id="sale-profit">R$ 0,00</strong>
                 </div>
               </div>
 
               <div class="summary-action-list">
                 <button type="button" id="btn-generate-receipt" class="btn btn-primary btn-full">Gerar comprovante</button>
-                <button type="button" id="btn-print-receipt" class="btn btn-secondary btn-full">Imprimir comprovante</button>
-                <button type="button" id="btn-generate-simple-invoice" class="btn btn-secondary btn-full">Gerar nota simplificada</button>
+                <button type="button" id="btn-print-receipt" class="btn btn-secondary btn-full">Imprimir</button>
+                <button type="button" id="btn-generate-simple-invoice" class="btn btn-secondary btn-full">Nota simplificada</button>
               </div>
             </article>
 
-            <article class="panel sales-status-panel">
+            <article class="panel">
               <div class="panel-header">
                 <div>
-                  <h3>Status rápido</h3>
-                  <p>Resumo operacional da venda em edição.</p>
+                  <h3>Status</h3>
                 </div>
               </div>
 
               <div class="status-list">
                 <div class="status-row">
-                  <span>Forma de pagamento</span>
+                  <span>Pagamento</span>
                   <strong id="summary-payment-method">Pix</strong>
                 </div>
                 <div class="status-row">
-                  <span>Status do pagamento</span>
+                  <span>Status pagamento</span>
                   <strong id="summary-payment-status">Aguardando pagamento</strong>
                 </div>
                 <div class="status-row">
-                  <span>Status do pedido</span>
+                  <span>Status pedido</span>
                   <strong id="summary-order-status">Pendente</strong>
                 </div>
                 <div class="status-row">
@@ -405,146 +378,101 @@
               </div>
             </article>
 
-            <article class="panel sales-receipt-preview-panel">
+            <article class="panel">
               <div class="panel-header">
                 <div>
-                  <h3>Pré-visualização</h3>
-                  <p>Como o comprovante sairá na impressão.</p>
+                  <h3>Últimas vendas</h3>
                 </div>
               </div>
 
-              <div id="receipt-preview" class="receipt-preview compact-receipt-preview">
-                <header class="receipt-header">
-                  <img src="assets/img/logo-husky.png" alt="Logo Husky" class="receipt-logo" />
-                  <div>
-                    <h4>Husky Confeitaria</h4>
-                    <p>Comprovante / Recibo</p>
-                  </div>
-                </header>
-
-                <div class="receipt-meta">
-                  <p><strong>Pedido:</strong> <span id="receipt-number">000001</span></p>
-                  <p><strong>Data:</strong> <span id="receipt-date">--/--/----</span></p>
-                  <p><strong>Cliente:</strong> <span id="receipt-client">Consumidor final</span></p>
-                </div>
-
-                <div class="table-wrapper">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th>Qtd</th>
-                        <th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody id="receipt-items-body">
-                      <tr>
-                        <td>Produto exemplo</td>
-                        <td>1</td>
-                        <td>R$ 0,00</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div class="receipt-totals">
-                  <p><strong>Total:</strong> <span id="receipt-total">R$ 0,00</span></p>
-                  <p><strong>Pagamento:</strong> <span id="receipt-payment">Pix</span></p>
-                  <p><strong>Status:</strong> <span id="receipt-status">Pendente</span></p>
-                </div>
-
-                <footer class="receipt-footer">
-                  <p>Obrigada pela preferência.</p>
-                </footer>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Pedido</th>
+                      <th>Cliente</th>
+                      <th>Total</th>
+                      <th>Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sales-table-body">
+                    <tr>
+                      <td>#0001</td>
+                      <td>Consumidor final</td>
+                      <td>R$ 0,00</td>
+                      <td>
+                        <div class="table-action-group">
+                          <button type="button" class="btn btn-secondary btn-small">Editar</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </article>
           </aside>
         </section>
 
-        <!-- FILTROS + TABELA -->
-        <section class="panel">
-          <div class="panel-header">
-            <div>
-              <h3>Lista de vendas</h3>
-              <p>Pesquise, filtre e edite pedidos cadastrados.</p>
-            </div>
-          </div>
-
-          <div class="toolbar-grid sales-filter-grid">
-            <input type="text" id="sales-search" placeholder="Buscar por pedido, cliente, telefone ou código" />
-            <input type="date" id="sales-filter-start" />
-            <input type="date" id="sales-filter-end" />
-            <select id="sales-filter-payment">
-              <option value="">Todos os pagamentos</option>
-              <option value="Pix">Pix</option>
-              <option value="Dinheiro">Dinheiro</option>
-              <option value="Débito">Débito</option>
-              <option value="Crédito">Crédito</option>
-              <option value="Misto">Misto</option>
-            </select>
-            <select id="sales-filter-order-status">
-              <option value="">Todos os status</option>
-              <option value="Pendente">Pendente</option>
-              <option value="Em produção">Em produção</option>
-              <option value="Pronto">Pronto</option>
-              <option value="Finalizado">Finalizado</option>
-              <option value="Cancelado">Cancelado</option>
-            </select>
-            <select id="sales-filter-payment-status">
-              <option value="">Todos os pagamentos</option>
-              <option value="Aguardando pagamento">Aguardando pagamento</option>
-              <option value="Pago">Pago</option>
-              <option value="Parcial">Parcial</option>
-              <option value="Cancelado">Cancelado</option>
-            </select>
-            <button type="button" id="btn-filter-sales" class="btn btn-secondary">Filtrar</button>
-            <button type="button" id="btn-clear-sales-filter" class="btn btn-secondary">Limpar</button>
-          </div>
-
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Pedido</th>
-                  <th>Data</th>
-                  <th>Cliente</th>
-                  <th>Pagamento</th>
-                  <th>Status pagamento</th>
-                  <th>Status pedido</th>
-                  <th>Total</th>
-                  <th>Pix</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="sales-table-body">
-                <tr>
-                  <td>#0001</td>
-                  <td>--/--/----</td>
-                  <td>Consumidor final</td>
-                  <td>Pix</td>
-                  <td>Aguardando pagamento</td>
-                  <td>Pendente</td>
-                  <td>R$ 0,00</td>
-                  <td>Sem arquivo</td>
-                  <td>
-                    <div class="table-action-group">
-                      <button type="button" class="btn btn-secondary btn-small">Editar</button>
-                      <button type="button" class="btn btn-secondary btn-small">Imprimir</button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <!-- PEDIDOS PIX -->
         <section class="content-grid two-columns">
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Pedidos aguardando comprovante Pix</h3>
-                <p>Use esta lista para encontrar rapidamente o que falta anexar.</p>
+                <h3>Filtros</h3>
+                <p>Pesquise pedidos.</p>
+              </div>
+            </div>
+
+            <div class="toolbar-grid sales-filter-grid">
+              <input type="text" id="sales-search" placeholder="Buscar pedido ou cliente" />
+              <input type="date" id="sales-filter-start" />
+              <input type="date" id="sales-filter-end" />
+              <select id="sales-filter-payment">
+                <option value="">Pagamento</option>
+                <option value="Pix">Pix</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Débito">Débito</option>
+                <option value="Crédito">Crédito</option>
+                <option value="Misto">Misto</option>
+              </select>
+              <select id="sales-filter-order-status">
+                <option value="">Status pedido</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Em produção">Em produção</option>
+                <option value="Pronto">Pronto</option>
+                <option value="Finalizado">Finalizado</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+              <select id="sales-filter-payment-status">
+                <option value="">Status pagamento</option>
+                <option value="Aguardando pagamento">Aguardando pagamento</option>
+                <option value="Pago">Pago</option>
+                <option value="Parcial">Parcial</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+              <button type="button" id="btn-filter-sales" class="btn btn-secondary">Filtrar</button>
+              <button type="button" id="btn-clear-sales-filter" class="btn btn-secondary">Limpar</button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Atalhos</h3>
+              </div>
+            </div>
+
+            <div class="summary-action-list">
+              <a href="comprovantes.html" class="btn btn-secondary btn-full">Abrir comprovantes</a>
+              <button type="button" id="btn-new-sale-hero" class="btn btn-primary btn-full">Criar nova venda</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Pix pendente</h3>
               </div>
             </div>
 
@@ -555,7 +483,6 @@
                     <th>Pedido</th>
                     <th>Cliente</th>
                     <th>Total</th>
-                    <th>Status</th>
                     <th>Ação</th>
                   </tr>
                 </thead>
@@ -564,7 +491,6 @@
                     <td>#0001</td>
                     <td>Cliente exemplo</td>
                     <td>R$ 0,00</td>
-                    <td>Aguardando pagamento</td>
                     <td><button type="button" class="btn btn-secondary btn-small">Anexar</button></td>
                   </tr>
                 </tbody>
@@ -575,8 +501,7 @@
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Últimos pedidos finalizados</h3>
-                <p>Pedidos concluídos e prontos para conferência.</p>
+                <h3>Finalizados</h3>
               </div>
             </div>
 
@@ -587,7 +512,6 @@
                     <th>Pedido</th>
                     <th>Cliente</th>
                     <th>Total</th>
-                    <th>Comprovante</th>
                     <th>Ação</th>
                   </tr>
                 </thead>
@@ -596,7 +520,6 @@
                     <td>#0002</td>
                     <td>Cliente exemplo</td>
                     <td>R$ 0,00</td>
-                    <td>Pendente</td>
                     <td><button type="button" class="btn btn-secondary btn-small">Ver</button></td>
                   </tr>
                 </tbody>
@@ -608,8 +531,7 @@
     </div>
   </div>
 
-  <!-- ÁREA OCULTA DE IMPRESSÃO -->
-  <section id="print-area" class="print-area" aria-hidden="true">
+  <section id="print-area" class="print-area hidden" aria-hidden="true">
     <article id="print-receipt-template" class="print-receipt-template">
       <header>
         <img src="assets/img/logo-husky.png" alt="Logo Husky" />
@@ -657,12 +579,59 @@
     </article>
   </section>
 
+  <section class="hidden" aria-hidden="true">
+    <article id="receipt-preview" class="receipt-preview compact-receipt-preview">
+      <header class="receipt-header">
+        <img src="assets/img/logo-husky.png" alt="Logo Husky" class="receipt-logo" />
+        <div>
+          <h4>Husky Confeitaria</h4>
+          <p>Comprovante / Recibo</p>
+        </div>
+      </header>
+
+      <div class="receipt-meta">
+        <p><strong>Pedido:</strong> <span id="receipt-number">000001</span></p>
+        <p><strong>Data:</strong> <span id="receipt-date">--/--/----</span></p>
+        <p><strong>Cliente:</strong> <span id="receipt-client">Consumidor final</span></p>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qtd</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="receipt-items-body">
+            <tr>
+              <td>Produto exemplo</td>
+              <td>1</td>
+              <td>R$ 0,00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="receipt-totals">
+        <p><strong>Total:</strong> <span id="receipt-total">R$ 0,00</span></p>
+        <p><strong>Pagamento:</strong> <span id="receipt-payment">Pix</span></p>
+        <p><strong>Status:</strong> <span id="receipt-status">Pendente</span></p>
+      </div>
+
+      <footer class="receipt-footer">
+        <p>Obrigada pela preferência.</p>
+      </footer>
+    </article>
+  </section>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/app.js"></script>
-<script src="js/env.js"></script>
-<script src="js/supabase-init.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/cloud-sync.js"></script>
-<script src="js/vendas.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabase-init.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cloud-sync.js"></script>
+  <script src="js/vendas.js"></script>
 </body>
 </html>
