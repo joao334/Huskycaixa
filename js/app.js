@@ -356,38 +356,86 @@
     },
 
     syncUsersFromAuthStorage() {
-      const authUsers = this.getStorage('auth_users');
-      if (!Array.isArray(authUsers) || !authUsers.length) return;
+  const authUsers = this.getStorage('auth_users');
+  if (!Array.isArray(authUsers) || !authUsers.length) return;
 
-      const nextState = this.updateAppState((state) => {
-        const currentUsers = Array.isArray(state.users) ? state.users : [];
-        const mergedUsers = [...currentUsers];
+  const nextState = this.updateAppState((state) => {
+    const currentUsers = Array.isArray(state.users) ? state.users : [];
+    const mergedUsers = [...currentUsers];
 
-        authUsers.forEach((authUser) => {
-          const index = mergedUsers.findIndex((entry) => entry.id === authUser.id || entry.email === authUser.email);
-          const normalized = {
-            id: authUser.id || crypto.randomUUID(),
-            name: authUser.name || 'Usuário',
-            email: authUser.email || '',
-            role: authUser.role || 'Operacional',
-            status: authUser.status || 'Ativo',
-            avatar: authUser.avatar || 'assets/img/avatar-user.png',
-            lastAccess: authUser.lastAccess || null
-          };
+    authUsers.forEach((authUser) => {
+      const index = mergedUsers.findIndex(
+        (entry) => entry.id === authUser.id || entry.email === authUser.email
+      );
 
-          if (index >= 0) {
-            mergedUsers[index] = { ...mergedUsers[index], ...normalized };
-          } else {
-            mergedUsers.push(normalized);
+      const existingUser = index >= 0 ? mergedUsers[index] : null;
+
+      const normalized = {
+        id: authUser.id || existingUser?.id || crypto.randomUUID(),
+        name: authUser.name || existingUser?.name || 'Usuário',
+        email: authUser.email || existingUser?.email || '',
+        role: authUser.role || existingUser?.role || 'Operacional',
+        status: authUser.status || existingUser?.status || 'Ativo',
+
+        /* AQUI ESTÁ A CORREÇÃO */
+        avatar:
+          authUser.avatar ||
+          authUser.avatar_url ||
+          existingUser?.avatar ||
+          'assets/img/avatar-user.png',
+
+        lastAccess: authUser.lastAccess || existingUser?.lastAccess || null,
+        domain: authUser.domain || existingUser?.domain || '',
+        notes: authUser.notes || existingUser?.notes || '',
+        permissions: {
+          canManageUsers:
+            authUser.permissions?.canManageUsers ??
+            existingUser?.permissions?.canManageUsers ??
+            false,
+          canViewFinancial:
+            authUser.permissions?.canViewFinancial ??
+            existingUser?.permissions?.canViewFinancial ??
+            true
+        }
+      };
+
+      if (index >= 0) {
+        mergedUsers[index] = {
+          ...mergedUsers[index],
+          ...normalized,
+          permissions: {
+            ...mergedUsers[index].permissions,
+            ...normalized.permissions
           }
-        });
+        };
+      } else {
+        mergedUsers.push(normalized);
+      }
+    });
 
-        state.users = mergedUsers;
-        return state;
-      });
+    state.users = mergedUsers;
 
-      return nextState.users;
-    },
+    if (state.currentUser) {
+      const currentMatch = mergedUsers.find(
+        (user) =>
+          user.id === state.currentUser.id ||
+          String(user.email || '').toLowerCase() ===
+            String(state.currentUser.email || '').toLowerCase()
+      );
+
+      if (currentMatch) {
+        state.currentUser = {
+          ...state.currentUser,
+          ...currentMatch
+        };
+      }
+    }
+
+    return state;
+  });
+
+  return nextState.users;
+},
 
     setPageUser() {
       const state = this.getAppState();

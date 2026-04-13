@@ -356,25 +356,33 @@
     },
 
     normalizeUser(user) {
-      return {
-        id: user.id || crypto.randomUUID(),
-        name: String(user.name || 'Usuário').trim(),
-        email: String(user.email || '').trim().toLowerCase(),
-        role: String(user.role || 'Operacional').trim(),
-        status: String(user.status || 'Ativo').trim(),
-        avatar: user.avatar || user.avatar_url || DEFAULT_AVATAR,
-        domain: String(user.domain || '').trim(),
-        notes: String(user.notes || '').trim(),
-        passwordHash: user.passwordHash || this.simpleHash(DEFAULT_PASSWORD),
-        createdAt: user.createdAt || new Date().toISOString(),
-        updatedAt: user.updatedAt || new Date().toISOString(),
-        lastAccess: user.lastAccess || null,
-        permissions: {
-          canManageUsers: Boolean(user.permissions?.canManageUsers),
-          canViewFinancial: user.permissions?.canViewFinancial !== false
-        }
-      };
-    },
+  return {
+    id: user.id || crypto.randomUUID(),
+    name: String(user.name || 'Usuário').trim(),
+    email: String(user.email || '').trim().toLowerCase(),
+    role: String(user.role || 'Operacional').trim(),
+    status: String(user.status || 'Ativo').trim(),
+
+    /* mantém a foto se já existir */
+    avatar:
+      user.avatar ||
+      user.avatar_url ||
+      user.photo ||
+      user.profileImage ||
+      'assets/img/avatar-user.png',
+
+    domain: String(user.domain || '').trim(),
+    notes: String(user.notes || '').trim(),
+    passwordHash: user.passwordHash || this.simpleHash('123456'),
+    createdAt: user.createdAt || new Date().toISOString(),
+    updatedAt: user.updatedAt || new Date().toISOString(),
+    lastAccess: user.lastAccess || null,
+    permissions: {
+      canManageUsers: Boolean(user.permissions?.canManageUsers),
+      canViewFinancial: user.permissions?.canViewFinancial !== false
+    }
+  };
+},
 
     loadAllForms() {
       const settings = this.deepMerge(this.deepClone(DEFAULT_CONFIG), this.getSettings());
