@@ -107,7 +107,9 @@
         this.refs.stockUnitCost,
         this.refs.stockReference,
         this.refs.stockOrigin,
-        this.refs.stockResponsible
+        this.refs.stockResponsible,
+        this.refs.stockReason,
+        this.refs.stockGenerateExpense
       ].forEach((field) => {
         field?.addEventListener('input', () => this.updateLiveSummary());
         field?.addEventListener('change', () => this.updateLiveSummary());
@@ -120,18 +122,32 @@
 
       this.refs.stockStatusTableBody?.addEventListener('click', (event) => this.handleStatusTableActions(event));
       this.refs.stockHistoryTableBody?.addEventListener('click', (event) => this.handleHistoryTableActions(event));
+
+      window.addEventListener('husky:state-changed', () => {
+        this.populateProductSelects();
+        this.populateCategoryFilter();
+        this.renderAll();
+      });
+
+      window.addEventListener('storage', () => {
+        this.populateProductSelects();
+        this.populateCategoryFilter();
+        this.renderAll();
+      });
     },
 
     prepareInitialState() {
       const state = this.getState();
+
       if (!Array.isArray(state.products)) state.products = [];
       if (!Array.isArray(state.stockMovements)) state.stockMovements = [];
       if (!Array.isArray(state.expenses)) state.expenses = [];
-      this.setState(state);
 
+      this.setState(state);
       this.populateProductSelects();
       this.populateCategoryFilter();
       this.resetForm(true);
+      this.renderAll();
     },
 
     getState() {
@@ -297,6 +313,7 @@
         .sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
       const current = this.refs.stockFilterCategory.value;
+
       this.refs.stockFilterCategory.innerHTML = `
         <option value="">Todas as categorias</option>
         ${categories.map((category) => `<option value="${this.escapeHtml(category)}">${this.escapeHtml(category)}</option>`).join('')}
@@ -639,6 +656,7 @@
       });
 
       const zeroStock = products.filter((product) => this.toNumber(product.stock || 0) <= 0);
+
       const lossValue = this.sum(
         movements.filter((movement) => movement.type === 'perda'),
         (movement) => movement.totalCost || 0

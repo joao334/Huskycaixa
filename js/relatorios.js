@@ -23,9 +23,11 @@
       if (!document.getElementById('report-filter-form')) return;
       this.cacheRefs();
       this.bindEvents();
+      this.ensureStateCollections();
       this.setDefaultFilters();
+      this.populateDynamicFilters();
       this.renderAll();
-      app.log('Tela de relatórios carregada.');
+      this.log('Tela de relatórios carregada.');
     },
 
     cacheRefs() {
@@ -87,30 +89,126 @@
       this.refs.reportEndDate?.addEventListener('change', () => this.captureFilters());
       this.refs.btnExportReportPdfTop?.addEventListener('click', () => this.exportAsPrint());
       this.refs.btnExportReportExcelTop?.addEventListener('click', () => this.exportAsCsv());
+
+      window.addEventListener('husky:state-changed', () => {
+        this.ensureStateCollections();
+        this.populateDynamicFilters();
+        this.renderAll();
+      });
+
+      window.addEventListener('storage', () => {
+        this.ensureStateCollections();
+        this.populateDynamicFilters();
+        this.renderAll();
+      });
+    },
+
+    ensureStateCollections() {
+      const state = this.getState();
+
+      if (!Array.isArray(state.sales)) state.sales = [];
+      if (!Array.isArray(state.expenses)) state.expenses = [];
+      if (!Array.isArray(state.products)) state.products = [];
+      if (!Array.isArray(state.stockMovements)) state.stockMovements = [];
+      if (!Array.isArray(state.proofs)) state.proofs = [];
+      if (!Array.isArray(state.customers)) state.customers = [];
+
+      if (typeof app.setAppState === 'function') {
+        app.setAppState(state);
+      }
     },
 
     getState() {
-      return app.getAppState();
+      return typeof app.getAppState === 'function' ? app.getAppState() : {};
     },
 
     getSales() {
-      return this.getState().sales || [];
+      return Array.isArray(this.getState().sales) ? this.getState().sales : [];
     },
 
     getExpenses() {
-      return this.getState().expenses || [];
+      return Array.isArray(this.getState().expenses) ? this.getState().expenses : [];
     },
 
     getProducts() {
-      return this.getState().products || [];
+      return Array.isArray(this.getState().products) ? this.getState().products : [];
     },
 
     getStockMovements() {
-      return this.getState().stockMovements || [];
+      return Array.isArray(this.getState().stockMovements) ? this.getState().stockMovements : [];
+    },
+
+    getProofs() {
+      return Array.isArray(this.getState().proofs) ? this.getState().proofs : [];
+    },
+
+    todayISO() {
+      if (typeof app.todayISO === 'function') return app.todayISO();
+      return new Date().toISOString().slice(0, 10);
+    },
+
+    toNumber(value) {
+      if (typeof app.toNumber === 'function') return app.toNumber(value);
+      const num = Number(String(value ?? '').replace(',', '.'));
+      return Number.isFinite(num) ? num : 0;
+    },
+
+    formatCurrency(value) {
+      if (typeof app.formatCurrency === 'function') return app.formatCurrency(value);
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(this.toNumber(value));
+    },
+
+    formatNumber(value, decimals = 0) {
+      if (typeof app.formatNumber === 'function') return app.formatNumber(value, decimals);
+      return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      }).format(this.toNumber(value));
+    },
+
+    formatDate(value) {
+      if (typeof app.formatDate === 'function') return app.formatDate(value);
+      if (!value) return '-';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleDateString('pt-BR');
+    },
+
+    normalizeText(value) {
+      if (typeof app.normalizeText === 'function') return app.normalizeText(value);
+      const text = String(value || '').trim().toLowerCase();
+      try {
+        return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      } catch (error) {
+        return text;
+      }
+    },
+
+    includesText(haystack, needle) {
+      if (typeof app.includesText === 'function') return app.includesText(haystack, needle);
+      return this.normalizeText(haystack).includes(this.normalizeText(needle));
+    },
+
+    sum(list = [], mapper = (item) => item) {
+      if (typeof app.sum === 'function') return app.sum(list, mapper);
+      return list.reduce((acc, item) => acc + Number(mapper(item) || 0), 0);
+    },
+
+    showToast(message, type = 'info') {
+      if (typeof app.showToast === 'function') app.showToast(message, type);
+      else console.log(message);
+    },
+
+    log(message, payload = null) {
+      if (typeof app.log === 'function') app.log(message, payload);
+      else console.log(message, payload || '');
     },
 
     setDefaultFilters() {
-      const today = app.todayISO();
+      const today = this.todayISO();
       const monthStart = `${today.slice(0, 7)}-01`;
 
       this.filters = {
@@ -126,26 +224,85 @@
     },
 
     syncFiltersToForm() {
-      this.refs.reportStartDate.value = this.filters.startDate || '';
-      this.refs.reportEndDate.value = this.filters.endDate || '';
-      this.refs.reportType.value = this.filters.reportType || 'geral';
-      this.refs.reportPeriodPreset.value = this.filters.periodPreset || '';
-      this.refs.reportPaymentFilter.value = this.filters.paymentMethod || '';
-      this.refs.reportCategoryFilter.value = this.filters.category || '';
+      if (this.refs.reportStartDate) this.refs.reportStartDate.value = this.filters.startDate || '';
+      if (this.refs.reportEndDate) this.refs.reportEndDate.value = this.filters.endDate || '';
+      if (this.refs.reportType) this.refs.reportType.value = this.filters.reportType || 'geral';
+      if (this.refs.reportPeriodPreset) this.refs.reportPeriodPreset.value = this.filters.periodPreset || '';
+      if (this.refs.reportPaymentFilter) this.refs.reportPaymentFilter.value = this.filters.paymentMethod || '';
+      if (this.refs.reportCategoryFilter) this.refs.reportCategoryFilter.value = this.filters.category || '';
     },
 
     captureFilters() {
-      this.filters.startDate = this.refs.reportStartDate.value;
-      this.filters.endDate = this.refs.reportEndDate.value;
-      this.filters.reportType = this.refs.reportType.value || 'geral';
-      this.filters.periodPreset = this.refs.reportPeriodPreset.value || '';
-      this.filters.paymentMethod = this.refs.reportPaymentFilter.value || '';
-      this.filters.category = this.refs.reportCategoryFilter.value || '';
+      this.filters.startDate = this.refs.reportStartDate?.value || '';
+      this.filters.endDate = this.refs.reportEndDate?.value || '';
+      this.filters.reportType = this.refs.reportType?.value || 'geral';
+      this.filters.periodPreset = this.refs.reportPeriodPreset?.value || '';
+      this.filters.paymentMethod = this.refs.reportPaymentFilter?.value || '';
+      this.filters.category = this.refs.reportCategoryFilter?.value || '';
+    },
+
+    populateDynamicFilters() {
+      this.populatePaymentFilter();
+      this.populateCategoryFilter();
+      this.syncFiltersToForm();
+    },
+
+    populatePaymentFilter() {
+      if (!this.refs.reportPaymentFilter) return;
+
+      const current = this.filters.paymentMethod || '';
+      const payments = new Set();
+
+      this.getSales().forEach((sale) => {
+        if (sale.paymentMethod) payments.add(sale.paymentMethod);
+      });
+
+      this.getExpenses().forEach((expense) => {
+        if (expense.paymentMethod) payments.add(expense.paymentMethod);
+      });
+
+      const sorted = [...payments].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      this.refs.reportPaymentFilter.innerHTML = `
+        <option value="">Todos os pagamentos</option>
+        ${sorted.map((payment) => `<option value="${this.escapeHtml(payment)}">${this.escapeHtml(payment)}</option>`).join('')}
+      `;
+
+      if (sorted.includes(current)) {
+        this.refs.reportPaymentFilter.value = current;
+      }
+    },
+
+    populateCategoryFilter() {
+      if (!this.refs.reportCategoryFilter) return;
+
+      const current = this.filters.category || '';
+      const categories = new Set();
+
+      this.getProducts().forEach((product) => {
+        if (product.category) categories.add(product.category);
+      });
+
+      this.getExpenses().forEach((expense) => {
+        if (expense.category) categories.add(expense.category);
+      });
+
+      const sorted = [...categories].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      this.refs.reportCategoryFilter.innerHTML = `
+        <option value="">Todas as categorias</option>
+        ${sorted.map((category) => `<option value="${this.escapeHtml(category)}">${this.escapeHtml(category)}</option>`).join('')}
+      `;
+
+      if (sorted.includes(current)) {
+        this.refs.reportCategoryFilter.value = current;
+      }
     },
 
     applyPreset() {
-      const preset = this.refs.reportPeriodPreset.value;
+      const preset = this.refs.reportPeriodPreset?.value || '';
       const today = new Date();
+
       const toISO = (date) => {
         const offset = date.getTimezoneOffset() * 60000;
         return new Date(date.getTime() - offset).toISOString().slice(0, 10);
@@ -199,8 +356,8 @@
       }
 
       if (start) {
-        this.refs.reportStartDate.value = start;
-        this.refs.reportEndDate.value = end;
+        if (this.refs.reportStartDate) this.refs.reportStartDate.value = start;
+        if (this.refs.reportEndDate) this.refs.reportEndDate.value = end;
       }
 
       this.captureFilters();
@@ -208,20 +365,22 @@
 
     resetFilters() {
       this.setDefaultFilters();
+      this.populateDynamicFilters();
       this.renderAll();
-      app.showToast('Filtros de relatório redefinidos.', 'success');
+      this.showToast('Filtros de relatório redefinidos.', 'success');
     },
 
     generateReport() {
       this.captureFilters();
+
       if (this.filters.startDate && this.filters.endDate && this.filters.startDate > this.filters.endDate) {
-        app.showToast('A data inicial não pode ser maior que a data final.', 'warning');
+        this.showToast('A data inicial não pode ser maior que a data final.', 'warning');
         return;
       }
 
       this.renderAll();
-      app.showToast('Relatório atualizado com sucesso.', 'success');
-      app.log('Relatório gerado.', { ...this.filters });
+      this.showToast('Relatório atualizado com sucesso.', 'success');
+      this.log('Relatório gerado.', { ...this.filters });
     },
 
     filterSales() {
@@ -232,11 +391,6 @@
 
         if (!inRange || !paymentOk || !categoryOk) return false;
 
-        if (this.filters.reportType === 'vendas') return true;
-        if (this.filters.reportType === 'geral') return true;
-        if (this.filters.reportType === 'mensal') return true;
-        if (this.filters.reportType === 'clientes') return true;
-        if (this.filters.reportType === 'produtos') return true;
         return true;
       });
     },
@@ -249,9 +403,6 @@
 
         if (!inRange || !paymentOk || !categoryOk) return false;
 
-        if (this.filters.reportType === 'despesas') return true;
-        if (this.filters.reportType === 'geral') return true;
-        if (this.filters.reportType === 'mensal') return true;
         return true;
       });
     },
@@ -263,9 +414,6 @@
 
         if (!inRange || !categoryOk) return false;
 
-        if (this.filters.reportType === 'estoque') return true;
-        if (this.filters.reportType === 'geral') return true;
-        if (this.filters.reportType === 'mensal') return true;
         return true;
       });
     },
@@ -300,14 +448,23 @@
       const validSales = sales.filter((sale) => sale.orderStatus !== 'Cancelado');
       const validExpenses = expenses.filter((expense) => expense.status !== 'Cancelado');
 
-      const totalSales = app.sum(validSales, (sale) => sale.total || 0);
-      const totalCosts = app.sum(validSales, (sale) => sale.cost || 0);
-      const totalExpenses = app.sum(validExpenses.filter((expense) => expense.affectsProfit !== false), (expense) => expense.value || 0);
+      const totalSales = this.sum(validSales, (sale) => sale.total || 0);
+      const totalCosts = this.sum(validSales, (sale) => {
+        if (sale.cost !== undefined && sale.cost !== null) return sale.cost || 0;
+        return this.sum(sale.items || [], (item) => this.toNumber(item.unitCost || 0) * this.toNumber(item.quantity || 0));
+      });
+      const totalExpenses = this.sum(
+        validExpenses.filter((expense) => expense.affectsProfit !== false),
+        (expense) => expense.value || 0
+      );
       const profit = totalSales - totalCosts - totalExpenses;
       const ordersCount = validSales.length;
       const averageTicket = ordersCount ? totalSales / ordersCount : 0;
       const profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0;
-      const lossesTotal = app.sum(validExpenses.filter((expense) => expense.category === 'Perda de material'), (expense) => expense.value || 0);
+      const lossesTotal = this.sum(
+        validExpenses.filter((expense) => expense.category === 'Perda de material'),
+        (expense) => expense.value || 0
+      );
 
       const monthlyBuckets = this.buildMonthlyBuckets(validSales, validExpenses);
       const dailyBuckets = this.buildDailyBuckets(validSales, validExpenses);
@@ -340,19 +497,27 @@
       sales.forEach((sale) => {
         const key = (sale.date || '').slice(0, 7);
         if (!key) return;
-        if (!bucket.has(key)) bucket.set(key, { label: key, sales: 0, expenses: 0, profit: 0 });
+
+        if (!bucket.has(key)) {
+          bucket.set(key, { label: key, sales: 0, expenses: 0, profit: 0 });
+        }
+
         const entry = bucket.get(key);
-        entry.sales += app.toNumber(sale.total || 0);
-        entry.profit += app.toNumber(sale.profit || 0);
+        entry.sales += this.toNumber(sale.total || 0);
+        entry.profit += this.toNumber(sale.profit || (sale.total || 0) - (sale.cost || 0));
       });
 
       expenses.forEach((expense) => {
         const key = (expense.date || '').slice(0, 7);
         if (!key) return;
-        if (!bucket.has(key)) bucket.set(key, { label: key, sales: 0, expenses: 0, profit: 0 });
+
+        if (!bucket.has(key)) {
+          bucket.set(key, { label: key, sales: 0, expenses: 0, profit: 0 });
+        }
+
         const entry = bucket.get(key);
-        entry.expenses += app.toNumber(expense.value || 0);
-        entry.profit -= app.toNumber(expense.value || 0);
+        entry.expenses += this.toNumber(expense.value || 0);
+        entry.profit -= this.toNumber(expense.value || 0);
       });
 
       return [...bucket.values()].sort((a, b) => a.label.localeCompare(b.label)).slice(-6);
@@ -364,15 +529,23 @@
       sales.forEach((sale) => {
         const key = sale.date;
         if (!key) return;
-        if (!bucket.has(key)) bucket.set(key, { label: app.formatDate(key), date: key, input: 0, output: 0 });
-        bucket.get(key).input += app.toNumber(sale.total || 0);
+
+        if (!bucket.has(key)) {
+          bucket.set(key, { label: this.formatDate(key), date: key, input: 0, output: 0 });
+        }
+
+        bucket.get(key).input += this.toNumber(sale.total || 0);
       });
 
       expenses.forEach((expense) => {
         const key = expense.date;
         if (!key) return;
-        if (!bucket.has(key)) bucket.set(key, { label: app.formatDate(key), date: key, input: 0, output: 0 });
-        bucket.get(key).output += app.toNumber(expense.value || 0);
+
+        if (!bucket.has(key)) {
+          bucket.set(key, { label: this.formatDate(key), date: key, input: 0, output: 0 });
+        }
+
+        bucket.get(key).output += this.toNumber(expense.value || 0);
       });
 
       return [...bucket.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-10);
@@ -380,27 +553,33 @@
 
     buildPaymentBuckets(sales) {
       const bucket = new Map();
+
       sales.forEach((sale) => {
         const key = sale.paymentMethod || 'Não informado';
-        bucket.set(key, (bucket.get(key) || 0) + app.toNumber(sale.total || 0));
+        bucket.set(key, (bucket.get(key) || 0) + this.toNumber(sale.total || 0));
       });
 
-      return [...bucket.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+      return [...bucket.entries()]
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value);
     },
 
     buildTopProducts(sales) {
       const bucket = new Map();
+
       sales.forEach((sale) => {
         (sale.items || []).forEach((item) => {
-          const current = bucket.get(item.productId) || {
-            productId: item.productId,
-            name: item.productName || 'Produto',
+          const key = item.productId || item.productName || item.name || 'produto';
+          const current = bucket.get(key) || {
+            productId: item.productId || key,
+            name: item.productName || item.name || 'Produto',
             quantity: 0,
             revenue: 0
           };
-          current.quantity += app.toNumber(item.quantity || 0);
-          current.revenue += app.toNumber(item.total || 0);
-          bucket.set(item.productId, current);
+
+          current.quantity += this.toNumber(item.quantity || 0);
+          current.revenue += this.toNumber(item.total || 0);
+          bucket.set(key, current);
         });
       });
 
@@ -409,29 +588,36 @@
 
     buildTopExpenseCategories(expenses) {
       const bucket = new Map();
+
       expenses.forEach((expense) => {
         const key = expense.category || 'Outros';
-        bucket.set(key, (bucket.get(key) || 0) + app.toNumber(expense.value || 0));
+        bucket.set(key, (bucket.get(key) || 0) + this.toNumber(expense.value || 0));
       });
 
-      return [...bucket.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 6);
+      return [...bucket.entries()]
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6);
     },
 
     buildBestMarginProducts(sales) {
       const bucket = new Map();
+
       sales.forEach((sale) => {
         (sale.items || []).forEach((item) => {
-          const current = bucket.get(item.productId) || {
-            productId: item.productId,
-            name: item.productName || 'Produto',
+          const key = item.productId || item.productName || item.name || 'produto';
+          const current = bucket.get(key) || {
+            productId: item.productId || key,
+            name: item.productName || item.name || 'Produto',
             revenue: 0,
             cost: 0,
             quantity: 0
           };
-          current.revenue += app.toNumber(item.total || 0);
-          current.cost += app.toNumber(item.unitCost || 0) * app.toNumber(item.quantity || 0);
-          current.quantity += app.toNumber(item.quantity || 0);
-          bucket.set(item.productId, current);
+
+          current.revenue += this.toNumber(item.total || 0);
+          current.cost += this.toNumber(item.unitCost || 0) * this.toNumber(item.quantity || 0);
+          current.quantity += this.toNumber(item.quantity || 0);
+          bucket.set(key, current);
         });
       });
 
@@ -445,62 +631,101 @@
     },
 
     renderMetrics(analytics) {
-      this.refs.reportTotalSales.textContent = app.formatCurrency(analytics.totalSales);
-      this.refs.reportTotalCosts.textContent = app.formatCurrency(analytics.totalCosts);
-      this.refs.reportTotalExpenses.textContent = app.formatCurrency(analytics.totalExpenses);
-      this.refs.reportTotalProfit.textContent = app.formatCurrency(analytics.profit);
-      this.refs.reportAverageTicket.textContent = app.formatCurrency(analytics.averageTicket);
-      this.refs.reportOrdersCount.textContent = String(analytics.ordersCount);
-      this.refs.reportProfitMargin.textContent = `${app.formatNumber(analytics.profitMargin, 1)}%`;
-      this.refs.reportLossesTotal.textContent = app.formatCurrency(analytics.lossesTotal);
+      this.setText(this.refs.reportTotalSales, this.formatCurrency(analytics.totalSales));
+      this.setText(this.refs.reportTotalCosts, this.formatCurrency(analytics.totalCosts));
+      this.setText(this.refs.reportTotalExpenses, this.formatCurrency(analytics.totalExpenses));
+      this.setText(this.refs.reportTotalProfit, this.formatCurrency(analytics.profit));
+      this.setText(this.refs.reportAverageTicket, this.formatCurrency(analytics.averageTicket));
+      this.setText(this.refs.reportOrdersCount, String(analytics.ordersCount));
+      this.setText(this.refs.reportProfitMargin, `${this.formatNumber(analytics.profitMargin, 1)}%`);
+      this.setText(this.refs.reportLossesTotal, this.formatCurrency(analytics.lossesTotal));
     },
 
     renderStatus(analytics, sales, movements) {
       const activeSales = sales.filter((sale) => sale.orderStatus !== 'Cancelado');
       const finishedOrders = activeSales.filter((sale) => sale.orderStatus === 'Finalizado').length;
       const pendingOrders = activeSales.filter((sale) => sale.orderStatus !== 'Finalizado').length;
-      const pixWithProof = activeSales.filter((sale) => sale.paymentMethod === 'Pix' && sale.pixProof?.name).length;
-      const products = this.getProducts();
-      const criticalStock = products.filter((product) => app.toNumber(product.stock || 0) <= app.toNumber(product.minStock || 0)).length;
-      const lowStock = products.filter((product) => app.toNumber(product.stock || 0) > 0 && app.toNumber(product.stock || 0) <= app.toNumber(product.minStock || 0)).length;
-      const zeroStock = products.filter((product) => app.toNumber(product.stock || 0) <= 0).length;
-      const stockLosses = app.sum(movements.filter((movement) => movement.type === 'perda'), (movement) => movement.totalCost || 0);
 
-      this.refs.reportFinishedOrders.textContent = String(finishedOrders);
-      this.refs.reportPendingOrders.textContent = String(pendingOrders);
-      this.refs.reportPixWithProof.textContent = String(pixWithProof);
-      this.refs.reportCriticalStock.textContent = String(criticalStock);
-      this.refs.reportStockMovements.textContent = String(movements.length);
-      this.refs.reportLowStock.textContent = String(lowStock);
-      this.refs.reportZeroStock.textContent = String(zeroStock);
-      this.refs.reportStockLosses.textContent = app.formatCurrency(stockLosses);
+      const proofs = this.getProofs();
+      const pixWithProof = activeSales.filter((sale) => {
+        if (sale.paymentMethod !== 'Pix') return false;
+        const hasInSale = Boolean(sale.pixProof?.name || sale.pixProof?.dataUrl);
+        const hasProofRecord = proofs.some((proof) => {
+          return proof.saleId === sale.id || proof.orderNumber === sale.orderNumber;
+        });
+        return hasInSale || hasProofRecord;
+      }).length;
+
+      const products = this.getProducts();
+      const criticalStock = products.filter((product) => this.toNumber(product.stock || 0) <= this.toNumber(product.minStock || 0)).length;
+      const lowStock = products.filter((product) => {
+        const stock = this.toNumber(product.stock || 0);
+        const minStock = this.toNumber(product.minStock || 0);
+        return stock > 0 && stock <= minStock;
+      }).length;
+      const zeroStock = products.filter((product) => this.toNumber(product.stock || 0) <= 0).length;
+      const stockLosses = this.sum(
+        movements.filter((movement) => movement.type === 'perda'),
+        (movement) => movement.totalCost || 0
+      );
+
+      this.setText(this.refs.reportFinishedOrders, String(finishedOrders));
+      this.setText(this.refs.reportPendingOrders, String(pendingOrders));
+      this.setText(this.refs.reportPixWithProof, String(pixWithProof));
+      this.setText(this.refs.reportCriticalStock, String(criticalStock));
+      this.setText(this.refs.reportStockMovements, String(movements.length));
+      this.setText(this.refs.reportLowStock, String(lowStock));
+      this.setText(this.refs.reportZeroStock, String(zeroStock));
+      this.setText(this.refs.reportStockLosses, this.formatCurrency(stockLosses));
     },
 
     renderMonthlyChart(data) {
+      if (!this.refs.monthlyReportChart) return;
+
       this.refs.monthlyReportChart.innerHTML = this.renderBarChart(
-        data.map((item) => ({ label: item.label, value: item.sales, secondary: item.expenses, tertiary: item.profit })),
+        data.map((item) => ({
+          label: item.label,
+          value: item.sales,
+          secondary: item.expenses,
+          tertiary: item.profit
+        })),
         'Vendas / Despesas / Lucro'
       );
     },
 
     renderFinancialFlowChart(data) {
+      if (!this.refs.financialFlowChart) return;
+
       this.refs.financialFlowChart.innerHTML = this.renderBarChart(
-        data.map((item) => ({ label: item.label, value: item.input, secondary: item.output, tertiary: item.input - item.output })),
+        data.map((item) => ({
+          label: item.label,
+          value: item.input,
+          secondary: item.output,
+          tertiary: item.input - item.output
+        })),
         'Entradas / Saídas / Saldo'
       );
     },
 
     renderPaymentMethodChart(data) {
+      if (!this.refs.paymentMethodChart) return;
+
       this.refs.paymentMethodChart.innerHTML = this.renderSimpleListChart(
         data,
-        (item) => `${item.label} • ${app.formatCurrency(item.value)}`,
+        (item) => `${item.label} • ${this.formatCurrency(item.value)}`,
         (item) => item.value
       );
     },
 
     renderTopProducts(data) {
+      if (!this.refs.topProductsReport) return;
+
       if (!data.length) {
-        this.refs.topProductsReport.innerHTML = this.renderEmptyCard('Sem dados ainda', 'Os produtos mais vendidos aparecerão aqui.', '0');
+        this.refs.topProductsReport.innerHTML = this.renderEmptyCard(
+          'Sem dados ainda',
+          'Os produtos mais vendidos aparecerão aqui.',
+          '0'
+        );
         return;
       }
 
@@ -508,16 +733,22 @@
         <div class="pix-proof-card">
           <div>
             <strong>${this.escapeHtml(item.name)}</strong>
-            <p>${app.formatNumber(item.quantity)} vendidos • ${app.formatCurrency(item.revenue)}</p>
+            <p>${this.formatNumber(item.quantity)} vendidos • ${this.formatCurrency(item.revenue)}</p>
           </div>
-          <span class="tag">${app.formatNumber(item.quantity)}</span>
+          <span class="tag">${this.formatNumber(item.quantity)}</span>
         </div>
       `).join('');
     },
 
     renderTopExpenseCategories(data) {
+      if (!this.refs.topExpenseCategories) return;
+
       if (!data.length) {
-        this.refs.topExpenseCategories.innerHTML = this.renderEmptyCard('Sem dados ainda', 'As categorias de despesa aparecerão aqui.', 'R$ 0,00');
+        this.refs.topExpenseCategories.innerHTML = this.renderEmptyCard(
+          'Sem dados ainda',
+          'As categorias de despesa aparecerão aqui.',
+          'R$ 0,00'
+        );
         return;
       }
 
@@ -527,14 +758,20 @@
             <strong>${this.escapeHtml(item.label)}</strong>
             <p>Impacto total no período</p>
           </div>
-          <span class="tag">${app.formatCurrency(item.value)}</span>
+          <span class="tag">${this.formatCurrency(item.value)}</span>
         </div>
       `).join('');
     },
 
     renderBestMarginProducts(data) {
+      if (!this.refs.bestMarginProducts) return;
+
       if (!data.length) {
-        this.refs.bestMarginProducts.innerHTML = this.renderEmptyCard('Sem dados ainda', 'Os produtos mais rentáveis aparecerão aqui.', '0%');
+        this.refs.bestMarginProducts.innerHTML = this.renderEmptyCard(
+          'Sem dados ainda',
+          'Os produtos mais rentáveis aparecerão aqui.',
+          '0%'
+        );
         return;
       }
 
@@ -542,28 +779,36 @@
         <div class="pix-proof-card">
           <div>
             <strong>${this.escapeHtml(item.name)}</strong>
-            <p>Receita ${app.formatCurrency(item.revenue)} • Custo ${app.formatCurrency(item.cost)}</p>
+            <p>Receita ${this.formatCurrency(item.revenue)} • Custo ${this.formatCurrency(item.cost)}</p>
           </div>
-          <span class="tag">${app.formatNumber(item.margin, 1)}%</span>
+          <span class="tag">${this.formatNumber(item.margin, 1)}%</span>
         </div>
       `).join('');
     },
 
     renderAnalyticsTable(analytics) {
+      if (!this.refs.reportTableBody) return;
+
       this.refs.reportTableBody.innerHTML = `
         <tr>
           <td>${this.getPeriodLabel()}</td>
-          <td>${app.formatCurrency(analytics.totalSales)}</td>
-          <td>${app.formatCurrency(analytics.totalCosts)}</td>
-          <td>${app.formatCurrency(analytics.totalExpenses)}</td>
-          <td>${app.formatCurrency(analytics.profit)}</td>
-          <td>${app.formatNumber(analytics.profitMargin, 1)}%</td>
+          <td>${this.formatCurrency(analytics.totalSales)}</td>
+          <td>${this.formatCurrency(analytics.totalCosts)}</td>
+          <td>${this.formatCurrency(analytics.totalExpenses)}</td>
+          <td>${this.formatCurrency(analytics.profit)}</td>
+          <td>${this.formatNumber(analytics.profitMargin, 1)}%</td>
         </tr>
       `;
     },
 
     renderSalesTable(sales) {
-      const validSales = sales.filter((sale) => sale.orderStatus !== 'Cancelado').slice(0, 12);
+      if (!this.refs.reportSalesTableBody) return;
+
+      const validSales = sales
+        .filter((sale) => sale.orderStatus !== 'Cancelado')
+        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime())
+        .slice(0, 12);
+
       if (!validSales.length) {
         this.refs.reportSalesTableBody.innerHTML = '<tr><td colspan="4">Nenhuma venda encontrada no período.</td></tr>';
         return;
@@ -574,13 +819,19 @@
           <td>${this.escapeHtml(sale.orderNumber || '-')}</td>
           <td>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</td>
           <td>${this.escapeHtml(sale.paymentMethod || '-')}</td>
-          <td>${app.formatCurrency(sale.total || 0)}</td>
+          <td>${this.formatCurrency(sale.total || 0)}</td>
         </tr>
       `).join('');
     },
 
     renderExpensesTable(expenses) {
-      const validExpenses = expenses.filter((expense) => expense.status !== 'Cancelado').slice(0, 12);
+      if (!this.refs.reportExpensesTableBody) return;
+
+      const validExpenses = expenses
+        .filter((expense) => expense.status !== 'Cancelado')
+        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime())
+        .slice(0, 12);
+
       if (!validExpenses.length) {
         this.refs.reportExpensesTableBody.innerHTML = '<tr><td colspan="4">Nenhuma despesa encontrada no período.</td></tr>';
         return;
@@ -588,10 +839,10 @@
 
       this.refs.reportExpensesTableBody.innerHTML = validExpenses.map((expense) => `
         <tr>
-          <td>${app.formatDate(expense.date)}</td>
+          <td>${this.formatDate(expense.date)}</td>
           <td>${this.escapeHtml(expense.category || '-')}</td>
           <td>${this.escapeHtml(expense.description || '-')}</td>
-          <td>${app.formatCurrency(expense.value || 0)}</td>
+          <td>${this.formatCurrency(expense.value || 0)}</td>
         </tr>
       `).join('');
     },
@@ -603,26 +854,33 @@
 
       const maxValue = Math.max(
         1,
-        ...data.flatMap((item) => [item.value || 0, item.secondary || 0, item.tertiary || 0].filter((value) => Number.isFinite(value)))
+        ...data.flatMap((item) => [item.value || 0, item.secondary || 0, Math.abs(item.tertiary || 0)])
       );
 
       return `
         <div style="display:grid; gap:14px; width:100%;">
-          <div style="font-size:12px; color:#8d786f; font-weight:700; text-transform:uppercase; letter-spacing:.04em;">${legendText}</div>
+          <div style="font-size:12px; color:#6b564d; font-weight:700; text-transform:uppercase; letter-spacing:.04em;">${this.escapeHtml(legendText)}</div>
           ${data.map((item) => {
             const valueWidth = Math.max(4, ((item.value || 0) / maxValue) * 100);
             const secondaryWidth = Math.max(4, ((item.secondary || 0) / maxValue) * 100);
             const tertiaryWidth = Math.max(4, (Math.abs(item.tertiary || 0) / maxValue) * 100);
+
             return `
               <div style="display:grid; gap:8px;">
                 <div style="display:flex; justify-content:space-between; gap:10px; font-size:13px; color:#6b564d;">
-                  <strong style="color:#2f211b;">${this.escapeHtml(item.label)}</strong>
-                  <span>V ${app.formatCurrency(item.value || 0)} • D ${app.formatCurrency(item.secondary || 0)} • L ${app.formatCurrency(item.tertiary || 0)}</span>
+                  <strong style="color:#163247;">${this.escapeHtml(item.label)}</strong>
+                  <span>V ${this.formatCurrency(item.value || 0)} • D ${this.formatCurrency(item.secondary || 0)} • L ${this.formatCurrency(item.tertiary || 0)}</span>
                 </div>
                 <div style="display:grid; gap:6px;">
-                  <div style="height:10px; background:rgba(143,95,67,.12); border-radius:999px; overflow:hidden;"><div style="height:100%; width:${valueWidth}%; background:linear-gradient(90deg,#8f5f43,#d9b08c);"></div></div>
-                  <div style="height:10px; background:rgba(106,86,77,.08); border-radius:999px; overflow:hidden;"><div style="height:100%; width:${secondaryWidth}%; background:linear-gradient(90deg,#c9804a,#ead4c2);"></div></div>
-                  <div style="height:10px; background:rgba(47,139,87,.08); border-radius:999px; overflow:hidden;"><div style="height:100%; width:${tertiaryWidth}%; background:linear-gradient(90deg,#2f8b57,#9fd0af);"></div></div>
+                  <div style="height:10px; background:rgba(47,111,159,.12); border-radius:999px; overflow:hidden;">
+                    <div style="height:100%; width:${valueWidth}%; background:linear-gradient(90deg,#2f6f9f,#9fc7e3);"></div>
+                  </div>
+                  <div style="height:10px; background:rgba(191,75,75,.10); border-radius:999px; overflow:hidden;">
+                    <div style="height:100%; width:${secondaryWidth}%; background:linear-gradient(90deg,#bf4b4b,#e4b2b2);"></div>
+                  </div>
+                  <div style="height:10px; background:rgba(47,139,87,.10); border-radius:999px; overflow:hidden;">
+                    <div style="height:100%; width:${tertiaryWidth}%; background:linear-gradient(90deg,#2f8b57,#9fd0af);"></div>
+                  </div>
                 </div>
               </div>
             `;
@@ -637,19 +895,21 @@
       }
 
       const maxValue = Math.max(1, ...data.map((item) => valueGetter(item)));
+
       return `
         <div style="display:grid; gap:12px; width:100%;">
           ${data.map((item) => {
             const value = valueGetter(item);
             const width = Math.max(4, (value / maxValue) * 100);
+
             return `
               <div style="display:grid; gap:6px;">
                 <div style="display:flex; justify-content:space-between; gap:10px; font-size:13px; color:#6b564d;">
-                  <strong style="color:#2f211b;">${this.escapeHtml(item.label)}</strong>
+                  <strong style="color:#163247;">${this.escapeHtml(item.label)}</strong>
                   <span>${this.escapeHtml(labelFormatter(item))}</span>
                 </div>
-                <div style="height:12px; background:rgba(143,95,67,.1); border-radius:999px; overflow:hidden;">
-                  <div style="height:100%; width:${width}%; background:linear-gradient(90deg,#8f5f43,#d9b08c);"></div>
+                <div style="height:12px; background:rgba(47,111,159,.10); border-radius:999px; overflow:hidden;">
+                  <div style="height:100%; width:${width}%; background:linear-gradient(90deg,#2f6f9f,#9fc7e3);"></div>
                 </div>
               </div>
             `;
@@ -671,8 +931,8 @@
     },
 
     getPeriodLabel() {
-      const start = this.filters.startDate ? app.formatDate(this.filters.startDate) : 'início';
-      const end = this.filters.endDate ? app.formatDate(this.filters.endDate) : 'hoje';
+      const start = this.filters.startDate ? this.formatDate(this.filters.startDate) : 'início';
+      const end = this.filters.endDate ? this.formatDate(this.filters.endDate) : 'hoje';
       return `${start} até ${end}`;
     },
 
@@ -685,27 +945,48 @@
       ];
 
       sales.forEach((sale) => {
-        lines.push(['Venda', sale.date || '', sale.orderNumber || '', sale.paymentMethod || '', app.toNumber(sale.total || 0)]);
+        lines.push([
+          'Venda',
+          sale.date || '',
+          sale.orderNumber || '',
+          sale.paymentMethod || '',
+          this.toNumber(sale.total || 0)
+        ]);
       });
 
       expenses.forEach((expense) => {
-        lines.push(['Despesa', expense.date || '', expense.description || '', expense.category || '', app.toNumber(expense.value || 0)]);
+        lines.push([
+          'Despesa',
+          expense.date || '',
+          expense.description || '',
+          expense.category || '',
+          this.toNumber(expense.value || 0)
+        ]);
       });
 
-      const csv = lines.map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const csv = lines
+        .map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
+
       link.href = url;
-      link.download = `relatorio_husky_${app.todayISO()}.csv`;
+      link.download = `relatorio_husky_${this.todayISO()}.csv`;
       link.click();
+
       URL.revokeObjectURL(url);
-      app.showToast('Relatório exportado em CSV.', 'success');
+      this.showToast('Relatório exportado em CSV.', 'success');
     },
 
     exportAsPrint() {
-      app.showToast('Preparando versão para impressão.', 'success');
+      this.showToast('Preparando versão para impressão.', 'success');
       window.print();
+    },
+
+    setText(element, value) {
+      if (element) element.textContent = value;
     },
 
     findProductById(id) {

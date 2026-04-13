@@ -121,20 +121,29 @@
       this.refs.btnFilterExpenses?.addEventListener('click', () => this.applyFilters());
       this.refs.btnClearExpensesFilter?.addEventListener('click', () => this.clearFilters());
       this.refs.expensesTableBody?.addEventListener('click', (event) => this.handleTableActions(event));
+
+      window.addEventListener('husky:state-changed', () => {
+        this.populateProductSelect();
+        this.renderAll();
+      });
+
+      window.addEventListener('storage', () => {
+        this.populateProductSelect();
+        this.renderAll();
+      });
     },
 
     prepareInitialState() {
       const state = this.getState();
-      if (!Array.isArray(state.expenses)) {
-        state.expenses = [];
-        this.setState(state);
-      }
-      if (!Array.isArray(state.proofs)) {
-        state.proofs = [];
-        this.setState(state);
-      }
+
+      if (!Array.isArray(state.expenses)) state.expenses = [];
+      if (!Array.isArray(state.products)) state.products = [];
+      if (!Array.isArray(state.stockMovements)) state.stockMovements = [];
+
+      this.setState(state);
       this.populateProductSelect();
       this.resetForm(true);
+      this.renderAll();
     },
 
     getState() {
@@ -225,6 +234,17 @@
       else console.log(message, payload || '');
     },
 
+    todayISO() {
+      if (typeof app.todayISO === 'function') return app.todayISO();
+      return new Date().toISOString().slice(0, 10);
+    },
+
+    currentTimeHHMM() {
+      if (typeof app.currentTimeHHMM === 'function') return app.currentTimeHHMM();
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    },
+
     resetForm(skipScroll = false) {
       this.editingExpenseId = null;
       this.attachmentDraft = null;
@@ -232,15 +252,13 @@
       if (this.refs.form) this.refs.form.reset();
 
       this.refs.expenseId.value = '';
-      this.refs.expenseDate.value = typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10);
-      this.refs.expenseTime.value = typeof app.currentTimeHHMM === 'function'
-        ? app.currentTimeHHMM()
-        : `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+      this.refs.expenseDate.value = this.todayISO();
+      this.refs.expenseTime.value = this.currentTimeHHMM();
       this.refs.expenseStatus.value = 'Pago';
       this.refs.expenseCategory.value = 'Compras';
       this.refs.expensePaymentMethod.value = 'Pix';
       this.refs.expenseInstallments.value = 1;
-      this.refs.expenseDueDate.value = typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10);
+      this.refs.expenseDueDate.value = this.todayISO();
       this.refs.expenseRelatedProduct.value = '';
       this.refs.expenseAffectsProfit.checked = true;
       this.refs.expenseRepeatMonthly.checked = false;
@@ -261,7 +279,9 @@
 
     populateProductSelect() {
       if (!this.refs.expenseRelatedProduct) return;
+
       const products = [...this.getProducts()].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+
       this.refs.expenseRelatedProduct.innerHTML = `
         <option value="">Nenhum</option>
         ${products.map((product) => `<option value="${product.id}">${this.escapeHtml(product.name)} • ${this.escapeHtml(product.code || '-')}</option>`).join('')}
@@ -307,7 +327,7 @@
         id: existing?.id || this.refs.expenseId.value || this.uuid(),
         relatedMovementId: existing?.relatedMovementId || null,
         date: this.refs.expenseDate.value,
-        time: this.refs.expenseTime.value || (typeof app.currentTimeHHMM === 'function' ? app.currentTimeHHMM() : '00:00'),
+        time: this.refs.expenseTime.value || this.currentTimeHHMM(),
         status: this.refs.expenseStatus.value,
         description: this.refs.expenseTitle.value.trim(),
         category: this.refs.expenseCategory.value,
@@ -537,7 +557,7 @@
     },
 
     renderMetrics() {
-      const today = typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10);
+      const today = this.todayISO();
       const currentMonth = today.slice(0, 7);
       const expenses = this.getExpenses();
 
@@ -573,7 +593,7 @@
     renderAlerts() {
       if (!this.refs.expenseAlertList) return;
 
-      const today = typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10);
+      const today = this.todayISO();
       const pending = this.getExpenses().filter((expense) => expense.status === 'Pendente' || expense.status === 'Parcelado');
       const overdue = pending.filter((expense) => expense.dueDate && expense.dueDate < today);
 
@@ -773,14 +793,14 @@
       this.attachmentDraft = expense.attachment || null;
 
       this.refs.expenseId.value = expense.id;
-      this.refs.expenseDate.value = expense.date || (typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10));
-      this.refs.expenseTime.value = expense.time || (typeof app.currentTimeHHMM === 'function' ? app.currentTimeHHMM() : '00:00');
+      this.refs.expenseDate.value = expense.date || this.todayISO();
+      this.refs.expenseTime.value = expense.time || this.currentTimeHHMM();
       this.refs.expenseStatus.value = expense.status || 'Pago';
       this.refs.expenseTitle.value = expense.description || '';
       this.refs.expenseCategory.value = expense.category || 'Compras';
       this.refs.expenseValue.value = expense.value || '';
       this.refs.expensePaymentMethod.value = expense.paymentMethod || 'Pix';
-      this.refs.expenseDueDate.value = expense.dueDate || expense.date || (typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10));
+      this.refs.expenseDueDate.value = expense.dueDate || expense.date || this.todayISO();
       this.refs.expenseInstallments.value = expense.installments || 1;
       this.refs.expenseSupplier.value = expense.supplier || '';
       this.refs.expenseReference.value = expense.reference || '';
