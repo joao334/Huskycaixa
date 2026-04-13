@@ -154,11 +154,18 @@
         if (target.matches('[data-copy-text]')) {
           this.copyText(target.getAttribute('data-copy-text'));
         }
-
-        if (target.closest('.sidebar .nav-item') && window.innerWidth <= 992) {
-          this.closeSidebar();
-        }
       });
+
+      if (this.dom.sidebar) {
+        this.dom.sidebar.addEventListener('click', (event) => {
+          const target = event.target.closest('a, button');
+          if (!target) return;
+
+          if (window.innerWidth <= 992 && !target.isSameNode(this.dom.mobileMenuButton)) {
+            setTimeout(() => this.closeSidebar(), 120);
+          }
+        });
+      }
 
       window.addEventListener(STATE_CHANGED_EVENT, () => {
         this.refreshShell();
@@ -183,26 +190,21 @@
       const overlay = document.createElement('div');
       overlay.id = 'sidebar-overlay';
       overlay.setAttribute('aria-hidden', 'true');
+
       overlay.style.position = 'fixed';
       overlay.style.inset = '0';
-      overlay.style.background = 'rgba(15, 23, 42, 0.22)';
+      overlay.style.background = 'rgba(15, 23, 42, 0.18)';
       overlay.style.opacity = '0';
       overlay.style.visibility = 'hidden';
       overlay.style.pointerEvents = 'none';
-      overlay.style.transition = 'opacity 0.25s ease, visibility 0.25s ease';
-      overlay.style.zIndex = '110';
+      overlay.style.transition = 'opacity 0.22s ease, visibility 0.22s ease';
+      overlay.style.zIndex = '100';
       overlay.style.backdropFilter = 'none';
 
       overlay.addEventListener('click', () => this.closeSidebar());
 
       document.body.appendChild(overlay);
       this.dom.sidebarOverlay = overlay;
-
-      if (this.dom.sidebar) {
-        this.dom.sidebar.addEventListener('click', (event) => {
-          event.stopPropagation();
-        });
-      }
     },
 
     toggleSidebar() {
@@ -221,6 +223,8 @@
       if (window.innerWidth > 992) return;
 
       this.dom.sidebar.classList.add('is-open');
+      this.dom.sidebar.style.pointerEvents = 'auto';
+      this.dom.sidebar.style.zIndex = '120';
 
       if (this.dom.sidebarOverlay) {
         this.dom.sidebarOverlay.style.opacity = '1';
@@ -233,6 +237,11 @@
 
     closeSidebar() {
       this.dom.sidebar?.classList.remove('is-open');
+
+      if (this.dom.sidebar) {
+        this.dom.sidebar.style.pointerEvents = '';
+        this.dom.sidebar.style.zIndex = '';
+      }
 
       if (this.dom.sidebarOverlay) {
         this.dom.sidebarOverlay.style.opacity = '0';

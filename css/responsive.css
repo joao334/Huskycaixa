@@ -745,3 +745,98 @@
     font-size: 16px;
   }
 }
+
+/* ===== HUSKY MOBILE CLEAN PATCH ===== */
+
+@media (max-width: 768px) {
+  .topbar {
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .sync-badge {
+    width: 100%;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .cards-grid.metrics-grid,
+  .metrics-grid-secondary,
+  .quick-links-grid,
+  .content-grid.two-columns,
+  .sales-side-column,
+  .products-side-column,
+  .estoque-side-column,
+  .despesas-side-column,
+  .clientes-side-column,
+  .comprovantes-side-column {
+    gap: 12px;
+  }
+
+  .sales-main-grid,
+  .products-main-grid,
+  .estoque-main-grid,
+  .despesas-main-grid,
+  .clientes-main-grid,
+  .comprovantes-main-grid {
+    gap: 12px;
+  }
+
+  .sidebar {
+    width: min(86vw, 310px);
+  }
+
+  .sidebar-top,
+  .sidebar-bottom,
+  .sidebar-nav {
+    gap: 10px;
+  }
+
+  .brand-box,
+  .operator-box,
+  .cloud-box {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .nav-item {
+    min-height: 42px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .operator-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .table-wrapper table {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-area {
+    padding: 10px 8px 20px;
+  }
+
+  .topbar {
+    margin-bottom: 12px;
+  }
+
+  .page-heading h1,
+  .hero-content h2 {
+    font-size: 22px;
+  }
+
+  .table-wrapper table {
+    min-width: 520px;
+  }
+}
