@@ -27,7 +27,7 @@
       this.bindEvents();
       this.prepareInitialState();
       this.renderAll();
-      app.log('Tela de estoque carregada.');
+      this.log('Tela de estoque carregada.');
     },
 
     cacheRefs() {
@@ -123,34 +123,125 @@
     },
 
     prepareInitialState() {
+      const state = this.getState();
+      if (!Array.isArray(state.products)) state.products = [];
+      if (!Array.isArray(state.stockMovements)) state.stockMovements = [];
+      if (!Array.isArray(state.expenses)) state.expenses = [];
+      this.setState(state);
+
       this.populateProductSelects();
       this.populateCategoryFilter();
       this.resetForm(true);
     },
 
     getState() {
-      return app.getAppState();
+      return typeof app.getAppState === 'function' ? app.getAppState() : {};
     },
 
     setState(nextState) {
-      app.setAppState(nextState);
+      if (typeof app.setAppState === 'function') {
+        app.setAppState(nextState);
+      }
       return nextState;
     },
 
     getProducts() {
-      return this.getState().products || [];
+      return Array.isArray(this.getState().products) ? this.getState().products : [];
     },
 
     getMovements() {
-      return this.getState().stockMovements || [];
+      return Array.isArray(this.getState().stockMovements) ? this.getState().stockMovements : [];
     },
 
     getExpenses() {
-      return this.getState().expenses || [];
+      return Array.isArray(this.getState().expenses) ? this.getState().expenses : [];
     },
 
     getCurrentUser() {
       return this.getState().currentUser || { name: 'Administrador', email: 'admin@husky.com' };
+    },
+
+    uuid() {
+      if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+      return `id-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    },
+
+    toNumber(value) {
+      if (typeof app.toNumber === 'function') return app.toNumber(value);
+      const num = Number(String(value ?? '').replace(',', '.'));
+      return Number.isFinite(num) ? num : 0;
+    },
+
+    formatCurrency(value) {
+      if (typeof app.formatCurrency === 'function') return app.formatCurrency(value);
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(this.toNumber(value));
+    },
+
+    formatNumber(value, decimals = 0) {
+      if (typeof app.formatNumber === 'function') return app.formatNumber(value, decimals);
+      return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      }).format(this.toNumber(value));
+    },
+
+    formatDate(value) {
+      if (typeof app.formatDate === 'function') return app.formatDate(value);
+      if (!value) return '-';
+      return new Date(value).toLocaleDateString('pt-BR');
+    },
+
+    includesText(haystack, needle) {
+      if (typeof app.includesText === 'function') return app.includesText(haystack, needle);
+      return String(haystack || '').toLowerCase().includes(String(needle || '').toLowerCase());
+    },
+
+    upsertItem(list, item, key = 'id') {
+      if (typeof app.upsertItem === 'function') return app.upsertItem(list, item, key);
+      const array = Array.isArray(list) ? [...list] : [];
+      const index = array.findIndex((entry) => entry?.[key] === item?.[key]);
+      if (index >= 0) array[index] = item;
+      else array.unshift(item);
+      return array;
+    },
+
+    removeById(list, id) {
+      if (typeof app.removeById === 'function') return app.removeById(list, id);
+      return (Array.isArray(list) ? list : []).filter((entry) => entry.id !== id);
+    },
+
+    sum(list = [], mapper = (item) => item) {
+      if (typeof app.sum === 'function') return app.sum(list, mapper);
+      return list.reduce((acc, item) => acc + Number(mapper(item) || 0), 0);
+    },
+
+    confirmAction(message) {
+      if (typeof app.confirmAction === 'function') return app.confirmAction(message);
+      return window.confirm(message);
+    },
+
+    showToast(message, type = 'info') {
+      if (typeof app.showToast === 'function') app.showToast(message, type);
+      else window.alert(message);
+    },
+
+    log(message, payload = null) {
+      if (typeof app.log === 'function') app.log(message, payload);
+      else console.log(message, payload || '');
+    },
+
+    todayISO() {
+      if (typeof app.todayISO === 'function') return app.todayISO();
+      return new Date().toISOString().slice(0, 10);
+    },
+
+    currentTimeHHMM() {
+      if (typeof app.currentTimeHHMM === 'function') return app.currentTimeHHMM();
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     },
 
     resetForm(skipScroll = false) {
@@ -158,8 +249,8 @@
       if (this.refs.form) this.refs.form.reset();
 
       this.refs.stockMovementId.value = '';
-      this.refs.stockDate.value = app.todayISO();
-      this.refs.stockTime.value = app.currentTimeHHMM();
+      this.refs.stockDate.value = this.todayISO();
+      this.refs.stockTime.value = this.currentTimeHHMM();
       this.refs.stockType.value = 'entrada';
       this.refs.stockProduct.value = '';
       this.refs.stockQuantity.value = '';
@@ -186,55 +277,71 @@
 
     populateProductSelects() {
       const products = [...this.getProducts()].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
-      const options = products.map((product) => `<option value="${product.id}">${this.escapeHtml(product.name)} • ${this.escapeHtml(product.code || '-')}</option>`).join('');
+      const options = products
+        .map((product) => `<option value="${product.id}">${this.escapeHtml(product.name)} • ${this.escapeHtml(product.code || '-')}</option>`)
+        .join('');
 
-      this.refs.stockProduct.innerHTML = `<option value="">Selecione um produto</option>${options}`;
-      this.refs.stockHistoryProduct.innerHTML = `<option value="">Todos os produtos</option>${options}`;
+      if (this.refs.stockProduct) {
+        this.refs.stockProduct.innerHTML = `<option value="">Selecione um produto</option>${options}`;
+      }
+
+      if (this.refs.stockHistoryProduct) {
+        this.refs.stockHistoryProduct.innerHTML = `<option value="">Todos os produtos</option>${options}`;
+      }
     },
 
     populateCategoryFilter() {
-      const categories = [...new Set(this.getProducts().map((product) => product.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      if (!this.refs.stockFilterCategory) return;
+
+      const categories = [...new Set(this.getProducts().map((product) => product.category).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
       const current = this.refs.stockFilterCategory.value;
       this.refs.stockFilterCategory.innerHTML = `
         <option value="">Todas as categorias</option>
         ${categories.map((category) => `<option value="${this.escapeHtml(category)}">${this.escapeHtml(category)}</option>`).join('')}
       `;
-      if (categories.includes(current)) this.refs.stockFilterCategory.value = current;
+
+      if (categories.includes(current)) {
+        this.refs.stockFilterCategory.value = current;
+      }
     },
 
     validateForm() {
       const productId = this.refs.stockProduct.value;
       const type = this.refs.stockType.value;
-      const quantity = app.toNumber(this.refs.stockQuantity.value || 0);
-      const unitCost = app.toNumber(this.refs.stockUnitCost.value || 0);
+      const quantity = this.toNumber(this.refs.stockQuantity.value || 0);
+      const unitCost = this.toNumber(this.refs.stockUnitCost.value || 0);
       const product = this.findProductById(productId);
 
       if (!product) {
-        app.showToast('Selecione um produto.', 'warning');
+        this.showToast('Selecione um produto.', 'warning');
         this.refs.stockProduct.focus();
         return false;
       }
 
       if (!this.refs.stockDate.value) {
-        app.showToast('Informe a data da movimentação.', 'warning');
+        this.showToast('Informe a data da movimentação.', 'warning');
         return false;
       }
 
       if (quantity <= 0) {
-        app.showToast('Informe uma quantidade válida.', 'warning');
+        this.showToast('Informe uma quantidade válida.', 'warning');
         this.refs.stockQuantity.focus();
         return false;
       }
 
       if (unitCost < 0) {
-        app.showToast('Informe um custo unitário válido.', 'warning');
+        this.showToast('Informe um custo unitário válido.', 'warning');
+        this.refs.stockUnitCost.focus();
         return false;
       }
 
       const previousMovement = this.findEditableMovementById(this.editingMovementId);
       const projectedStock = this.calculateProjectedStock(product, type, quantity, previousMovement);
+
       if (projectedStock < 0) {
-        app.showToast(`Estoque insuficiente para ${product.name}.`, 'danger');
+        this.showToast(`Estoque insuficiente para ${product.name}.`, 'danger');
         return false;
       }
 
@@ -242,7 +349,7 @@
     },
 
     calculateProjectedStock(product, type, quantity, previousMovement = null) {
-      let currentStock = app.toNumber(product.stock || 0);
+      let currentStock = this.toNumber(product.stock || 0);
 
       if (previousMovement) {
         currentStock = this.revertStockValue(currentStock, previousMovement.type, previousMovement.quantity);
@@ -252,30 +359,35 @@
     },
 
     applyStockValue(currentStock, type, quantity) {
-      const qty = app.toNumber(quantity || 0);
+      const qty = this.toNumber(quantity || 0);
+
       if (type === 'entrada' || type === 'producao') return currentStock + qty;
       if (type === 'saida' || type === 'perda') return currentStock - qty;
       if (type === 'ajuste') return qty;
+
       return currentStock;
     },
 
     revertStockValue(currentStock, type, quantity) {
-      const qty = app.toNumber(quantity || 0);
+      const qty = this.toNumber(quantity || 0);
+
       if (type === 'entrada' || type === 'producao') return currentStock - qty;
       if (type === 'saida' || type === 'perda') return currentStock + qty;
+      if (type === 'ajuste') return currentStock;
+
       return currentStock;
     },
 
     buildMovementPayload() {
       const previous = this.findEditableMovementById(this.editingMovementId);
       const product = this.findProductById(this.refs.stockProduct.value);
-      const quantity = app.toNumber(this.refs.stockQuantity.value || 0);
-      const unitCost = app.toNumber(this.refs.stockUnitCost.value || 0);
+      const quantity = this.toNumber(this.refs.stockQuantity.value || 0);
+      const unitCost = this.toNumber(this.refs.stockUnitCost.value || 0);
       const totalCost = quantity * unitCost;
       const now = new Date().toISOString();
 
       return {
-        id: previous?.id || this.refs.stockMovementId.value || crypto.randomUUID(),
+        id: previous?.id || this.refs.stockMovementId.value || this.uuid(),
         relatedSaleId: null,
         relatedOrderNumber: null,
         type: this.refs.stockType.value,
@@ -285,13 +397,13 @@
         unitCost,
         totalCost,
         date: this.refs.stockDate.value,
-        time: this.refs.stockTime.value || app.currentTimeHHMM(),
+        time: this.refs.stockTime.value || this.currentTimeHHMM(),
         reason: this.refs.stockReason.value.trim(),
         reference: this.refs.stockReference.value.trim() || this.getReferenceByType(this.refs.stockType.value),
         origin: this.refs.stockOrigin.value.trim(),
         responsible: this.refs.stockResponsible.value.trim() || this.getCurrentUser().name || 'Administrador',
-        generateExpense: this.refs.stockGenerateExpense.checked,
-        alertManagement: this.refs.stockAlertManagement.checked,
+        generateExpense: Boolean(this.refs.stockGenerateExpense.checked),
+        alertManagement: Boolean(this.refs.stockAlertManagement.checked),
         createdAt: previous?.createdAt || now,
         updatedAt: now,
         createdBy: previous?.createdBy || this.getCurrentUser().email || 'admin@husky.com',
@@ -300,48 +412,79 @@
     },
 
     handleSaveMovement(isUpdate = false) {
-      if (!this.validateForm()) return;
+      try {
+        if (!this.validateForm()) return;
 
-      const movement = this.buildMovementPayload();
-      const previousMovement = this.findEditableMovementById(movement.id);
-      const state = this.applyMovementToState(movement, previousMovement);
-      this.setState(state);
-      this.populateProductSelects();
-      this.populateCategoryFilter();
-      this.renderAll();
-      app.showToast(isUpdate || previousMovement ? 'Movimentação atualizada com sucesso.' : 'Movimentação salva com sucesso.', 'success');
-      app.log('Movimentação de estoque salva/atualizada.', { movementId: movement.id, productId: movement.productId, type: movement.type });
-      this.resetForm();
+        const movement = this.buildMovementPayload();
+        const previousMovement = this.findEditableMovementById(movement.id);
+        const state = this.applyMovementToState(movement, previousMovement);
+
+        this.setState(state);
+        this.populateProductSelects();
+        this.populateCategoryFilter();
+        this.renderAll();
+
+        this.showToast(
+          isUpdate || previousMovement
+            ? 'Movimentação atualizada com sucesso.'
+            : 'Movimentação salva com sucesso.',
+          'success'
+        );
+
+        this.log('Movimentação de estoque salva/atualizada.', {
+          movementId: movement.id,
+          productId: movement.productId,
+          type: movement.type
+        });
+
+        this.resetForm();
+      } catch (error) {
+        console.error('[Husky Estoque] erro ao salvar movimentação', error);
+        this.showToast('Não foi possível salvar a movimentação.', 'danger');
+      }
     },
 
     handleDeleteMovement() {
-      const movement = this.findEditableMovementById(this.editingMovementId || this.refs.stockMovementId.value);
-      if (!movement) {
-        app.showToast('Selecione uma movimentação manual para excluir.', 'warning');
-        return;
+      try {
+        const movement = this.findEditableMovementById(this.editingMovementId || this.refs.stockMovementId.value);
+
+        if (!movement) {
+          this.showToast('Selecione uma movimentação manual para excluir.', 'warning');
+          return;
+        }
+
+        const confirmed = this.confirmAction(`Deseja excluir a movimentação de ${movement.productName}?`);
+        if (!confirmed) return;
+
+        const state = this.getState();
+        const products = [...(state.products || [])];
+        const product = products.find((entry) => entry.id === movement.productId);
+
+        if (product) {
+          product.stock = this.revertStockValue(this.toNumber(product.stock || 0), movement.type, movement.quantity);
+          product.stock = Math.max(0, product.stock);
+        }
+
+        state.products = products;
+        state.stockMovements = (state.stockMovements || []).filter((entry) => entry.id !== movement.id);
+        state.expenses = (state.expenses || []).filter((expense) => expense.relatedMovementId !== movement.id);
+
+        this.setState(state);
+        this.populateProductSelects();
+        this.populateCategoryFilter();
+        this.renderAll();
+
+        this.showToast('Movimentação excluída com sucesso.', 'success');
+        this.log('Movimentação de estoque excluída.', {
+          movementId: movement.id,
+          productId: movement.productId
+        });
+
+        this.resetForm();
+      } catch (error) {
+        console.error('[Husky Estoque] erro ao excluir movimentação', error);
+        this.showToast('Não foi possível excluir a movimentação.', 'danger');
       }
-
-      const confirmed = app.confirmAction(`Deseja excluir a movimentação de ${movement.productName}?`);
-      if (!confirmed) return;
-
-      const state = this.getState();
-      const products = [...(state.products || [])];
-      const product = products.find((entry) => entry.id === movement.productId);
-      if (product) {
-        product.stock = this.revertStockValue(app.toNumber(product.stock || 0), movement.type, movement.quantity);
-        product.stock = Math.max(0, product.stock);
-      }
-
-      state.products = products;
-      state.stockMovements = (state.stockMovements || []).filter((entry) => entry.id !== movement.id);
-      state.expenses = (state.expenses || []).filter((expense) => expense.relatedMovementId !== movement.id);
-      this.setState(state);
-      this.populateProductSelects();
-      this.populateCategoryFilter();
-      this.renderAll();
-      app.showToast('Movimentação excluída com sucesso.', 'success');
-      app.log('Movimentação de estoque excluída.', { movementId: movement.id, productId: movement.productId });
-      this.resetForm();
     },
 
     applyMovementToState(movement, previousMovement = null) {
@@ -354,16 +497,20 @@
       if (previousMovement) {
         const previousProduct = products.find((entry) => entry.id === previousMovement.productId);
         if (previousProduct) {
-          previousProduct.stock = this.revertStockValue(app.toNumber(previousProduct.stock || 0), previousMovement.type, previousMovement.quantity);
+          previousProduct.stock = this.revertStockValue(
+            this.toNumber(previousProduct.stock || 0),
+            previousMovement.type,
+            previousMovement.quantity
+          );
           previousProduct.stock = Math.max(0, previousProduct.stock);
         }
       }
 
-      product.stock = this.applyStockValue(app.toNumber(product.stock || 0), movement.type, movement.quantity);
+      product.stock = this.applyStockValue(this.toNumber(product.stock || 0), movement.type, movement.quantity);
       product.stock = Math.max(0, product.stock);
 
       state.products = products;
-      state.stockMovements = app.upsertItem(state.stockMovements || [], movement, 'id');
+      state.stockMovements = this.upsertItem(state.stockMovements || [], movement, 'id');
       state.expenses = (state.expenses || []).filter((expense) => expense.relatedMovementId !== movement.id);
 
       if (movement.generateExpense && (movement.type === 'entrada' || movement.type === 'perda') && movement.totalCost > 0) {
@@ -375,8 +522,9 @@
 
     buildExpenseFromMovement(movement) {
       const category = movement.type === 'perda' ? 'Perda de material' : 'Compras';
+
       return {
-        id: crypto.randomUUID(),
+        id: this.uuid(),
         relatedMovementId: movement.id,
         date: movement.date,
         time: movement.time,
@@ -402,33 +550,38 @@
     updateLiveSummary() {
       const product = this.findProductById(this.refs.stockProduct.value);
       const type = this.refs.stockType.value;
-      const quantity = app.toNumber(this.refs.stockQuantity.value || 0);
-      const unitCost = app.toNumber(this.refs.stockUnitCost.value || 0);
+      const quantity = this.toNumber(this.refs.stockQuantity.value || 0);
+      const unitCost = this.toNumber(this.refs.stockUnitCost.value || 0);
       const totalCost = quantity * unitCost;
       const previousMovement = this.findEditableMovementById(this.editingMovementId);
       const currentStock = product ? this.calculateCurrentEditableStock(product, previousMovement) : 0;
       const afterStock = product ? this.applyStockValue(currentStock, type, quantity) : 0;
       const lastMovement = product ? this.getLastMovementByProduct(product.id) : null;
-      const minStock = app.toNumber(product?.minStock || 0);
+      const minStock = this.toNumber(product?.minStock || 0);
 
-      this.refs.stockTotalCost.value = totalCost ? String(totalCost) : '';
+      if (this.refs.stockTotalCost) {
+        this.refs.stockTotalCost.value = totalCost ? String(totalCost) : '';
+      }
+
       this.refs.stockSummaryProduct.textContent = product?.name || '-';
-      this.refs.stockSummaryCurrent.textContent = app.formatNumber(currentStock);
+      this.refs.stockSummaryCurrent.textContent = this.formatNumber(currentStock);
       this.refs.stockSummaryType.textContent = this.getTypeLabel(type);
-      this.refs.stockSummaryAfter.textContent = app.formatNumber(Math.max(0, afterStock));
-      this.refs.stockSummaryCost.textContent = app.formatCurrency(totalCost);
+      this.refs.stockSummaryAfter.textContent = this.formatNumber(Math.max(0, afterStock));
+      this.refs.stockSummaryCost.textContent = this.formatCurrency(totalCost);
 
       this.refs.stockStatusSummary.textContent = product ? this.getProductStockStatus(product, currentStock) : 'Normal';
-      this.refs.stockMinSummary.textContent = app.formatNumber(minStock);
-      this.refs.stockLastMovementSummary.textContent = lastMovement ? `${this.getTypeLabel(lastMovement.type)} • ${app.formatDate(lastMovement.date)}` : '-';
+      this.refs.stockMinSummary.textContent = this.formatNumber(minStock);
+      this.refs.stockLastMovementSummary.textContent = lastMovement ? `${this.getTypeLabel(lastMovement.type)} • ${this.formatDate(lastMovement.date)}` : '-';
       this.refs.stockReplenishmentSummary.textContent = product && Math.max(0, afterStock) <= minStock ? 'Sim' : 'Não';
     },
 
     calculateCurrentEditableStock(product, previousMovement = null) {
-      let currentStock = app.toNumber(product.stock || 0);
+      let currentStock = this.toNumber(product.stock || 0);
+
       if (previousMovement && previousMovement.productId === product.id) {
         currentStock = this.revertStockValue(currentStock, previousMovement.type, previousMovement.quantity);
       }
+
       return Math.max(0, currentStock);
     },
 
@@ -455,8 +608,9 @@
     },
 
     getProductStockStatus(product, stockOverride = null) {
-      const stock = stockOverride === null ? app.toNumber(product.stock || 0) : app.toNumber(stockOverride || 0);
-      const minStock = app.toNumber(product.minStock || 0);
+      const stock = stockOverride === null ? this.toNumber(product.stock || 0) : this.toNumber(stockOverride || 0);
+      const minStock = this.toNumber(product.minStock || 0);
+
       if (stock <= 0) return 'Sem estoque';
       if (stock <= minStock) return 'Baixo';
       return 'Normal';
@@ -477,18 +631,32 @@
     renderMetrics() {
       const products = this.getProducts();
       const movements = this.getMovements();
-      const lowStock = products.filter((product) => app.toNumber(product.stock || 0) > 0 && app.toNumber(product.stock || 0) <= app.toNumber(product.minStock || 0));
-      const zeroStock = products.filter((product) => app.toNumber(product.stock || 0) <= 0);
-      const lossValue = app.sum(movements.filter((movement) => movement.type === 'perda'), (movement) => movement.totalCost || 0);
+
+      const lowStock = products.filter((product) => {
+        const stock = this.toNumber(product.stock || 0);
+        const minStock = this.toNumber(product.minStock || 0);
+        return stock > 0 && stock <= minStock;
+      });
+
+      const zeroStock = products.filter((product) => this.toNumber(product.stock || 0) <= 0);
+      const lossValue = this.sum(
+        movements.filter((movement) => movement.type === 'perda'),
+        (movement) => movement.totalCost || 0
+      );
 
       this.refs.stockProductsCount.textContent = String(products.length);
       this.refs.stockLowCount.textContent = String(lowStock.length);
       this.refs.stockZeroCount.textContent = String(zeroStock.length);
-      this.refs.stockLossValue.textContent = app.formatCurrency(lossValue);
+      this.refs.stockLossValue.textContent = this.formatCurrency(lossValue);
     },
 
     renderAlerts() {
-      const critical = this.getProducts().filter((product) => app.toNumber(product.stock || 0) <= app.toNumber(product.minStock || 0));
+      if (!this.refs.stockAlertList) return;
+
+      const critical = this.getProducts().filter((product) => {
+        return this.toNumber(product.stock || 0) <= this.toNumber(product.minStock || 0);
+      });
+
       if (!critical.length) {
         this.refs.stockAlertList.innerHTML = `
           <div class="pix-proof-card">
@@ -503,12 +671,16 @@
       }
 
       this.refs.stockAlertList.innerHTML = critical.slice(0, 6).map((product) => {
-        const needed = Math.max(0, app.toNumber(product.minStock || 0) - app.toNumber(product.stock || 0));
+        const needed = Math.max(
+          0,
+          this.toNumber(product.minStock || 0) - this.toNumber(product.stock || 0)
+        );
+
         return `
           <div class="pix-proof-card">
             <div>
               <strong>${this.escapeHtml(product.name)}</strong>
-              <p>Atual: ${app.formatNumber(product.stock || 0)} • Mínimo: ${app.formatNumber(product.minStock || 0)} • Repor: ${app.formatNumber(needed || 0)}</p>
+              <p>Atual: ${this.formatNumber(product.stock || 0)} • Mínimo: ${this.formatNumber(product.minStock || 0)} • Repor: ${this.formatNumber(needed)}</p>
             </div>
             <span class="tag">${this.getProductStockStatus(product)}</span>
           </div>
@@ -527,33 +699,40 @@
       this.filters.statusSearch = '';
       this.filters.statusCategory = '';
       this.filters.statusType = '';
+
       this.refs.stockSearch.value = '';
       this.refs.stockFilterCategory.value = '';
       this.refs.stockFilterStatus.value = '';
+
       this.renderStatusTable();
     },
 
     getFilteredProducts() {
-      return this.getProducts().filter((product) => {
-        const haystack = [product.name, product.code, product.sku, product.category].join(' ');
-        const matchesSearch = !this.filters.statusSearch || app.includesText(haystack, this.filters.statusSearch);
-        const matchesCategory = !this.filters.statusCategory || product.category === this.filters.statusCategory;
-        const matchesType = !this.filters.statusType || this.matchesStockType(product, this.filters.statusType);
-        return matchesSearch && matchesCategory && matchesType;
-      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+      return this.getProducts()
+        .filter((product) => {
+          const haystack = [product.name, product.code, product.sku, product.category].join(' ');
+          const matchesSearch = !this.filters.statusSearch || this.includesText(haystack, this.filters.statusSearch);
+          const matchesCategory = !this.filters.statusCategory || product.category === this.filters.statusCategory;
+          const matchesType = !this.filters.statusType || this.matchesStockType(product, this.filters.statusType);
+          return matchesSearch && matchesCategory && matchesType;
+        })
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
     },
 
     matchesStockType(product, type) {
-      const stock = app.toNumber(product.stock || 0);
-      const minStock = app.toNumber(product.minStock || 0);
+      const stock = this.toNumber(product.stock || 0);
+      const minStock = this.toNumber(product.minStock || 0);
+
       if (type === 'zero') return stock <= 0;
       if (type === 'low') return stock > 0 && stock <= minStock;
       if (type === 'ok') return stock > minStock;
+
       return true;
     },
 
     renderStatusTable() {
       const products = this.getFilteredProducts();
+
       if (!products.length) {
         this.refs.stockStatusTableBody.innerHTML = `
           <tr>
@@ -565,15 +744,16 @@
 
       this.refs.stockStatusTableBody.innerHTML = products.map((product) => {
         const lastMovement = this.getLastMovementByProduct(product.id);
+
         return `
           <tr>
             <td>${this.escapeHtml(product.name)}</td>
             <td>${this.escapeHtml(product.code || '-')}</td>
             <td>${this.escapeHtml(product.category || '-')}</td>
-            <td>${app.formatNumber(product.stock || 0)}</td>
-            <td>${app.formatNumber(product.minStock || 0)}</td>
+            <td>${this.formatNumber(product.stock || 0)}</td>
+            <td>${this.formatNumber(product.minStock || 0)}</td>
             <td>${this.getProductStockStatus(product)}</td>
-            <td>${lastMovement ? `${app.formatDate(lastMovement.date)} • ${this.getTypeLabel(lastMovement.type)}` : '-'}</td>
+            <td>${lastMovement ? `${this.formatDate(lastMovement.date)} • ${this.getTypeLabel(lastMovement.type)}` : '-'}</td>
             <td>
               <div class="table-action-group">
                 <button type="button" class="btn btn-secondary btn-small" data-action="move-product" data-id="${product.id}">Movimentar</button>
@@ -598,25 +778,30 @@
       this.filters.historyEnd = '';
       this.filters.historyType = '';
       this.filters.historyProduct = '';
+
       this.refs.stockHistoryStart.value = '';
       this.refs.stockHistoryEnd.value = '';
       this.refs.stockHistoryType.value = '';
       this.refs.stockHistoryProduct.value = '';
+
       this.renderHistoryTable();
     },
 
     getFilteredMovements() {
-      return this.getMovements().filter((movement) => {
-        const matchesStart = !this.filters.historyStart || movement.date >= this.filters.historyStart;
-        const matchesEnd = !this.filters.historyEnd || movement.date <= this.filters.historyEnd;
-        const matchesType = !this.filters.historyType || movement.type === this.filters.historyType;
-        const matchesProduct = !this.filters.historyProduct || movement.productId === this.filters.historyProduct;
-        return matchesStart && matchesEnd && matchesType && matchesProduct;
-      }).sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime());
+      return this.getMovements()
+        .filter((movement) => {
+          const matchesStart = !this.filters.historyStart || movement.date >= this.filters.historyStart;
+          const matchesEnd = !this.filters.historyEnd || movement.date <= this.filters.historyEnd;
+          const matchesType = !this.filters.historyType || movement.type === this.filters.historyType;
+          const matchesProduct = !this.filters.historyProduct || movement.productId === this.filters.historyProduct;
+          return matchesStart && matchesEnd && matchesType && matchesProduct;
+        })
+        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime());
     },
 
     renderHistoryTable() {
       const movements = this.getFilteredMovements();
+
       if (!movements.length) {
         this.refs.stockHistoryTableBody.innerHTML = `
           <tr>
@@ -628,19 +813,22 @@
 
       this.refs.stockHistoryTableBody.innerHTML = movements.map((movement) => {
         const editable = !movement.relatedSaleId;
+
         return `
           <tr>
-            <td>${app.formatDate(movement.date)}</td>
+            <td>${this.formatDate(movement.date)}</td>
             <td>${this.escapeHtml(movement.time || '-')}</td>
             <td>${this.escapeHtml(movement.productName || '-')}</td>
             <td>${this.getTypeLabel(movement.type)}</td>
-            <td>${app.formatNumber(movement.quantity || 0)}</td>
-            <td>${app.formatCurrency(movement.totalCost || 0)}</td>
+            <td>${this.formatNumber(movement.quantity || 0)}</td>
+            <td>${this.formatCurrency(movement.totalCost || 0)}</td>
             <td>${this.escapeHtml(movement.reference || '-')}</td>
             <td>${this.escapeHtml(movement.responsible || '-')}</td>
             <td>
               <div class="table-action-group">
-                ${editable ? `<button type="button" class="btn btn-secondary btn-small" data-action="edit-movement" data-id="${movement.id}">Editar</button>` : `<button type="button" class="btn btn-secondary btn-small" disabled>Automático</button>`}
+                ${editable
+                  ? `<button type="button" class="btn btn-secondary btn-small" data-action="edit-movement" data-id="${movement.id}">Editar</button>`
+                  : `<button type="button" class="btn btn-secondary btn-small" disabled>Automático</button>`}
               </div>
             </td>
           </tr>
@@ -650,8 +838,8 @@
 
     renderRestockTable() {
       const products = this.getProducts()
-        .filter((product) => app.toNumber(product.stock || 0) <= app.toNumber(product.minStock || 0))
-        .sort((a, b) => app.toNumber(a.stock || 0) - app.toNumber(b.stock || 0));
+        .filter((product) => this.toNumber(product.stock || 0) <= this.toNumber(product.minStock || 0))
+        .sort((a, b) => this.toNumber(a.stock || 0) - this.toNumber(b.stock || 0));
 
       if (!products.length) {
         this.refs.restockTableBody.innerHTML = `
@@ -663,22 +851,26 @@
       }
 
       this.refs.restockTableBody.innerHTML = products.map((product) => {
-        const current = app.toNumber(product.stock || 0);
-        const minimum = app.toNumber(product.minStock || 0);
+        const current = this.toNumber(product.stock || 0);
+        const minimum = this.toNumber(product.minStock || 0);
         const replenish = Math.max(0, minimum - current);
+
         return `
           <tr>
             <td>${this.escapeHtml(product.name)}</td>
-            <td>${app.formatNumber(current)}</td>
-            <td>${app.formatNumber(minimum)}</td>
-            <td>${app.formatNumber(replenish)}</td>
+            <td>${this.formatNumber(current)}</td>
+            <td>${this.formatNumber(minimum)}</td>
+            <td>${this.formatNumber(replenish)}</td>
           </tr>
         `;
       }).join('');
     },
 
     renderRecentLossesTable() {
-      const losses = this.getMovements().filter((movement) => movement.type === 'perda').sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`) - new Date(`${a.date}T${a.time || '00:00'}`)).slice(0, 10);
+      const losses = this.getMovements()
+        .filter((movement) => movement.type === 'perda')
+        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime())
+        .slice(0, 10);
 
       if (!losses.length) {
         this.refs.recentLossTableBody.innerHTML = `
@@ -692,9 +884,9 @@
       this.refs.recentLossTableBody.innerHTML = losses.map((movement) => `
         <tr>
           <td>${this.escapeHtml(movement.productName || '-')}</td>
-          <td>${app.formatDate(movement.date)}</td>
-          <td>${app.formatNumber(movement.quantity || 0)}</td>
-          <td>${app.formatCurrency(movement.totalCost || 0)}</td>
+          <td>${this.formatDate(movement.date)}</td>
+          <td>${this.formatNumber(movement.quantity || 0)}</td>
+          <td>${this.formatCurrency(movement.totalCost || 0)}</td>
         </tr>
       `).join('');
     },
@@ -723,6 +915,7 @@
     handleHistoryTableActions(event) {
       const button = event.target.closest('button[data-action]');
       if (!button) return;
+
       if (button.dataset.action === 'edit-movement') {
         this.loadMovementIntoForm(button.dataset.id);
       }
@@ -730,15 +923,16 @@
 
     loadMovementIntoForm(movementId) {
       const movement = this.findEditableMovementById(movementId);
+
       if (!movement) {
-        app.showToast('Movimentação não encontrada ou não pode ser editada.', 'danger');
+        this.showToast('Movimentação não encontrada ou não pode ser editada.', 'danger');
         return;
       }
 
       this.editingMovementId = movement.id;
       this.refs.stockMovementId.value = movement.id;
-      this.refs.stockDate.value = movement.date || app.todayISO();
-      this.refs.stockTime.value = movement.time || app.currentTimeHHMM();
+      this.refs.stockDate.value = movement.date || this.todayISO();
+      this.refs.stockTime.value = movement.time || this.currentTimeHHMM();
       this.refs.stockType.value = movement.type || 'entrada';
       this.refs.stockProduct.value = movement.productId || '';
       this.refs.stockQuantity.value = movement.quantity || 0;

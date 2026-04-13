@@ -2,8 +2,10 @@
   'use strict';
 
   const APP_NAME = 'Husky Confeitaria';
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '1.1.0';
   const STORAGE_PREFIX = 'husky_system';
+  const STATE_CHANGED_EVENT = 'husky:state-changed';
+  const SETTINGS_CHANGED_EVENT = 'husky:settings-changed';
 
   const defaultSettings = {
     company: {
@@ -63,6 +65,7 @@
         email: 'admin@husky.com',
         role: 'Administrador',
         status: 'Ativo',
+        avatar: 'assets/img/avatar-user.png',
         lastAccess: null
       }
     ],
@@ -72,7 +75,9 @@
     expenses: [],
     stockMovements: [],
     customers: [],
-    proofs: []
+    proofs: [],
+    proofLogs: [],
+    logs: []
   };
 
   const selectors = {
@@ -81,7 +86,8 @@
     topbarSyncStatus: '#topbar-sync-status',
     sidebarCloudStatus: '#sidebar-cloud-status',
     loggedUserName: '#logged-user-name',
-    loggedUserRole: '#logged-user-role'
+    loggedUserRole: '#logged-user-role',
+    operatorAvatar: '.operator-avatar'
   };
 
   const HuskyApp = {
@@ -92,11 +98,12 @@
     init() {
       this.cacheDom();
       this.ensureBaseState();
+      this.syncUsersFromAuthStorage();
       this.applySettingsToUI();
       this.injectSidebarOverlay();
       this.bindGlobalEvents();
-      this.setPageUser();
-      this.setCloudStatus();
+      this.bindStorageSync();
+      this.refreshShell();
       this.setCurrentDateDefaults();
       this.registerAutoFields();
       this.markActiveLinksByPath();
@@ -112,7 +119,8 @@
         topbarSyncStatus: document.querySelector(selectors.topbarSyncStatus),
         sidebarCloudStatus: document.querySelector(selectors.sidebarCloudStatus),
         loggedUserName: document.querySelector(selectors.loggedUserName),
-        loggedUserRole: document.querySelector(selectors.loggedUserRole)
+        loggedUserRole: document.querySelector(selectors.loggedUserRole),
+        operatorAvatar: document.querySelector(selectors.operatorAvatar)
       };
     },
 
@@ -142,6 +150,19 @@
 
         if (target.matches('[data-copy-text]')) {
           this.copyText(target.getAttribute('data-copy-text'));
+        }
+      });
+
+      window.addEventListener(STATE_CHANGED_EVENT, () => {
+        this.refreshShell();
+      });
+    },
+
+    bindStorageSync() {
+      window.addEventListener('storage', (event) => {
+        if (event.key === this.getStorageKey('state')) {
+          this.refreshShell();
+          this.dispatchStateChanged(this.getAppState());
         }
       });
     },
@@ -198,6 +219,7 @@
     markActiveLinksByPath() {
       const currentFile = window.location.pathname.split('/').pop() || 'index.html';
       const navLinks = document.querySelectorAll('.nav-item[href]');
+
       navLinks.forEach((link) => {
         const href = link.getAttribute('href');
         if (href === currentFile) {
@@ -210,12 +232,27 @@
 
     ensureBaseState() {
       const existing = this.getStorage('state');
+
       if (!existing) {
-        this.setStorage('state', this.deepMerge({}, defaultState));
-      } else {
-        const merged = this.deepMerge(this.deepClone(defaultState), existing);
-        this.setStorage('state', merged);
+        this.setStorage('state', this.deepClone(defaultState));
+        return;
       }
+
+      const migrated = this.deepClone(existing);
+
+      if (Array.isArray(migrated.clients) && !Array.isArray(migrated.customers)) {
+        migrated.customers = [...migrated.clients];
+      }
+
+      const merged = this.deepMerge(this.deepClone(defaultState), migrated);
+      this.setStorage('state', merged);
+    },
+
+    refreshShell() {
+      this.applySettingsToUI();
+      this.setPageUser();
+      this.setCloudStatus();
+      this.markActiveLinksByPath();
     },
 
     getAppState() {
@@ -223,15 +260,33 @@
     },
 
     setAppState(nextState) {
-      this.setStorage('state', nextState);
-      return nextState;
+      const safeState = this.deepMerge(this.deepClone(defaultState), nextState || {});
+      this.setStorage('state', safeState);
+      this.refreshShell();
+      this.dispatchStateChanged(safeState);
+      return safeState;
     },
 
     updateAppState(updater) {
-      const current = this.getAppState();
-      const next = typeof updater === 'function' ? updater(this.deepClone(current)) : current;
-      this.setAppState(next);
-      return next;
+      const current = this.deepClone(this.getAppState());
+      const next = typeof updater === 'function' ? updater(current) : current;
+      return this.setAppState(next);
+    },
+
+    dispatchStateChanged(state) {
+      window.dispatchEvent(
+        new CustomEvent(STATE_CHANGED_EVENT, {
+          detail: { state: this.deepClone(state) }
+        })
+      );
+    },
+
+    dispatchSettingsChanged(settings) {
+      window.dispatchEvent(
+        new CustomEvent(SETTINGS_CHANGED_EVENT, {
+          detail: { settings: this.deepClone(settings) }
+        })
+      );
     },
 
     getSettings() {
@@ -240,10 +295,14 @@
 
     updateSettings(partialSettings) {
       const nextState = this.updateAppState((state) => {
-        state.settings = this.deepMerge(state.settings || this.deepClone(defaultSettings), partialSettings);
+        state.settings = this.deepMerge(
+          state.settings || this.deepClone(defaultSettings),
+          partialSettings
+        );
         return state;
       });
-      this.applySettingsToUI();
+
+      this.dispatchSettingsChanged(nextState.settings);
       return nextState.settings;
     },
 
@@ -256,11 +315,9 @@
         this.dom.body.dataset.accentStyle = settings.visual?.accentStyle || 'original';
       }
 
-      if (!settings.visual?.enablePatternBackground) {
-        document.querySelectorAll('.app-pattern').forEach((el) => {
-          el.style.display = 'none';
-        });
-      }
+      document.querySelectorAll('.app-pattern').forEach((el) => {
+        el.style.display = settings.visual?.enablePatternBackground ? '' : 'none';
+      });
     },
 
     getPageTitleFallback() {
@@ -268,20 +325,58 @@
       return h1?.textContent?.trim() || 'Sistema';
     },
 
+    syncUsersFromAuthStorage() {
+      const authUsers = this.getStorage('auth_users');
+      if (!Array.isArray(authUsers) || !authUsers.length) return;
+
+      const nextState = this.updateAppState((state) => {
+        const currentUsers = Array.isArray(state.users) ? state.users : [];
+        const mergedUsers = [...currentUsers];
+
+        authUsers.forEach((authUser) => {
+          const index = mergedUsers.findIndex((entry) => entry.id === authUser.id || entry.email === authUser.email);
+          const normalized = {
+            id: authUser.id || crypto.randomUUID(),
+            name: authUser.name || 'Usuário',
+            email: authUser.email || '',
+            role: authUser.role || 'Operacional',
+            status: authUser.status || 'Ativo',
+            avatar: authUser.avatar || 'assets/img/avatar-user.png',
+            lastAccess: authUser.lastAccess || null
+          };
+
+          if (index >= 0) {
+            mergedUsers[index] = { ...mergedUsers[index], ...normalized };
+          } else {
+            mergedUsers.push(normalized);
+          }
+        });
+
+        state.users = mergedUsers;
+        return state;
+      });
+
+      return nextState.users;
+    },
+
     setPageUser() {
       const state = this.getAppState();
-      const fallbackUser = state.users?.[0] || null;
+      const fallbackUser = (state.users || []).find((user) => user.status !== 'Inativo') || state.users?.[0] || null;
       const currentUser = state.currentUser || fallbackUser;
 
       if (currentUser) {
-        this.dom.loggedUserName && (this.dom.loggedUserName.textContent = currentUser.name || 'Administrador');
-        this.dom.loggedUserRole && (this.dom.loggedUserRole.textContent = currentUser.role || 'Gestão / Caixa');
+        if (this.dom.loggedUserName) this.dom.loggedUserName.textContent = currentUser.name || 'Administrador';
+        if (this.dom.loggedUserRole) this.dom.loggedUserRole.textContent = currentUser.role || 'Gestão / Caixa';
+        if (this.dom.operatorAvatar) {
+          this.dom.operatorAvatar.src = currentUser.avatar || 'assets/img/avatar-user.png';
+        }
       }
     },
 
     setCloudStatus() {
       const settings = this.getSettings();
       const cloud = settings.cloud || {};
+
       const text = cloud.connected
         ? `Conectada${cloud.lastSyncAt ? ` • Última sincronização ${this.formatDateTime(cloud.lastSyncAt)}` : ''}`
         : 'Pronto para sincronização';
@@ -290,7 +385,7 @@
       if (this.dom.sidebarCloudStatus) this.dom.sidebarCloudStatus.textContent = text;
 
       document.querySelectorAll('#login-cloud-status').forEach((element) => {
-        element.textContent = cloud.connected ? 'Conectada' : 'Preparada para integração';
+        element.textContent = cloud.connected ? 'Conectada' : 'Pronta';
       });
     },
 
@@ -323,6 +418,35 @@
       });
     },
 
+    getCollection(name) {
+      const state = this.getAppState();
+      const value = state?.[name];
+      return Array.isArray(value) ? value : [];
+    },
+
+    setCollection(name, list) {
+      return this.updateAppState((state) => {
+        state[name] = Array.isArray(list) ? list : [];
+        return state;
+      });
+    },
+
+    addToCollection(name, item, idField = 'id') {
+      return this.updateAppState((state) => {
+        const list = Array.isArray(state[name]) ? state[name] : [];
+        state[name] = this.upsertItem(list, item, idField);
+        return state;
+      });
+    },
+
+    deleteFromCollection(name, id) {
+      return this.updateAppState((state) => {
+        const list = Array.isArray(state[name]) ? state[name] : [];
+        state[name] = this.removeById(list, id);
+        return state;
+      });
+    },
+
     formatCurrency(value) {
       return Number(value || 0).toLocaleString('pt-BR', {
         style: 'currency',
@@ -339,6 +463,7 @@
 
     formatDate(value) {
       if (!value) return '-';
+
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) {
         const parts = String(value).split('-');
@@ -347,6 +472,7 @@
         }
         return String(value);
       }
+
       return date.toLocaleDateString('pt-BR');
     },
 
@@ -354,7 +480,11 @@
       if (!value) return '-';
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return String(value);
-      return `${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+
+      return `${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`;
     },
 
     todayISO() {
@@ -383,10 +513,12 @@
     toNumber(value) {
       if (typeof value === 'number') return value;
       if (!value) return 0;
+
       const normalized = String(value)
         .replace(/\./g, '')
         .replace(',', '.')
         .replace(/[^\d.-]/g, '');
+
       const parsed = Number(normalized);
       return Number.isFinite(parsed) ? parsed : 0;
     },
@@ -443,7 +575,10 @@
         if (Array.isArray(sourceValue)) {
           output[key] = [...sourceValue];
         } else if (sourceValue && typeof sourceValue === 'object') {
-          output[key] = this.deepMerge(targetValue && typeof targetValue === 'object' ? targetValue : {}, sourceValue);
+          output[key] = this.deepMerge(
+            targetValue && typeof targetValue === 'object' ? targetValue : {},
+            sourceValue
+          );
         } else {
           output[key] = sourceValue;
         }
@@ -461,7 +596,7 @@
     },
 
     upsertItem(list = [], item, idField = 'id') {
-      const index = list.findIndex((entry) => entry[idField] === item[idField]);
+      const index = list.findIndex((entry) => entry?.[idField] === item?.[idField]);
       if (index >= 0) {
         const updated = [...list];
         updated[index] = item;
@@ -484,6 +619,7 @@
 
     showToast(message, type = 'info') {
       let container = document.getElementById('husky-toast-container');
+
       if (!container) {
         container = document.createElement('div');
         container.id = 'husky-toast-container';
@@ -511,6 +647,7 @@
       toast.style.transition = '0.22s ease';
 
       container.appendChild(toast);
+
       requestAnimationFrame(() => {
         toast.style.opacity = '1';
         toast.style.transform = 'translateY(0)';
@@ -532,7 +669,7 @@
         case 'danger':
           return 'linear-gradient(180deg, #bf4b4b, #8f3434)';
         default:
-          return 'linear-gradient(180deg, #8f5f43, #6f4732)';
+          return 'linear-gradient(180deg, #2f6f9f, #1f4f73)';
       }
     },
 
@@ -546,13 +683,16 @@
         return;
       }
 
-      navigator.clipboard.writeText(String(text || ''))
+      navigator.clipboard
+        .writeText(String(text || ''))
         .then(() => this.showToast('Copiado com sucesso.', 'success'))
         .catch(() => this.showToast('Não foi possível copiar.', 'danger'));
     },
 
     downloadJSON(filename, data) {
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json'
+      });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;

@@ -27,7 +27,7 @@
       this.bindEvents();
       this.prepareInitialState();
       this.renderAll();
-      app.log('Tela de despesas carregada.');
+      this.log('Tela de despesas carregada.');
     },
 
     cacheRefs() {
@@ -124,33 +124,105 @@
     },
 
     prepareInitialState() {
+      const state = this.getState();
+      if (!Array.isArray(state.expenses)) {
+        state.expenses = [];
+        this.setState(state);
+      }
+      if (!Array.isArray(state.proofs)) {
+        state.proofs = [];
+        this.setState(state);
+      }
       this.populateProductSelect();
       this.resetForm(true);
     },
 
     getState() {
-      return app.getAppState();
+      return typeof app.getAppState === 'function' ? app.getAppState() : {};
     },
 
     setState(nextState) {
-      app.setAppState(nextState);
+      if (typeof app.setAppState === 'function') {
+        app.setAppState(nextState);
+      }
       return nextState;
     },
 
     getExpenses() {
-      return this.getState().expenses || [];
+      return Array.isArray(this.getState().expenses) ? this.getState().expenses : [];
     },
 
     getProducts() {
-      return this.getState().products || [];
+      return Array.isArray(this.getState().products) ? this.getState().products : [];
     },
 
     getStockMovements() {
-      return this.getState().stockMovements || [];
+      return Array.isArray(this.getState().stockMovements) ? this.getState().stockMovements : [];
     },
 
     getCurrentUser() {
       return this.getState().currentUser || { name: 'Administrador', email: 'admin@husky.com' };
+    },
+
+    uuid() {
+      if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+      return `id-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    },
+
+    toNumber(value) {
+      if (typeof app.toNumber === 'function') return app.toNumber(value);
+      const num = Number(String(value ?? '').replace(',', '.'));
+      return Number.isFinite(num) ? num : 0;
+    },
+
+    formatCurrency(value) {
+      if (typeof app.formatCurrency === 'function') return app.formatCurrency(value);
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(this.toNumber(value));
+    },
+
+    formatDate(value) {
+      if (typeof app.formatDate === 'function') return app.formatDate(value);
+      if (!value) return '-';
+      return new Date(value).toLocaleDateString('pt-BR');
+    },
+
+    includesText(haystack, needle) {
+      if (typeof app.includesText === 'function') return app.includesText(haystack, needle);
+      return String(haystack || '').toLowerCase().includes(String(needle || '').toLowerCase());
+    },
+
+    upsertItem(list, item, key = 'id') {
+      if (typeof app.upsertItem === 'function') return app.upsertItem(list, item, key);
+      const array = Array.isArray(list) ? [...list] : [];
+      const index = array.findIndex((entry) => entry?.[key] === item?.[key]);
+      if (index >= 0) array[index] = item;
+      else array.unshift(item);
+      return array;
+    },
+
+    removeById(list, id) {
+      if (typeof app.removeById === 'function') return app.removeById(list, id);
+      return (Array.isArray(list) ? list : []).filter((entry) => entry.id !== id);
+    },
+
+    sum(list = [], mapper = (item) => item) {
+      if (typeof app.sum === 'function') return app.sum(list, mapper);
+      return list.reduce((acc, item) => acc + Number(mapper(item) || 0), 0);
+    },
+
+    confirmAction(message) {
+      if (typeof app.confirmAction === 'function') return app.confirmAction(message);
+      return window.confirm(message);
+    },
+
+    showToast(message, type = 'info') {
+      if (typeof app.showToast === 'function') app.showToast(message, type);
+      else window.alert(message);
+    },
+
+    log(message, payload = null) {
+      if (typeof app.log === 'function') app.log(message, payload);
+      else console.log(message, payload || '');
     },
 
     resetForm(skipScroll = false) {
@@ -160,13 +232,15 @@
       if (this.refs.form) this.refs.form.reset();
 
       this.refs.expenseId.value = '';
-      this.refs.expenseDate.value = app.todayISO();
-      this.refs.expenseTime.value = app.currentTimeHHMM();
+      this.refs.expenseDate.value = typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10);
+      this.refs.expenseTime.value = typeof app.currentTimeHHMM === 'function'
+        ? app.currentTimeHHMM()
+        : `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
       this.refs.expenseStatus.value = 'Pago';
       this.refs.expenseCategory.value = 'Compras';
       this.refs.expensePaymentMethod.value = 'Pix';
       this.refs.expenseInstallments.value = 1;
-      this.refs.expenseDueDate.value = app.todayISO();
+      this.refs.expenseDueDate.value = typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10);
       this.refs.expenseRelatedProduct.value = '';
       this.refs.expenseAffectsProfit.checked = true;
       this.refs.expenseRepeatMonthly.checked = false;
@@ -186,6 +260,7 @@
     },
 
     populateProductSelect() {
+      if (!this.refs.expenseRelatedProduct) return;
       const products = [...this.getProducts()].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
       this.refs.expenseRelatedProduct.innerHTML = `
         <option value="">Nenhum</option>
@@ -195,28 +270,28 @@
 
     validateForm() {
       const title = this.refs.expenseTitle.value.trim();
-      const value = app.toNumber(this.refs.expenseValue.value || 0);
-      const installments = app.toNumber(this.refs.expenseInstallments.value || 1);
+      const value = this.toNumber(this.refs.expenseValue.value || 0);
+      const installments = this.toNumber(this.refs.expenseInstallments.value || 1);
 
       if (!title) {
-        app.showToast('Informe a descrição da despesa.', 'warning');
+        this.showToast('Informe a descrição da despesa.', 'warning');
         this.refs.expenseTitle.focus();
         return false;
       }
 
       if (!this.refs.expenseDate.value) {
-        app.showToast('Informe a data da despesa.', 'warning');
+        this.showToast('Informe a data da despesa.', 'warning');
         return false;
       }
 
       if (value <= 0) {
-        app.showToast('Informe um valor válido para a despesa.', 'warning');
+        this.showToast('Informe um valor válido para a despesa.', 'warning');
         this.refs.expenseValue.focus();
         return false;
       }
 
       if (installments <= 0) {
-        app.showToast('Informe uma quantidade válida de parcelas.', 'warning');
+        this.showToast('Informe uma quantidade válida de parcelas.', 'warning');
         this.refs.expenseInstallments.focus();
         return false;
       }
@@ -229,17 +304,17 @@
       const now = new Date().toISOString();
 
       return {
-        id: existing?.id || this.refs.expenseId.value || crypto.randomUUID(),
+        id: existing?.id || this.refs.expenseId.value || this.uuid(),
         relatedMovementId: existing?.relatedMovementId || null,
         date: this.refs.expenseDate.value,
-        time: this.refs.expenseTime.value || app.currentTimeHHMM(),
+        time: this.refs.expenseTime.value || (typeof app.currentTimeHHMM === 'function' ? app.currentTimeHHMM() : '00:00'),
         status: this.refs.expenseStatus.value,
         description: this.refs.expenseTitle.value.trim(),
         category: this.refs.expenseCategory.value,
-        value: app.toNumber(this.refs.expenseValue.value || 0),
+        value: this.toNumber(this.refs.expenseValue.value || 0),
         paymentMethod: this.refs.expensePaymentMethod.value,
         dueDate: this.refs.expenseDueDate.value || this.refs.expenseDate.value,
-        installments: Math.max(1, app.toNumber(this.refs.expenseInstallments.value || 1)),
+        installments: Math.max(1, this.toNumber(this.refs.expenseInstallments.value || 1)),
         supplier: this.refs.expenseSupplier.value.trim(),
         reference: this.refs.expenseReference.value.trim(),
         note: this.refs.expenseNote.value.trim(),
@@ -255,40 +330,68 @@
     },
 
     handleSaveExpense(isUpdate = false) {
-      if (!this.validateForm()) return;
+      try {
+        if (!this.validateForm()) return;
 
-      const expense = this.buildExpensePayload();
-      const state = this.getState();
-      state.expenses = app.upsertItem(state.expenses || [], expense, 'id');
-      this.setState(state);
-      this.renderAll();
-      app.showToast(isUpdate || this.editingExpenseId ? 'Despesa atualizada com sucesso.' : 'Despesa salva com sucesso.', 'success');
-      app.log('Despesa salva/atualizada.', { expenseId: expense.id, category: expense.category, value: expense.value });
-      this.resetForm();
+        const expense = this.buildExpensePayload();
+        const state = this.getState();
+        state.expenses = this.upsertItem(state.expenses || [], expense, 'id');
+        this.setState(state);
+        this.renderAll();
+
+        this.showToast(
+          isUpdate || this.editingExpenseId
+            ? 'Despesa atualizada com sucesso.'
+            : 'Despesa salva com sucesso.',
+          'success'
+        );
+
+        this.log('Despesa salva/atualizada.', {
+          expenseId: expense.id,
+          category: expense.category,
+          value: expense.value
+        });
+
+        this.resetForm();
+      } catch (error) {
+        console.error('[Husky Despesas] erro ao salvar despesa', error);
+        this.showToast('Não foi possível salvar a despesa.', 'danger');
+      }
     },
 
     handleDeleteExpense() {
-      const expense = this.findExpenseById(this.editingExpenseId || this.refs.expenseId.value);
-      if (!expense) {
-        app.showToast('Selecione uma despesa para excluir.', 'warning');
-        return;
+      try {
+        const expense = this.findExpenseById(this.editingExpenseId || this.refs.expenseId.value);
+
+        if (!expense) {
+          this.showToast('Selecione uma despesa para excluir.', 'warning');
+          return;
+        }
+
+        if (expense.relatedMovementId) {
+          this.showToast('Esta despesa foi gerada automaticamente pelo estoque. Exclua a movimentação correspondente para removê-la.', 'warning');
+          return;
+        }
+
+        const confirmed = this.confirmAction(`Deseja excluir a despesa "${expense.description}"?`);
+        if (!confirmed) return;
+
+        const state = this.getState();
+        state.expenses = this.removeById(state.expenses || [], expense.id);
+        this.setState(state);
+        this.renderAll();
+
+        this.showToast('Despesa excluída com sucesso.', 'success');
+        this.log('Despesa excluída.', {
+          expenseId: expense.id,
+          description: expense.description
+        });
+
+        this.resetForm();
+      } catch (error) {
+        console.error('[Husky Despesas] erro ao excluir despesa', error);
+        this.showToast('Não foi possível excluir a despesa.', 'danger');
       }
-
-      if (expense.relatedMovementId) {
-        app.showToast('Esta despesa foi gerada automaticamente pelo estoque. Exclua a movimentação correspondente para removê-la.', 'warning');
-        return;
-      }
-
-      const confirmed = app.confirmAction(`Deseja excluir a despesa "${expense.description}"?`);
-      if (!confirmed) return;
-
-      const state = this.getState();
-      state.expenses = app.removeById(state.expenses || [], expense.id);
-      this.setState(state);
-      this.renderAll();
-      app.showToast('Despesa excluída com sucesso.', 'success');
-      app.log('Despesa excluída.', { expenseId: expense.id, description: expense.description });
-      this.resetForm();
     },
 
     handleAttachmentUpload(event) {
@@ -301,6 +404,7 @@
       }
 
       const reader = new FileReader();
+
       reader.onload = () => {
         this.attachmentDraft = {
           name: file.name,
@@ -311,15 +415,19 @@
         };
         this.updateAttachmentPreview();
         this.updateLiveSummary();
-        app.showToast('Anexo carregado com sucesso.', 'success');
+        this.showToast('Anexo carregado com sucesso.', 'success');
       };
+
       reader.onerror = () => {
-        app.showToast('Não foi possível ler o anexo.', 'danger');
+        this.showToast('Não foi possível ler o anexo.', 'danger');
       };
+
       reader.readAsDataURL(file);
     },
 
     updateAttachmentPreview() {
+      if (!this.refs.expenseAttachmentPreview) return;
+
       const attachment = this.attachmentDraft || this.findExpenseById(this.editingExpenseId)?.attachment || null;
 
       if (!attachment) {
@@ -338,22 +446,22 @@
           </div>
           <span class="tag">${isImage ? 'Imagem' : 'Arquivo'}</span>
         </div>
-        ${isImage && attachment.dataUrl ? `<div style="margin-top: 12px;"><img src="${attachment.dataUrl}" alt="Anexo da despesa" style="max-width: 100%; border-radius: 14px; border: 1px solid #ead9cd;" /></div>` : ''}
+        ${isImage && attachment.dataUrl ? `<div style="margin-top: 12px;"><img src="${attachment.dataUrl}" alt="Anexo da despesa" style="max-width: 100%; border-radius: 14px; border: 1px solid #e7d9c9;" /></div>` : ''}
       `;
     },
 
     updateLiveSummary() {
-      const value = app.toNumber(this.refs.expenseValue.value || 0);
+      const value = this.toNumber(this.refs.expenseValue.value || 0);
       const category = this.refs.expenseCategory.value || '-';
       const status = this.refs.expenseStatus.value || 'Pago';
       const payment = this.refs.expensePaymentMethod.value || 'Pix';
-      const dueDate = this.refs.expenseDueDate.value ? app.formatDate(this.refs.expenseDueDate.value) : '-';
-      const installments = Math.max(1, app.toNumber(this.refs.expenseInstallments.value || 1));
+      const dueDate = this.refs.expenseDueDate.value ? this.formatDate(this.refs.expenseDueDate.value) : '-';
+      const installments = Math.max(1, this.toNumber(this.refs.expenseInstallments.value || 1));
       const supplier = this.refs.expenseSupplier.value.trim() || '-';
       const hasAttachment = Boolean(this.attachmentDraft || this.findExpenseById(this.editingExpenseId)?.attachment);
       const affectsProfit = this.refs.expenseAffectsProfit.checked ? 'Sim' : 'Não';
 
-      this.refs.expenseSummaryValue.textContent = app.formatCurrency(value);
+      this.refs.expenseSummaryValue.textContent = this.formatCurrency(value);
       this.refs.expenseSummaryCategory.textContent = category;
       this.refs.expenseSummaryStatus.textContent = status;
       this.refs.expenseSummaryPayment.textContent = payment;
@@ -395,24 +503,26 @@
     },
 
     getFilteredExpenses() {
-      return this.getExpenses().filter((expense) => {
-        const haystack = [
-          expense.description,
-          expense.supplier,
-          expense.reference,
-          expense.note,
-          expense.category
-        ].join(' ');
+      return this.getExpenses()
+        .filter((expense) => {
+          const haystack = [
+            expense.description,
+            expense.supplier,
+            expense.reference,
+            expense.note,
+            expense.category
+          ].join(' ');
 
-        const matchesSearch = !this.filters.search || app.includesText(haystack, this.filters.search);
-        const matchesStart = !this.filters.start || expense.date >= this.filters.start;
-        const matchesEnd = !this.filters.end || expense.date <= this.filters.end;
-        const matchesCategory = !this.filters.category || expense.category === this.filters.category;
-        const matchesStatus = !this.filters.status || expense.status === this.filters.status;
-        const matchesPayment = !this.filters.payment || expense.paymentMethod === this.filters.payment;
+          const matchesSearch = !this.filters.search || this.includesText(haystack, this.filters.search);
+          const matchesStart = !this.filters.start || expense.date >= this.filters.start;
+          const matchesEnd = !this.filters.end || expense.date <= this.filters.end;
+          const matchesCategory = !this.filters.category || expense.category === this.filters.category;
+          const matchesStatus = !this.filters.status || expense.status === this.filters.status;
+          const matchesPayment = !this.filters.payment || expense.paymentMethod === this.filters.payment;
 
-        return matchesSearch && matchesStart && matchesEnd && matchesCategory && matchesStatus && matchesPayment;
-      }).sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime());
+          return matchesSearch && matchesStart && matchesEnd && matchesCategory && matchesStatus && matchesPayment;
+        })
+        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime());
     },
 
     renderAll() {
@@ -427,34 +537,43 @@
     },
 
     renderMetrics() {
-      const today = app.todayISO();
+      const today = typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10);
       const currentMonth = today.slice(0, 7);
       const expenses = this.getExpenses();
+
       const todayExpenses = expenses.filter((expense) => expense.date === today && expense.status !== 'Cancelado');
       const monthExpenses = expenses.filter((expense) => expense.date?.startsWith(currentMonth) && expense.status !== 'Cancelado');
-      const categoryMap = {};
 
+      const categoryMap = {};
       monthExpenses.forEach((expense) => {
-        categoryMap[expense.category] = (categoryMap[expense.category] || 0) + app.toNumber(expense.value || 0);
+        categoryMap[expense.category] = (categoryMap[expense.category] || 0) + this.toNumber(expense.value || 0);
       });
 
       const topCategory = Object.entries(categoryMap).sort((a, b) => b[1] - a[1])[0];
       const lossTotal = this.calculateLossExpensesTotal();
 
-      this.refs.expensesDayTotal.textContent = app.formatCurrency(app.sum(todayExpenses, (expense) => expense.value || 0));
-      this.refs.expensesMonthTotal.textContent = app.formatCurrency(app.sum(monthExpenses, (expense) => expense.value || 0));
-      this.refs.expensesTopCategory.textContent = topCategory ? `${topCategory[0]} • ${app.formatCurrency(topCategory[1])}` : '-';
-      this.refs.expensesLossTotal.textContent = app.formatCurrency(lossTotal);
+      this.refs.expensesDayTotal.textContent = this.formatCurrency(this.sum(todayExpenses, (expense) => expense.value || 0));
+      this.refs.expensesMonthTotal.textContent = this.formatCurrency(this.sum(monthExpenses, (expense) => expense.value || 0));
+      this.refs.expensesTopCategory.textContent = topCategory ? `${topCategory[0]} • ${this.formatCurrency(topCategory[1])}` : '-';
+      this.refs.expensesLossTotal.textContent = this.formatCurrency(lossTotal);
     },
 
     calculateLossExpensesTotal() {
       const movements = this.getStockMovements();
-      const lossMovementIds = new Set(movements.filter((movement) => movement.type === 'perda').map((movement) => movement.id));
-      return app.sum(this.getExpenses().filter((expense) => expense.category === 'Perda de material' || lossMovementIds.has(expense.relatedMovementId)), (expense) => expense.value || 0);
+      const lossMovementIds = new Set(
+        movements.filter((movement) => movement.type === 'perda').map((movement) => movement.id)
+      );
+
+      return this.sum(
+        this.getExpenses().filter((expense) => expense.category === 'Perda de material' || lossMovementIds.has(expense.relatedMovementId)),
+        (expense) => expense.value || 0
+      );
     },
 
     renderAlerts() {
-      const today = app.todayISO();
+      if (!this.refs.expenseAlertList) return;
+
+      const today = typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10);
       const pending = this.getExpenses().filter((expense) => expense.status === 'Pendente' || expense.status === 'Parcelado');
       const overdue = pending.filter((expense) => expense.dueDate && expense.dueDate < today);
 
@@ -478,7 +597,7 @@
           <div class="pix-proof-card">
             <div>
               <strong>${this.escapeHtml(expense.description)}</strong>
-              <p>Venceu em ${app.formatDate(expense.dueDate)} • ${app.formatCurrency(expense.value || 0)}</p>
+              <p>Venceu em ${this.formatDate(expense.dueDate)} • ${this.formatCurrency(expense.value || 0)}</p>
             </div>
             <span class="tag">Vencida</span>
           </div>
@@ -491,7 +610,7 @@
             <div class="pix-proof-card">
               <div>
                 <strong>${this.escapeHtml(expense.description)}</strong>
-                <p>Status ${this.escapeHtml(expense.status)} • ${app.formatCurrency(expense.value || 0)}</p>
+                <p>Status ${this.escapeHtml(expense.status)} • ${this.formatCurrency(expense.value || 0)}</p>
               </div>
               <span class="tag">Pendente</span>
             </div>
@@ -516,13 +635,13 @@
 
       this.refs.expensesTableBody.innerHTML = expenses.map((expense) => `
         <tr>
-          <td>${app.formatDate(expense.date)}</td>
+          <td>${this.formatDate(expense.date)}</td>
           <td>${this.escapeHtml(expense.description)}</td>
           <td>${this.escapeHtml(expense.category || '-')}</td>
           <td>${this.escapeHtml(expense.supplier || '-')}</td>
           <td>${this.escapeHtml(expense.paymentMethod || '-')}</td>
           <td>${this.escapeHtml(expense.status || '-')}</td>
-          <td>${app.formatCurrency(expense.value || 0)}</td>
+          <td>${this.formatCurrency(expense.value || 0)}</td>
           <td>${expense.attachment?.name ? 'Sim' : 'Não'}</td>
           <td>
             <div class="table-action-group">
@@ -535,7 +654,11 @@
     },
 
     renderRecurringExpenses() {
-      const recurring = this.getExpenses().filter((expense) => expense.recurring).sort((a, b) => app.toNumber(b.value || 0) - app.toNumber(a.value || 0));
+      if (!this.refs.recurringExpensesTableBody) return;
+
+      const recurring = this.getExpenses()
+        .filter((expense) => expense.recurring)
+        .sort((a, b) => this.toNumber(b.value || 0) - this.toNumber(a.value || 0));
 
       if (!recurring.length) {
         this.refs.recurringExpensesTableBody.innerHTML = `
@@ -550,18 +673,23 @@
         <tr>
           <td>${this.escapeHtml(expense.description)}</td>
           <td>${this.escapeHtml(expense.category || '-')}</td>
-          <td>${app.formatCurrency(expense.value || 0)}</td>
-          <td>${expense.dueDate ? app.formatDate(expense.dueDate) : '-'}</td>
+          <td>${this.formatCurrency(expense.value || 0)}</td>
+          <td>${expense.dueDate ? this.formatDate(expense.dueDate) : '-'}</td>
         </tr>
       `).join('');
     },
 
     renderLossExpenses() {
+      if (!this.refs.lossExpensesTableBody) return;
+
       const movements = this.getStockMovements();
-      const lossMovementIds = new Set(movements.filter((movement) => movement.type === 'perda').map((movement) => movement.id));
+      const lossMovementIds = new Set(
+        movements.filter((movement) => movement.type === 'perda').map((movement) => movement.id)
+      );
+
       const lossExpenses = this.getExpenses()
         .filter((expense) => expense.category === 'Perda de material' || lossMovementIds.has(expense.relatedMovementId))
-        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`) - new Date(`${a.date}T${a.time || '00:00'}`))
+        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime())
         .slice(0, 10);
 
       if (!lossExpenses.length) {
@@ -580,17 +708,22 @@
 
         return `
           <tr>
-            <td>${app.formatDate(expense.date)}</td>
+            <td>${this.formatDate(expense.date)}</td>
             <td>${this.escapeHtml(productName)}</td>
             <td>${this.escapeHtml(reason || '-')}</td>
-            <td>${app.formatCurrency(expense.value || 0)}</td>
+            <td>${this.formatCurrency(expense.value || 0)}</td>
           </tr>
         `;
       }).join('');
     },
 
     renderAttachmentsPreview() {
-      const withAttachments = this.getExpenses().filter((expense) => expense.attachment?.name).sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`) - new Date(`${a.date}T${a.time || '00:00'}`)).slice(0, 6);
+      if (!this.refs.expensesAttachmentsPreviewList) return;
+
+      const withAttachments = this.getExpenses()
+        .filter((expense) => expense.attachment?.name)
+        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime())
+        .slice(0, 6);
 
       if (!withAttachments.length) {
         this.refs.expensesAttachmentsPreviewList.innerHTML = `
@@ -630,8 +763,9 @@
 
     loadExpenseIntoForm(expenseId, scrollToTop = true) {
       const expense = this.findExpenseById(expenseId);
+
       if (!expense) {
-        app.showToast('Despesa não encontrada.', 'danger');
+        this.showToast('Despesa não encontrada.', 'danger');
         return;
       }
 
@@ -639,14 +773,14 @@
       this.attachmentDraft = expense.attachment || null;
 
       this.refs.expenseId.value = expense.id;
-      this.refs.expenseDate.value = expense.date || app.todayISO();
-      this.refs.expenseTime.value = expense.time || app.currentTimeHHMM();
+      this.refs.expenseDate.value = expense.date || (typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10));
+      this.refs.expenseTime.value = expense.time || (typeof app.currentTimeHHMM === 'function' ? app.currentTimeHHMM() : '00:00');
       this.refs.expenseStatus.value = expense.status || 'Pago';
       this.refs.expenseTitle.value = expense.description || '';
       this.refs.expenseCategory.value = expense.category || 'Compras';
       this.refs.expenseValue.value = expense.value || '';
       this.refs.expensePaymentMethod.value = expense.paymentMethod || 'Pix';
-      this.refs.expenseDueDate.value = expense.dueDate || expense.date || app.todayISO();
+      this.refs.expenseDueDate.value = expense.dueDate || expense.date || (typeof app.todayISO === 'function' ? app.todayISO() : new Date().toISOString().slice(0, 10));
       this.refs.expenseInstallments.value = expense.installments || 1;
       this.refs.expenseSupplier.value = expense.supplier || '';
       this.refs.expenseReference.value = expense.reference || '';
@@ -656,7 +790,7 @@
       this.refs.expenseRepeatMonthly.checked = Boolean(expense.recurring);
       if (this.refs.expenseAttachment) this.refs.expenseAttachment.value = '';
 
-      this.updateModeTag(`Editando despesa`);
+      this.updateModeTag('Editando despesa');
       this.updateAttachmentPreview();
       this.updateLiveSummary();
 
