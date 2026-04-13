@@ -10,6 +10,7 @@
     applyingRemote: false,
     suppressSaveOnce: false,
     saveTimer: null,
+    workspaceId: window.HUSKY_WORKSPACE_ID || 'husky-principal',
 
     async init() {
       this.app = window.HuskyApp || null;
@@ -35,7 +36,7 @@
 
       this.started = true;
       this.setCloudStatus(true, new Date().toISOString());
-      console.log('[Cloud Sync] Sincronização iniciada.');
+      console.log('[Cloud Sync] Sincronização compartilhada iniciada.');
     },
 
     async waitForSupabase() {
@@ -66,13 +67,13 @@
     async loadOrCreateRemoteState() {
       try {
         const { data, error } = await this.supabase
-          .from('app_state')
+          .from('app_state_shared')
           .select('state, updated_at')
-          .eq('user_id', this.user.id)
+          .eq('workspace_id', this.workspaceId)
           .maybeSingle();
 
         if (error) {
-          console.error('[Cloud Sync] erro ao buscar estado remoto', error);
+          console.error('[Cloud Sync] erro ao buscar estado compartilhado', error);
           this.setCloudStatus(false, null);
           return;
         }
@@ -93,7 +94,6 @@
     bindStateChanges() {
       window.addEventListener('husky:state-changed', () => {
         if (!this.started) return;
-
         if (this.applyingRemote) return;
 
         if (this.suppressSaveOnce) {
@@ -124,19 +124,17 @@
     },
 
     bindRealtime() {
-      if (!this.user) return;
-
       this.removeRealtime();
 
       this.channel = this.supabase
-        .channel(`husky-app-state-${this.user.id}`)
+        .channel(`husky-shared-state-${this.workspaceId}`)
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
-            table: 'app_state',
-            filter: `user_id=eq.${this.user.id}`
+            table: 'app_state_shared',
+            filter: `workspace_id=eq.${this.workspaceId}`
           },
           (payload) => {
             const remoteState = payload?.new?.state;
@@ -170,7 +168,11 @@
     },
 
     sanitizeState(state) {
-      const cloned = this.app.deepClone ? this.app.deepClone(state) : JSON.parse(JSON.stringify(state || {}));
+      const cloned = this.app.deepClone
+        ? this.app.deepClone(state)
+        : JSON.parse(JSON.stringify(state || {}));
+
+      cloned.currentUser = null;
 
       if (cloned?.settings?.cloud) {
         cloned.settings.cloud.connected = true;
@@ -182,26 +184,24 @@
     },
 
     async pushLocalState() {
-      if (!this.user) return;
-
       try {
         const state = this.app.getAppState();
         const cleanState = this.sanitizeState(state);
         const updatedAt = new Date().toISOString();
 
         const { error } = await this.supabase
-          .from('app_state')
+          .from('app_state_shared')
           .upsert(
             {
-              user_id: this.user.id,
+              workspace_id: this.workspaceId,
               state: cleanState,
               updated_at: updatedAt
             },
-            { onConflict: 'user_id' }
+            { onConflict: 'workspace_id' }
           );
 
         if (error) {
-          console.error('[Cloud Sync] erro ao salvar nuvem', error);
+          console.error('[Cloud Sync] erro ao salvar nuvem compartilhada', error);
           this.setCloudStatus(false, null);
           return;
         }
@@ -218,9 +218,13 @@
         this.applyingRemote = true;
 
         const current = this.app.getAppState();
+        const localCurrentUser = current.currentUser || null;
+
         const merged = this.app.deepMerge
           ? this.app.deepMerge(current, remoteState || {})
           : { ...current, ...(remoteState || {}) };
+
+        merged.currentUser = localCurrentUser;
 
         this.app.setAppState(merged);
       } catch (error) {

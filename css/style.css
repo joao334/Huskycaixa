@@ -1310,3 +1310,243 @@ tbody tr:hover {
     gap: 12px;
   }
 }
+
+/* ===== comprovante bonito ===== */
+
+.compact-receipt-preview,
+.print-receipt-template {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(45, 111, 155, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 18px 42px rgba(24, 50, 71, 0.12);
+  color: #183247;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.compact-receipt-preview header,
+.print-receipt-template header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(45, 111, 155, 0.1);
+  margin-bottom: 18px;
+}
+
+.compact-receipt-preview header img,
+.print-receipt-template header img {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.compact-receipt-preview header h4,
+.print-receipt-template header h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.compact-receipt-preview header p,
+.print-receipt-template header p {
+  margin: 4px 0 0;
+  color: #6d7d88;
+  font-size: 13px;
+}
+
+.receipt-meta,
+.print-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.receipt-meta p,
+.print-meta p {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(231, 241, 248, 0.72), rgba(247, 239, 231, 0.72));
+  border: 1px solid rgba(45, 111, 155, 0.08);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.compact-receipt-preview .table-wrapper,
+.print-receipt-template .table-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(45, 111, 155, 0.08);
+  margin-bottom: 18px;
+}
+
+.compact-receipt-preview table,
+.print-receipt-template table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.compact-receipt-preview thead th,
+.print-receipt-template thead th {
+  background: rgba(45, 111, 155, 0.05);
+  color: #5f7483;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 14px;
+}
+
+.compact-receipt-preview tbody td,
+.print-receipt-template tbody td {
+  padding: 12px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(45, 111, 155, 0.06);
+}
+
+.compact-receipt-preview tbody tr:last-child td,
+.print-receipt-template tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.receipt-totals,
+.print-totals {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.receipt-totals p,
+.print-totals p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(45, 111, 155, 0.08);
+  font-size: 14px;
+}
+
+.receipt-totals p:last-child,
+.print-totals p:last-child {
+  background: linear-gradient(135deg, rgba(45, 111, 155, 0.08), rgba(234, 216, 196, 0.28));
+  border-color: rgba(45, 111, 155, 0.14);
+  font-weight: 800;
+}
+
+.receipt-footer,
+.print-receipt-template footer {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(45, 111, 155, 0.1);
+  text-align: center;
+}
+
+.receipt-footer p,
+.print-receipt-template footer p {
+  margin: 4px 0;
+  color: #6d7d88;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .compact-receipt-preview,
+  .print-receipt-template {
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+
+  .receipt-meta,
+  .print-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-receipt-preview header,
+  .print-receipt-template header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .compact-receipt-preview header h4,
+  .print-receipt-template header h2 {
+    font-size: 20px;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .print-area {
+    display: block !important;
+  }
+
+  .print-receipt-template {
+    max-width: none !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-receipt-template * {
+    color: #000 !important;
+  }
+}
+
+.comprovantes-form-panel .upload-preview-box,
+.comprovantes-viewer-panel .document-viewer-box {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,239,231,0.9));
+  border: 1px dashed rgba(45, 111, 155, 0.18);
+  color: var(--text-soft);
+  padding: 18px;
+}
+
+.comprovantes-summary-panel .summary-line.total-line,
+.comprovantes-status-panel .status-row:last-child {
+  background: linear-gradient(135deg, rgba(45, 111, 155, 0.08), rgba(234, 216, 196, 0.28));
+}
+
+@media (max-width: 768px) {
+  .comprovantes-form-panel .form-grid.cols-2,
+  .comprovantes-form-panel .form-grid.cols-3,
+  .comprovantes-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .comprovantes-form-panel .form-grid.cols-2,
+  .comprovantes-form-panel .form-grid.cols-3,
+  .comprovantes-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

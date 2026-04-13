@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+        <button type="button" class="btn btn-danger btn-full" id="btn-logout" data-action="logout">Sair</button>
       </div>
     </aside>
 
@@ -67,9 +67,9 @@
           </button>
 
           <div class="page-heading">
-            <span class="eyebrow">Conferência e anexos</span>
+            <span class="eyebrow">Pix e anexos</span>
             <h1>Comprovantes</h1>
-            <p>Suba, visualize e vincule comprovantes Pix aos pedidos da Husky.</p>
+            <p>Envie, confira e vincule comprovantes aos pedidos.</p>
           </div>
         </div>
 
@@ -87,54 +87,34 @@
       </header>
 
       <main class="main-content">
-        <section class="hero-panel hero-panel-compact">
-          <div class="hero-content">
-            <span class="eyebrow">Pix e finalização</span>
-            <h2>Central de comprovantes da Husky</h2>
-            <p>
-              Faça upload de imagem ou PDF, vincule ao pedido, marque conferência,
-              visualize o histórico e acompanhe quais vendas ainda precisam de comprovante.
-            </p>
-          </div>
-
-          <div class="hero-actions">
-            <button type="button" id="btn-new-proof-hero" class="btn btn-primary">Enviar comprovante</button>
-            <a href="vendas.html" class="btn btn-secondary">Pedidos Pix</a>
-          </div>
-        </section>
-
         <section class="cards-grid metrics-grid">
           <article class="metric-card">
-            <span class="metric-label">Comprovantes enviados</span>
+            <span class="metric-label">Enviados</span>
             <strong id="proofs-total-count">0</strong>
-            <small>Total registrado</small>
           </article>
 
           <article class="metric-card">
-            <span class="metric-label">Pendentes de conferência</span>
+            <span class="metric-label">Pendentes</span>
             <strong id="proofs-pending-count">0</strong>
-            <small>Aguardando validação</small>
           </article>
 
           <article class="metric-card">
-            <span class="metric-label">Pedidos sem comprovante</span>
+            <span class="metric-label">Sem comprovante</span>
             <strong id="proofs-missing-count">0</strong>
-            <small>Precisam de anexo</small>
           </article>
 
           <article class="metric-card">
-            <span class="metric-label">Finalizados com Pix</span>
+            <span class="metric-label">Pix finalizados</span>
             <strong id="proofs-finished-pix-count">0</strong>
-            <small>Pedidos encerrados</small>
           </article>
         </section>
 
-        <section class="content-grid comprovantes-main-grid">
+        <section class="sales-compact-grid">
           <article class="panel comprovantes-form-panel">
             <div class="panel-header">
               <div>
-                <h3>Upload de comprovante</h3>
-                <p>Envie e vincule o comprovante ao pedido correto.</p>
+                <h3>Enviar comprovante</h3>
+                <p>Preencha só o essencial.</p>
               </div>
               <span class="tag" id="proof-mode-tag">Novo envio</span>
             </div>
@@ -149,7 +129,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="proof-time">Horário</label>
+                  <label for="proof-time">Hora</label>
                   <input type="time" id="proof-time" />
                 </div>
 
@@ -166,7 +146,7 @@
 
               <div class="form-grid cols-2">
                 <div class="form-group">
-                  <label for="proof-order-number">Número do pedido</label>
+                  <label for="proof-order-number">Pedido</label>
                   <select id="proof-order-number">
                     <option value="">Selecione o pedido</option>
                   </select>
@@ -174,13 +154,13 @@
 
                 <div class="form-group">
                   <label for="proof-client-name">Cliente</label>
-                  <input type="text" id="proof-client-name" placeholder="Preenchido automaticamente ou manual" />
+                  <input type="text" id="proof-client-name" placeholder="Nome do cliente" />
                 </div>
               </div>
 
               <div class="form-grid cols-3">
                 <div class="form-group">
-                  <label for="proof-payment-method">Forma de pagamento</label>
+                  <label for="proof-payment-method">Pagamento</label>
                   <select id="proof-payment-method">
                     <option value="Pix">Pix</option>
                     <option value="Transferência">Transferência</option>
@@ -189,7 +169,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="proof-amount">Valor do comprovante</label>
+                  <label for="proof-amount">Valor</label>
                   <input type="number" id="proof-amount" placeholder="0,00" />
                 </div>
 
@@ -206,19 +186,19 @@
 
               <div class="form-grid cols-2">
                 <div class="form-group">
-                  <label for="proof-file">Arquivo do comprovante</label>
+                  <label for="proof-file">Arquivo</label>
                   <input type="file" id="proof-file" accept="image/*,.pdf" />
                 </div>
 
                 <div class="form-group">
                   <label for="proof-transaction-id">ID da transação</label>
-                  <input type="text" id="proof-transaction-id" placeholder="Código ou identificação da transação" />
+                  <input type="text" id="proof-transaction-id" placeholder="Código da transação" />
                 </div>
               </div>
 
               <div class="form-group">
                 <label for="proof-note">Observação</label>
-                <textarea id="proof-note" rows="4" placeholder="Ex.: enviado pelo cliente às 14:32, aguardando conferência"></textarea>
+                <textarea id="proof-note" rows="3" placeholder="Observações do comprovante"></textarea>
               </div>
 
               <div class="upload-preview-box proof-preview-box" id="proof-file-preview">
@@ -228,29 +208,28 @@
               <div class="form-grid cols-2">
                 <label class="checkbox-field checkbox-card">
                   <input type="checkbox" id="proof-mark-order-paid" checked />
-                  <span>Marcar pedido como pago ao vincular</span>
+                  <span>Marcar pedido como pago</span>
                 </label>
 
                 <label class="checkbox-field checkbox-card">
                   <input type="checkbox" id="proof-finish-order-when-valid" />
-                  <span>Finalizar pedido automaticamente quando conferido</span>
+                  <span>Finalizar pedido quando conferir</span>
                 </label>
               </div>
 
               <div class="form-actions sticky-form-actions">
-                <button type="button" id="btn-save-proof" class="btn btn-primary">Salvar comprovante</button>
-                <button type="button" id="btn-update-proof" class="btn btn-secondary">Editar comprovante</button>
-                <button type="button" id="btn-delete-proof" class="btn btn-danger">Excluir comprovante</button>
+                <button type="button" id="btn-save-proof" class="btn btn-primary">Salvar</button>
+                <button type="button" id="btn-update-proof" class="btn btn-secondary">Editar</button>
+                <button type="button" id="btn-delete-proof" class="btn btn-danger">Excluir</button>
               </div>
             </form>
           </article>
 
-          <aside class="comprovantes-side-column">
+          <aside class="sales-fast-side">
             <article class="panel comprovantes-summary-panel">
               <div class="panel-header">
                 <div>
-                  <h3>Resumo do comprovante</h3>
-                  <p>Dados rápidos do envio atual.</p>
+                  <h3>Resumo</h3>
                 </div>
               </div>
 
@@ -281,8 +260,7 @@
             <article class="panel comprovantes-status-panel">
               <div class="panel-header">
                 <div>
-                  <h3>Status rápido</h3>
-                  <p>Situação do pedido vinculado.</p>
+                  <h3>Status</h3>
                 </div>
               </div>
 
@@ -310,7 +288,6 @@
               <div class="panel-header">
                 <div>
                   <h3>Pré-visualização</h3>
-                  <p>Visualização do arquivo anexado.</p>
                 </div>
               </div>
 
@@ -325,12 +302,12 @@
           <div class="panel-header">
             <div>
               <h3>Lista de comprovantes</h3>
-              <p>Pesquise, filtre e valide os anexos enviados.</p>
+              <p>Pesquise e confira os anexos.</p>
             </div>
           </div>
 
           <div class="toolbar-grid comprovantes-filter-grid">
-            <input type="text" id="proofs-search" placeholder="Buscar por pedido, cliente, transação ou observação" />
+            <input type="text" id="proofs-search" placeholder="Buscar pedido, cliente ou transação" />
             <input type="date" id="proofs-filter-start" />
             <input type="date" id="proofs-filter-end" />
             <select id="proofs-filter-status">
@@ -390,8 +367,8 @@
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Pedidos aguardando comprovante</h3>
-                <p>Vendas em Pix que ainda não receberam arquivo.</p>
+                <h3>Sem comprovante</h3>
+                <p>Pedidos Pix que ainda precisam de anexo.</p>
               </div>
               <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
             </div>
@@ -403,7 +380,6 @@
                     <th>Pedido</th>
                     <th>Cliente</th>
                     <th>Total</th>
-                    <th>Status</th>
                     <th>Ação</th>
                   </tr>
                 </thead>
@@ -412,7 +388,6 @@
                     <td>#0002</td>
                     <td>Cliente exemplo</td>
                     <td>R$ 0,00</td>
-                    <td>Aguardando pagamento</td>
                     <td><button type="button" class="btn btn-secondary btn-small">Anexar</button></td>
                   </tr>
                 </tbody>
@@ -423,7 +398,7 @@
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Comprovantes conferidos recentemente</h3>
+                <h3>Conferidos recentemente</h3>
                 <p>Últimos anexos já validados.</p>
               </div>
             </div>
@@ -444,8 +419,8 @@
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Pedidos finalizados com comprovante</h3>
-                <p>Histórico pronto para consulta.</p>
+                <h3>Finalizados</h3>
+                <p>Pedidos já concluídos com comprovante.</p>
               </div>
             </div>
 
@@ -476,8 +451,8 @@
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Logs de conferência</h3>
-                <p>Últimas ações realizadas nos comprovantes.</p>
+                <h3>Logs</h3>
+                <p>Últimas ações da conferência.</p>
               </div>
             </div>
 
@@ -506,11 +481,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/app.js"></script>
-<script src="js/env.js"></script>
-<script src="js/supabase-init.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/cloud-sync.js"></script>
-<script src="js/comprovantes.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabase-init.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cloud-sync.js"></script>
+  <script src="js/comprovantes.js"></script>
 </body>
 </html>
