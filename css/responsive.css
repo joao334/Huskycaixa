@@ -753,3 +753,75 @@
     font-size: 16px;
   }
 }
+
+/* ===== vendas mobile mais compacta ===== */
+@media (max-width: 768px) {
+  /* mantém alguns grupos lado a lado para economizar espaço */
+  .sales-compact-grid,
+  .sales-main-grid {
+    gap: 10px !important;
+  }
+
+  .sales-fast-form .form-grid.cols-2,
+  .sales-fast-form .form-grid.cols-3,
+  .sales-form-panel .form-grid.cols-2,
+  .sales-form-panel .form-grid.cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  /* resumo e status em 2 colunas */
+  .sales-fast-side .sale-summary-box,
+  .sales-fast-side .status-list,
+  .sales-summary-panel .sale-summary-box,
+  .sales-status-panel .status-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .sales-fast-side .summary-line,
+  .sales-fast-side .status-row,
+  .sales-summary-panel .summary-line,
+  .sales-status-panel .status-row {
+    min-height: 76px;
+    justify-content: space-between;
+  }
+
+  /* ações mais compactas */
+  .sales-fast-side .summary-action-list,
+  .sales-summary-panel .summary-action-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  /* tabela de últimas vendas cabe melhor */
+  .sales-fast-side .table-wrapper table,
+  .sales-receipt-preview-panel .table-wrapper table {
+    min-width: 420px !important;
+  }
+
+  /* comprovante pix ocupa menos espaço */
+  .payment-proof-subsection .form-grid.cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .sales-fast-form .form-grid.cols-2,
+  .sales-fast-form .form-grid.cols-3,
+  .sales-form-panel .form-grid.cols-2,
+  .sales-form-panel .form-grid.cols-3,
+  .payment-proof-subsection .form-grid.cols-2,
+  .sales-fast-side .summary-action-list,
+  .sales-summary-panel .summary-action-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sales-fast-side .sale-summary-box,
+  .sales-fast-side .status-list,
+  .sales-summary-panel .sale-summary-box,
+  .sales-status-panel .status-list {
+    grid-template-columns: 1fr !important;
+  }
+}

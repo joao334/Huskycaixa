@@ -147,34 +147,43 @@
       document.addEventListener('click', (event) => {
         const target = event.target;
 
-        if (target.matches('[data-action="logout"]')) {
+        const logoutTrigger = target.closest('[data-action="logout"], #btn-logout');
+        if (logoutTrigger) {
+          event.preventDefault();
           this.logout();
+          return;
         }
 
-        if (target.matches('[data-copy-text]')) {
-          this.copyText(target.getAttribute('data-copy-text'));
+        const copyTrigger = target.closest('[data-copy-text]');
+        if (copyTrigger) {
+          this.copyText(copyTrigger.getAttribute('data-copy-text'));
+          return;
+        }
+
+        if (target.closest('.sidebar .nav-item') && window.innerWidth <= 992) {
+          this.closeSidebar();
         }
       });
 
-     if (this.dom.sidebar) {
-  this.dom.sidebar.addEventListener('click', (event) => {
-    const target = event.target.closest('a, button');
-    if (!target) return;
+      if (this.dom.sidebar) {
+        this.dom.sidebar.addEventListener('click', (event) => {
+          const target = event.target.closest('a, button');
+          if (!target) return;
 
-    if (window.innerWidth <= 992 && target.classList.contains('nav-item')) {
-      setTimeout(() => this.closeSidebar(), 180);
-    }
-  });
+          if (window.innerWidth <= 992 && target.classList.contains('nav-item')) {
+            setTimeout(() => this.closeSidebar(), 180);
+          }
+        });
 
-  this.dom.sidebar.addEventListener('touchend', (event) => {
-    const target = event.target.closest('a, button');
-    if (!target) return;
+        this.dom.sidebar.addEventListener('touchend', (event) => {
+          const target = event.target.closest('a, button');
+          if (!target) return;
 
-    if (window.innerWidth <= 992 && target.classList.contains('nav-item')) {
-      setTimeout(() => this.closeSidebar(), 180);
-    }
-  });
-}
+          if (window.innerWidth <= 992 && target.classList.contains('nav-item')) {
+            setTimeout(() => this.closeSidebar(), 180);
+          }
+        });
+      }
 
       window.addEventListener(STATE_CHANGED_EVENT, () => {
         this.refreshShell();
@@ -191,20 +200,19 @@
     },
 
     injectSidebarOverlay() {
-  if (document.getElementById('sidebar-overlay')) {
-    this.dom.sidebarOverlay = document.getElementById('sidebar-overlay');
-    return;
-  }
+      if (document.getElementById('sidebar-overlay')) {
+        this.dom.sidebarOverlay = document.getElementById('sidebar-overlay');
+        return;
+      }
 
-  const overlay = document.createElement('div');
-  overlay.id = 'sidebar-overlay';
-  overlay.setAttribute('aria-hidden', 'true');
+      const overlay = document.createElement('div');
+      overlay.id = 'sidebar-overlay';
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.style.display = 'none';
 
-  overlay.style.display = 'none';
-
-  document.body.appendChild(overlay);
-  this.dom.sidebarOverlay = overlay;
-},
+      document.body.appendChild(overlay);
+      this.dom.sidebarOverlay = overlay;
+    },
 
     toggleSidebar() {
       if (!this.dom.sidebar) return;
@@ -218,25 +226,25 @@
     },
 
     openSidebar() {
-  if (!this.dom.sidebar) return;
-  if (window.innerWidth > 992) return;
+      if (!this.dom.sidebar) return;
+      if (window.innerWidth > 992) return;
 
-  this.dom.sidebar.classList.add('is-open');
-  this.dom.sidebar.style.pointerEvents = 'auto';
-  this.dom.sidebar.style.zIndex = '9999';
+      this.dom.sidebar.classList.add('is-open');
+      this.dom.sidebar.style.pointerEvents = 'auto';
+      this.dom.sidebar.style.zIndex = '9999';
+      document.body.style.overflow = 'hidden';
+    },
 
-  document.body.style.overflow = 'hidden';
-},
-   closeSidebar() {
-  this.dom.sidebar?.classList.remove('is-open');
+    closeSidebar() {
+      this.dom.sidebar?.classList.remove('is-open');
 
-  if (this.dom.sidebar) {
-    this.dom.sidebar.style.pointerEvents = '';
-    this.dom.sidebar.style.zIndex = '';
-  }
+      if (this.dom.sidebar) {
+        this.dom.sidebar.style.pointerEvents = '';
+        this.dom.sidebar.style.zIndex = '';
+      }
 
-  document.body.style.overflow = '';
-},
+      document.body.style.overflow = '';
+    },
 
     markActiveLinksByPath() {
       const currentFile = window.location.pathname.split('/').pop() || 'index.html';
@@ -738,11 +746,31 @@
       this.showToast('Backup exportado com sucesso.', 'success');
     },
 
-    logout() {
-      const state = this.getAppState();
-      state.currentUser = null;
-      this.setAppState(state);
-      window.location.href = 'index.html';
+    async logout() {
+      try {
+        if (window.HuskySupabase?.auth) {
+          await window.HuskySupabase.auth.signOut();
+        }
+      } catch (error) {
+        console.error('[HuskyApp] erro ao encerrar sessão no Supabase', error);
+      }
+
+      try {
+        const state = this.getAppState();
+        state.currentUser = null;
+        this.setAppState(state);
+      } catch (error) {
+        console.error('[HuskyApp] erro ao limpar estado local', error);
+      }
+
+      try {
+        localStorage.removeItem(this.getStorageKey('auth_session'));
+        sessionStorage.removeItem('husky_auth_message');
+      } catch (error) {
+        console.error('[HuskyApp] erro ao limpar sessão local', error);
+      }
+
+      window.location.replace('index.html');
     },
 
     log(message, meta = {}) {
