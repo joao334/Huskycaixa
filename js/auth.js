@@ -56,16 +56,13 @@
         }
 
         this.persistCurrentUserInApp(profile);
+        return;
+      }
 
-        if (this.isLoginPage()) {
-          window.location.replace(HOME_PAGE);
-        }
-      } else {
-        this.persistCurrentUserInApp(null);
+      this.persistCurrentUserInApp(null);
 
-        if (!this.isLoginPage()) {
-          this.redirectToLogin();
-        }
+      if (!this.isLoginPage()) {
+        this.redirectToLogin();
       }
     } catch (error) {
       console.error('[Auth] erro ao observar autenticação', error);
@@ -74,7 +71,7 @@
   });
 },
 
-    bindLoginForm() {
+   bindLoginForm() {
   const form = document.getElementById('login-form');
   if (!form) return;
 
@@ -96,7 +93,26 @@
 
     try {
       const { auth, signInWithEmailAndPassword } = this.firebase;
-      await signInWithEmailAndPassword(auth, email, password);
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+
+      let profile = null;
+
+      try {
+        profile = await this.ensureUserProfile(credential.user);
+      } catch (profileError) {
+        console.error('[Auth] erro ao carregar perfil no Firestore', profileError);
+
+        profile = {
+          id: credential.user.uid,
+          name: credential.user.displayName || this.getNameFromEmail(credential.user.email),
+          email: credential.user.email || '',
+          role: 'Administrador',
+          status: 'Ativo',
+          lastAccess: new Date().toISOString()
+        };
+      }
+
+      this.persistCurrentUserInApp(profile);
 
       if (remember) {
         this.setRememberedUser({ email });
@@ -105,6 +121,10 @@
       }
 
       this.notify('Login realizado com sucesso.', 'success');
+
+      setTimeout(() => {
+        window.location.replace(HOME_PAGE);
+      }, 250);
     } catch (error) {
       console.error('[Auth] erro no login', error);
       this.notify(this.getFirebaseErrorMessage(error), 'danger');
@@ -178,8 +198,21 @@
       console.error('[Auth] conta criada, mas perfil no Firestore falhou', profileError);
     }
 
+    this.persistCurrentUserInApp({
+      id: credential.user.uid,
+      name,
+      email,
+      role: 'Administrador',
+      status: 'Ativo',
+      lastAccess: new Date().toISOString()
+    });
+
     this.setRememberedUser({ email });
     this.notify('Login criado com sucesso.', 'success');
+
+    setTimeout(() => {
+      window.location.replace(HOME_PAGE);
+    }, 250);
   } catch (error) {
     console.error('[Auth] erro ao criar login', error);
     this.notify(this.getFirebaseErrorMessage(error), 'danger');
