@@ -156,16 +156,25 @@
         }
       });
 
-      if (this.dom.sidebar) {
-        this.dom.sidebar.addEventListener('click', (event) => {
-          const target = event.target.closest('a, button');
-          if (!target) return;
+     if (this.dom.sidebar) {
+  this.dom.sidebar.addEventListener('click', (event) => {
+    const target = event.target.closest('a, button');
+    if (!target) return;
 
-          if (window.innerWidth <= 992 && !target.isSameNode(this.dom.mobileMenuButton)) {
-            setTimeout(() => this.closeSidebar(), 120);
-          }
-        });
-      }
+    if (window.innerWidth <= 992 && target.classList.contains('nav-item')) {
+      setTimeout(() => this.closeSidebar(), 180);
+    }
+  });
+
+  this.dom.sidebar.addEventListener('touchend', (event) => {
+    const target = event.target.closest('a, button');
+    if (!target) return;
+
+    if (window.innerWidth <= 992 && target.classList.contains('nav-item')) {
+      setTimeout(() => this.closeSidebar(), 180);
+    }
+  });
+}
 
       window.addEventListener(STATE_CHANGED_EVENT, () => {
         this.refreshShell();
@@ -182,30 +191,20 @@
     },
 
     injectSidebarOverlay() {
-      if (document.getElementById('sidebar-overlay')) {
-        this.dom.sidebarOverlay = document.getElementById('sidebar-overlay');
-        return;
-      }
+  if (document.getElementById('sidebar-overlay')) {
+    this.dom.sidebarOverlay = document.getElementById('sidebar-overlay');
+    return;
+  }
 
-      const overlay = document.createElement('div');
-      overlay.id = 'sidebar-overlay';
-      overlay.setAttribute('aria-hidden', 'true');
+  const overlay = document.createElement('div');
+  overlay.id = 'sidebar-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
 
-      overlay.style.position = 'fixed';
-      overlay.style.inset = '0';
-      overlay.style.background = 'rgba(15, 23, 42, 0.18)';
-      overlay.style.opacity = '0';
-      overlay.style.visibility = 'hidden';
-      overlay.style.pointerEvents = 'none';
-      overlay.style.transition = 'opacity 0.22s ease, visibility 0.22s ease';
-      overlay.style.zIndex = '100';
-      overlay.style.backdropFilter = 'none';
+  overlay.style.display = 'none';
 
-      overlay.addEventListener('click', () => this.closeSidebar());
-
-      document.body.appendChild(overlay);
-      this.dom.sidebarOverlay = overlay;
-    },
+  document.body.appendChild(overlay);
+  this.dom.sidebarOverlay = overlay;
+},
 
     toggleSidebar() {
       if (!this.dom.sidebar) return;
@@ -219,38 +218,25 @@
     },
 
     openSidebar() {
-      if (!this.dom.sidebar) return;
-      if (window.innerWidth > 992) return;
+  if (!this.dom.sidebar) return;
+  if (window.innerWidth > 992) return;
 
-      this.dom.sidebar.classList.add('is-open');
-      this.dom.sidebar.style.pointerEvents = 'auto';
-      this.dom.sidebar.style.zIndex = '120';
+  this.dom.sidebar.classList.add('is-open');
+  this.dom.sidebar.style.pointerEvents = 'auto';
+  this.dom.sidebar.style.zIndex = '9999';
 
-      if (this.dom.sidebarOverlay) {
-        this.dom.sidebarOverlay.style.opacity = '1';
-        this.dom.sidebarOverlay.style.visibility = 'visible';
-        this.dom.sidebarOverlay.style.pointerEvents = 'auto';
-      }
+  document.body.style.overflow = 'hidden';
+},
+   closeSidebar() {
+  this.dom.sidebar?.classList.remove('is-open');
 
-      document.body.style.overflow = 'hidden';
-    },
+  if (this.dom.sidebar) {
+    this.dom.sidebar.style.pointerEvents = '';
+    this.dom.sidebar.style.zIndex = '';
+  }
 
-    closeSidebar() {
-      this.dom.sidebar?.classList.remove('is-open');
-
-      if (this.dom.sidebar) {
-        this.dom.sidebar.style.pointerEvents = '';
-        this.dom.sidebar.style.zIndex = '';
-      }
-
-      if (this.dom.sidebarOverlay) {
-        this.dom.sidebarOverlay.style.opacity = '0';
-        this.dom.sidebarOverlay.style.visibility = 'hidden';
-        this.dom.sidebarOverlay.style.pointerEvents = 'none';
-      }
-
-      document.body.style.overflow = '';
-    },
+  document.body.style.overflow = '';
+},
 
     markActiveLinksByPath() {
       const currentFile = window.location.pathname.split('/').pop() || 'index.html';

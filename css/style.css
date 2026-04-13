@@ -1481,3 +1481,64 @@ tbody tr:hover {
     font-size: 11px;
   }
 }
+
+#sidebar-overlay {
+  display: none !important;
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: min(86vw, 320px);
+    height: 100vh;
+    transform: translateX(-110%);
+    transition: transform 0.28s ease;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar.is-open {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar * {
+    pointer-events: auto !important;
+  }
+
+  .sidebar-nav {
+    position: relative;
+    z-index: 2;
+  }
+
+  .nav-item {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    width: 100%;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+  }
+
+  .sidebar-bottom,
+  .sidebar-top,
+  .brand-box,
+  .operator-box,
+  .cloud-box {
+    position: relative;
+    z-index: 2;
+  }
+
+  .mobile-menu-btn {
+    position: relative;
+    z-index: 10000;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+  }
+}
