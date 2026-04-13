@@ -90,11 +90,12 @@
     },
 
     bindEvents() {
-      this.refs.btnSaveProof?.addEventListener('click', () => this.handleSaveProof());
+      this.refs.btnSaveProof?.addEventListener('click', () => this.handleSaveProof(false));
       this.refs.btnUpdateProof?.addEventListener('click', () => this.handleSaveProof(true));
       this.refs.btnDeleteProof?.addEventListener('click', () => this.handleDeleteProof());
       this.refs.btnNewProofTop?.addEventListener('click', () => this.resetForm());
       this.refs.btnNewProofHero?.addEventListener('click', () => this.resetForm());
+
       this.refs.proofFile?.addEventListener('change', (event) => this.handleFileUpload(event));
       this.refs.proofOrderNumber?.addEventListener('change', () => this.onOrderChange());
 
@@ -114,9 +115,40 @@
 
       this.refs.btnFilterProofs?.addEventListener('click', () => this.applyFilters());
       this.refs.btnClearProofsFilter?.addEventListener('click', () => this.clearFilters());
+
+      this.refs.proofsSearch?.addEventListener('input', () => {
+        this.filters.search = this.refs.proofsSearch.value.trim();
+        this.renderProofsTable();
+      });
+
+      this.refs.proofsFilterStart?.addEventListener('change', () => {
+        this.filters.start = this.refs.proofsFilterStart.value;
+        this.renderProofsTable();
+      });
+
+      this.refs.proofsFilterEnd?.addEventListener('change', () => {
+        this.filters.end = this.refs.proofsFilterEnd.value;
+        this.renderProofsTable();
+      });
+
+      this.refs.proofsFilterStatus?.addEventListener('change', () => {
+        this.filters.status = this.refs.proofsFilterStatus.value;
+        this.renderProofsTable();
+      });
+
+      this.refs.proofsFilterOrigin?.addEventListener('change', () => {
+        this.filters.origin = this.refs.proofsFilterOrigin.value;
+        this.renderProofsTable();
+      });
+
       this.refs.proofsTableBody?.addEventListener('click', (event) => this.handleProofsTableActions(event));
       this.refs.proofsMissingTableBody?.addEventListener('click', (event) => this.handleMissingTableActions(event));
       this.refs.finishedProofsTableBody?.addEventListener('click', (event) => this.handleFinishedTableActions(event));
+
+      window.addEventListener('husky:state-changed', () => {
+        this.populateOrderSelect();
+        this.renderAll();
+      });
     },
 
     prepareInitialState() {
@@ -134,11 +166,11 @@
     },
 
     getProofs() {
-      return this.getState().proofs || [];
+      return Array.isArray(this.getState().proofs) ? this.getState().proofs : [];
     },
 
     getSales() {
-      return this.getState().sales || [];
+      return Array.isArray(this.getState().sales) ? this.getState().sales : [];
     },
 
     getCurrentUser() {
@@ -151,19 +183,19 @@
 
       if (this.refs.form) this.refs.form.reset();
 
-      this.refs.proofId.value = '';
-      this.refs.proofDate.value = app.todayISO();
-      this.refs.proofTime.value = app.currentTimeHHMM();
-      this.refs.proofStatus.value = 'Pendente de conferência';
-      this.refs.proofPaymentMethod.value = 'Pix';
-      this.refs.proofOrigin.value = 'Cliente';
-      this.refs.proofAmount.value = '';
-      this.refs.proofOrderNumber.value = '';
-      this.refs.proofClientName.value = '';
-      this.refs.proofTransactionId.value = '';
-      this.refs.proofNote.value = '';
-      this.refs.proofMarkOrderPaid.checked = true;
-      this.refs.proofFinishOrderWhenValid.checked = false;
+      if (this.refs.proofId) this.refs.proofId.value = '';
+      if (this.refs.proofDate) this.refs.proofDate.value = app.todayISO();
+      if (this.refs.proofTime) this.refs.proofTime.value = app.currentTimeHHMM();
+      if (this.refs.proofStatus) this.refs.proofStatus.value = 'Pendente de conferência';
+      if (this.refs.proofPaymentMethod) this.refs.proofPaymentMethod.value = 'Pix';
+      if (this.refs.proofOrigin) this.refs.proofOrigin.value = 'Cliente';
+      if (this.refs.proofAmount) this.refs.proofAmount.value = '';
+      if (this.refs.proofOrderNumber) this.refs.proofOrderNumber.value = '';
+      if (this.refs.proofClientName) this.refs.proofClientName.value = '';
+      if (this.refs.proofTransactionId) this.refs.proofTransactionId.value = '';
+      if (this.refs.proofNote) this.refs.proofNote.value = '';
+      if (this.refs.proofMarkOrderPaid) this.refs.proofMarkOrderPaid.checked = true;
+      if (this.refs.proofFinishOrderWhenValid) this.refs.proofFinishOrderWhenValid.checked = false;
       if (this.refs.proofFile) this.refs.proofFile.value = '';
 
       this.updateModeTag('Novo envio');
@@ -181,58 +213,69 @@
     },
 
     populateOrderSelect() {
+      if (!this.refs.proofOrderNumber) return;
+
       const pixSales = this.getSales()
         .filter((sale) => sale.paymentMethod === 'Pix' && sale.orderStatus !== 'Cancelado')
-        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime());
+        .sort((a, b) => {
+          const dateA = new Date(`${a.date || ''}T${a.time || '00:00'}`).getTime();
+          const dateB = new Date(`${b.date || ''}T${b.time || '00:00'}`).getTime();
+          return dateB - dateA;
+        });
 
       this.refs.proofOrderNumber.innerHTML = `
         <option value="">Selecione o pedido</option>
-        ${pixSales.map((sale) => `<option value="${sale.id}">${this.escapeHtml(sale.orderNumber)} • ${this.escapeHtml(sale.client?.name || 'Consumidor final')}</option>`).join('')}
+        ${pixSales.map((sale) => `
+          <option value="${sale.id}">
+            ${this.escapeHtml(sale.orderNumber || '-')} • ${this.escapeHtml(sale.client?.name || 'Consumidor final')}
+          </option>
+        `).join('')}
       `;
     },
 
     onOrderChange() {
-      const sale = this.findSaleById(this.refs.proofOrderNumber.value);
+      const sale = this.findSaleById(this.refs.proofOrderNumber?.value);
       if (!sale) {
-        this.refs.proofClientName.value = '';
-        this.refs.proofAmount.value = '';
-        this.refs.proofPaymentMethod.value = 'Pix';
+        if (this.refs.proofClientName) this.refs.proofClientName.value = '';
+        if (this.refs.proofAmount) this.refs.proofAmount.value = '';
+        if (this.refs.proofPaymentMethod) this.refs.proofPaymentMethod.value = 'Pix';
         this.updateLiveSummary();
         return;
       }
 
-      this.refs.proofClientName.value = sale.client?.name || '';
-      this.refs.proofPaymentMethod.value = sale.paymentMethod || 'Pix';
-      this.refs.proofAmount.value = app.toNumber(sale.total || 0);
-      this.refs.proofDate.value = sale.date || app.todayISO();
+      if (this.refs.proofClientName) this.refs.proofClientName.value = sale.client?.name || '';
+      if (this.refs.proofPaymentMethod) this.refs.proofPaymentMethod.value = sale.paymentMethod || 'Pix';
+      if (this.refs.proofAmount) this.refs.proofAmount.value = app.toNumber(sale.total || 0);
+      if (this.refs.proofDate) this.refs.proofDate.value = sale.date || app.todayISO();
+
       this.updateLiveSummary();
     },
 
     validateForm() {
-      const sale = this.findSaleById(this.refs.proofOrderNumber.value);
-      const amount = app.toNumber(this.refs.proofAmount.value || 0);
+      const sale = this.findSaleById(this.refs.proofOrderNumber?.value);
+      const amount = app.toNumber(this.refs.proofAmount?.value || 0);
       const proofFile = this.fileDraft || this.findProofById(this.editingProofId)?.attachment || null;
 
       if (!sale) {
         app.showToast('Selecione um pedido para vincular o comprovante.', 'warning');
-        this.refs.proofOrderNumber.focus();
+        this.refs.proofOrderNumber?.focus();
         return false;
       }
 
-      if (sale.paymentMethod !== 'Pix' && this.refs.proofPaymentMethod.value === 'Pix') {
+      if (sale.paymentMethod !== 'Pix' && this.refs.proofPaymentMethod?.value === 'Pix') {
         app.showToast('O pedido selecionado não está como Pix.', 'warning');
         return false;
       }
 
       if (amount <= 0) {
         app.showToast('Informe um valor válido para o comprovante.', 'warning');
-        this.refs.proofAmount.focus();
+        this.refs.proofAmount?.focus();
         return false;
       }
 
       if (!proofFile) {
         app.showToast('Anexe o arquivo do comprovante.', 'warning');
-        this.refs.proofFile.focus();
+        this.refs.proofFile?.focus();
         return false;
       }
 
@@ -241,28 +284,29 @@
 
     buildProofPayload() {
       const existing = this.findProofById(this.editingProofId);
-      const sale = this.findSaleById(this.refs.proofOrderNumber.value);
+      const sale = this.findSaleById(this.refs.proofOrderNumber?.value);
       const now = new Date().toISOString();
+      const attachment = this.fileDraft || existing?.attachment || null;
 
       return {
-        id: existing?.id || this.refs.proofId.value || crypto.randomUUID(),
+        id: existing?.id || this.refs.proofId?.value || crypto.randomUUID(),
         relatedSaleId: sale.id,
         orderNumber: sale.orderNumber,
-        clientName: this.refs.proofClientName.value.trim() || sale.client?.name || 'Consumidor final',
-        date: this.refs.proofDate.value,
-        time: this.refs.proofTime.value || app.currentTimeHHMM(),
-        amount: app.toNumber(this.refs.proofAmount.value || 0),
-        status: this.refs.proofStatus.value,
-        origin: this.refs.proofOrigin.value,
-        paymentMethod: this.refs.proofPaymentMethod.value,
-        attachment: this.fileDraft || existing?.attachment || null,
-        fileName: (this.fileDraft || existing?.attachment || {}).name || '',
-        fileType: (this.fileDraft || existing?.attachment || {}).type || '',
-        fileDataUrl: (this.fileDraft || existing?.attachment || {}).dataUrl || '',
-        transactionId: this.refs.proofTransactionId.value.trim(),
-        note: this.refs.proofNote.value.trim(),
-        markOrderPaid: Boolean(this.refs.proofMarkOrderPaid.checked),
-        finishOrderWhenValid: Boolean(this.refs.proofFinishOrderWhenValid.checked),
+        clientName: this.refs.proofClientName?.value.trim() || sale.client?.name || 'Consumidor final',
+        date: this.refs.proofDate?.value || app.todayISO(),
+        time: this.refs.proofTime?.value || app.currentTimeHHMM(),
+        amount: app.toNumber(this.refs.proofAmount?.value || 0),
+        status: this.refs.proofStatus?.value || 'Pendente de conferência',
+        origin: this.refs.proofOrigin?.value || 'Cliente',
+        paymentMethod: this.refs.proofPaymentMethod?.value || 'Pix',
+        attachment,
+        fileName: attachment?.name || '',
+        fileType: attachment?.type || '',
+        fileDataUrl: attachment?.dataUrl || '',
+        transactionId: this.refs.proofTransactionId?.value.trim() || '',
+        note: this.refs.proofNote?.value.trim() || '',
+        markOrderPaid: Boolean(this.refs.proofMarkOrderPaid?.checked),
+        finishOrderWhenValid: Boolean(this.refs.proofFinishOrderWhenValid?.checked),
         createdAt: existing?.createdAt || now,
         updatedAt: now,
         createdBy: existing?.createdBy || this.getCurrentUser().email || 'admin@husky.com',
@@ -275,19 +319,34 @@
 
       const proof = this.buildProofPayload();
       const state = this.getState();
+
       state.proofs = app.upsertItem(state.proofs || [], proof, 'id');
       this.applyProofToSale(state, proof);
       this.writeProofLog(state, proof, isUpdate ? 'Comprovante atualizado' : 'Comprovante salvo');
+
       this.setState(state);
       this.populateOrderSelect();
       this.renderAll();
-      app.showToast(isUpdate || this.editingProofId ? 'Comprovante atualizado com sucesso.' : 'Comprovante salvo com sucesso.', 'success');
-      app.log('Comprovante salvo/atualizado.', { proofId: proof.id, orderNumber: proof.orderNumber, saleId: proof.relatedSaleId });
+
+      app.showToast(
+        isUpdate || this.editingProofId
+          ? 'Comprovante atualizado com sucesso.'
+          : 'Comprovante salvo com sucesso.',
+        'success'
+      );
+
+      app.log('Comprovante salvo/atualizado.', {
+        proofId: proof.id,
+        orderNumber: proof.orderNumber,
+        saleId: proof.relatedSaleId
+      });
+
       this.resetForm();
     },
 
     handleDeleteProof() {
-      const proof = this.findProofById(this.editingProofId || this.refs.proofId.value);
+      const proof = this.findProofById(this.editingProofId || this.refs.proofId?.value);
+
       if (!proof) {
         app.showToast('Selecione um comprovante para excluir.', 'warning');
         return;
@@ -300,16 +359,24 @@
       state.proofs = app.removeById(state.proofs || [], proof.id);
       this.removeProofFromSale(state, proof.relatedSaleId);
       this.writeProofLog(state, proof, 'Comprovante excluído');
+
       this.setState(state);
       this.populateOrderSelect();
       this.renderAll();
+
       app.showToast('Comprovante excluído com sucesso.', 'success');
-      app.log('Comprovante excluído.', { proofId: proof.id, orderNumber: proof.orderNumber, saleId: proof.relatedSaleId });
+      app.log('Comprovante excluído.', {
+        proofId: proof.id,
+        orderNumber: proof.orderNumber,
+        saleId: proof.relatedSaleId
+      });
+
       this.resetForm();
     },
 
     handleFileUpload(event) {
       const file = event.target.files?.[0];
+
       if (!file) {
         this.fileDraft = null;
         this.updateFilePreview();
@@ -319,6 +386,7 @@
       }
 
       const reader = new FileReader();
+
       reader.onload = () => {
         this.fileDraft = {
           name: file.name,
@@ -327,18 +395,23 @@
           dataUrl: reader.result,
           uploadedAt: new Date().toISOString()
         };
+
         this.updateFilePreview();
         this.updateDocumentViewer();
         this.updateLiveSummary();
         app.showToast('Arquivo do comprovante carregado com sucesso.', 'success');
       };
+
       reader.onerror = () => {
         app.showToast('Não foi possível ler o arquivo do comprovante.', 'danger');
       };
+
       reader.readAsDataURL(file);
     },
 
     updateFilePreview() {
+      if (!this.refs.proofFilePreview) return;
+
       const attachment = this.fileDraft || this.findProofById(this.editingProofId)?.attachment || null;
 
       if (!attachment) {
@@ -348,13 +421,17 @@
 
       const isImage = String(attachment.type || '').startsWith('image/');
       const sizeKb = attachment.size ? `${Math.ceil(attachment.size / 1024)} KB` : '-';
+      const transactionId =
+        this.refs.proofTransactionId?.value.trim() ||
+        this.findProofById(this.editingProofId)?.transactionId ||
+        'Não informada';
 
       this.refs.proofFilePreview.innerHTML = `
         <div class="pix-proof-card">
           <div>
             <strong>${this.escapeHtml(attachment.name || 'Comprovante')}</strong>
             <p>Tipo: ${this.escapeHtml(attachment.type || '-')} • Tamanho: ${sizeKb}</p>
-            <p>Transação: ${this.escapeHtml(this.refs.proofTransactionId.value.trim() || this.findProofById(this.editingProofId)?.transactionId || 'Não informada')}</p>
+            <p>Transação: ${this.escapeHtml(transactionId)}</p>
           </div>
           <span class="tag">${isImage ? 'Imagem' : 'Arquivo'}</span>
         </div>
@@ -362,6 +439,8 @@
     },
 
     updateDocumentViewer() {
+      if (!this.refs.proofDocumentViewer) return;
+
       const attachment = this.fileDraft || this.findProofById(this.editingProofId)?.attachment || null;
 
       if (!attachment) {
@@ -370,18 +449,30 @@
       }
 
       const isImage = String(attachment.type || '').startsWith('image/');
-      const isPdf = String(attachment.type || '').includes('pdf') || String(attachment.name || '').toLowerCase().endsWith('.pdf');
+      const isPdf =
+        String(attachment.type || '').includes('pdf') ||
+        String(attachment.name || '').toLowerCase().endsWith('.pdf');
 
       if (isImage && attachment.dataUrl) {
-        this.refs.proofDocumentViewer.innerHTML = `<img src="${attachment.dataUrl}" alt="Comprovante" style="max-width:100%; max-height:320px; border-radius:14px; border:1px solid #ead9cd;" />`;
+        this.refs.proofDocumentViewer.innerHTML = `
+          <img
+            src="${attachment.dataUrl}"
+            alt="Comprovante"
+            style="max-width:100%; max-height:320px; border-radius:14px; border:1px solid rgba(45,111,155,0.12);"
+          />
+        `;
         return;
       }
 
       if (isPdf && attachment.dataUrl) {
         this.refs.proofDocumentViewer.innerHTML = `
           <div style="display:grid; gap:12px; width:100%; text-align:center;">
-            <strong style="color:#2f211b;">${this.escapeHtml(attachment.name)}</strong>
-            <iframe src="${attachment.dataUrl}" title="Prévia do comprovante PDF" style="width:100%; min-height:320px; border:none; border-radius:14px; background:#fff;"></iframe>
+            <strong style="color:#183247;">${this.escapeHtml(attachment.name)}</strong>
+            <iframe
+              src="${attachment.dataUrl}"
+              title="Prévia do comprovante PDF"
+              style="width:100%; min-height:320px; border:none; border-radius:14px; background:#fff;"
+            ></iframe>
           </div>
         `;
         return;
@@ -389,26 +480,45 @@
 
       this.refs.proofDocumentViewer.innerHTML = `
         <div style="display:grid; gap:10px; text-align:center;">
-          <strong style="color:#2f211b;">${this.escapeHtml(attachment.name || 'Arquivo')}</strong>
+          <strong style="color:#183247;">${this.escapeHtml(attachment.name || 'Arquivo')}</strong>
           <p>Pré-visualização não disponível para este tipo de arquivo.</p>
         </div>
       `;
     },
 
     updateLiveSummary() {
-      const sale = this.findSaleById(this.refs.proofOrderNumber.value);
+      const sale = this.findSaleById(this.refs.proofOrderNumber?.value);
       const attachment = this.fileDraft || this.findProofById(this.editingProofId)?.attachment || null;
 
-      this.refs.proofSummaryOrder.textContent = sale?.orderNumber || '-';
-      this.refs.proofSummaryClient.textContent = this.refs.proofClientName.value.trim() || sale?.client?.name || '-';
-      this.refs.proofSummaryAmount.textContent = app.formatCurrency(app.toNumber(this.refs.proofAmount.value || 0));
-      this.refs.proofSummaryStatus.textContent = this.refs.proofStatus.value || 'Pendente de conferência';
-      this.refs.proofSummaryOrigin.textContent = this.refs.proofOrigin.value || 'Cliente';
+      if (this.refs.proofSummaryOrder) {
+        this.refs.proofSummaryOrder.textContent = sale?.orderNumber || '-';
+      }
+      if (this.refs.proofSummaryClient) {
+        this.refs.proofSummaryClient.textContent =
+          this.refs.proofClientName?.value.trim() || sale?.client?.name || '-';
+      }
+      if (this.refs.proofSummaryAmount) {
+        this.refs.proofSummaryAmount.textContent = app.formatCurrency(app.toNumber(this.refs.proofAmount?.value || 0));
+      }
+      if (this.refs.proofSummaryStatus) {
+        this.refs.proofSummaryStatus.textContent = this.refs.proofStatus?.value || 'Pendente de conferência';
+      }
+      if (this.refs.proofSummaryOrigin) {
+        this.refs.proofSummaryOrigin.textContent = this.refs.proofOrigin?.value || 'Cliente';
+      }
 
-      this.refs.proofOrderPaymentStatus.textContent = sale?.paymentStatus || 'Aguardando pagamento';
-      this.refs.proofOrderStatus.textContent = sale?.orderStatus || 'Pendente';
-      this.refs.proofFileStatus.textContent = attachment ? 'Enviado' : 'Não enviado';
-      this.refs.proofValidationStatus.textContent = this.refs.proofStatus.value || 'Pendente';
+      if (this.refs.proofOrderPaymentStatus) {
+        this.refs.proofOrderPaymentStatus.textContent = sale?.paymentStatus || 'Aguardando pagamento';
+      }
+      if (this.refs.proofOrderStatus) {
+        this.refs.proofOrderStatus.textContent = sale?.orderStatus || 'Pendente';
+      }
+      if (this.refs.proofFileStatus) {
+        this.refs.proofFileStatus.textContent = attachment ? 'Enviado' : 'Não enviado';
+      }
+      if (this.refs.proofValidationStatus) {
+        this.refs.proofValidationStatus.textContent = this.refs.proofStatus?.value || 'Pendente';
+      }
     },
 
     applyProofToSale(state, proof) {
@@ -417,6 +527,7 @@
       if (saleIndex < 0) return;
 
       const sale = { ...sales[saleIndex] };
+
       sale.pixProof = {
         name: proof.fileName || proof.attachment?.name || '',
         type: proof.fileType || proof.attachment?.type || '',
@@ -426,18 +537,23 @@
         transactionId: proof.transactionId || '',
         note: proof.note || ''
       };
+
       sale.pixProofNote = proof.note || '';
 
       if (proof.markOrderPaid || proof.status === 'Conferido' || proof.status === 'Vinculado') {
         sale.paymentStatus = 'Pago';
       }
 
-      if ((proof.finishOrderWhenValid && (proof.status === 'Conferido' || proof.status === 'Vinculado')) || proof.status === 'Vinculado') {
+      if (
+        (proof.finishOrderWhenValid && (proof.status === 'Conferido' || proof.status === 'Vinculado')) ||
+        proof.status === 'Vinculado'
+      ) {
         sale.orderStatus = 'Finalizado';
       }
 
       sale.updatedAt = new Date().toISOString();
       sale.updatedBy = this.getCurrentUser().email || 'admin@husky.com';
+
       sales[saleIndex] = sale;
       state.sales = sales;
     },
@@ -448,22 +564,27 @@
       if (saleIndex < 0) return;
 
       const sale = { ...sales[saleIndex] };
+
       sale.pixProof = null;
       sale.pixProofNote = '';
+
       if (sale.paymentMethod === 'Pix' && sale.orderStatus !== 'Cancelado') {
         sale.paymentStatus = 'Aguardando pagamento';
         if (sale.orderStatus === 'Finalizado') {
           sale.orderStatus = 'Pronto';
         }
       }
+
       sale.updatedAt = new Date().toISOString();
       sale.updatedBy = this.getCurrentUser().email || 'admin@husky.com';
+
       sales[saleIndex] = sale;
       state.sales = sales;
     },
 
     writeProofLog(state, proof, action) {
       const logs = state.proofLogs || [];
+
       logs.unshift({
         id: crypto.randomUUID(),
         proofId: proof.id,
@@ -473,15 +594,16 @@
         operator: this.getCurrentUser().name || 'Administrador',
         createdAt: new Date().toISOString()
       });
+
       state.proofLogs = logs.slice(0, 50);
     },
 
     applyFilters() {
-      this.filters.search = this.refs.proofsSearch.value.trim();
-      this.filters.start = this.refs.proofsFilterStart.value;
-      this.filters.end = this.refs.proofsFilterEnd.value;
-      this.filters.status = this.refs.proofsFilterStatus.value;
-      this.filters.origin = this.refs.proofsFilterOrigin.value;
+      this.filters.search = this.refs.proofsSearch?.value.trim() || '';
+      this.filters.start = this.refs.proofsFilterStart?.value || '';
+      this.filters.end = this.refs.proofsFilterEnd?.value || '';
+      this.filters.status = this.refs.proofsFilterStatus?.value || '';
+      this.filters.origin = this.refs.proofsFilterOrigin?.value || '';
       this.renderProofsTable();
     },
 
@@ -494,24 +616,39 @@
         origin: ''
       };
 
-      this.refs.proofsSearch.value = '';
-      this.refs.proofsFilterStart.value = '';
-      this.refs.proofsFilterEnd.value = '';
-      this.refs.proofsFilterStatus.value = '';
-      this.refs.proofsFilterOrigin.value = '';
+      if (this.refs.proofsSearch) this.refs.proofsSearch.value = '';
+      if (this.refs.proofsFilterStart) this.refs.proofsFilterStart.value = '';
+      if (this.refs.proofsFilterEnd) this.refs.proofsFilterEnd.value = '';
+      if (this.refs.proofsFilterStatus) this.refs.proofsFilterStatus.value = '';
+      if (this.refs.proofsFilterOrigin) this.refs.proofsFilterOrigin.value = '';
+
       this.renderProofsTable();
     },
 
     getFilteredProofs() {
-      return this.getProofs().filter((proof) => {
-        const haystack = [proof.orderNumber, proof.clientName, proof.transactionId, proof.note, proof.origin].join(' ');
-        const matchesSearch = !this.filters.search || app.includesText(haystack, this.filters.search);
-        const matchesStart = !this.filters.start || proof.date >= this.filters.start;
-        const matchesEnd = !this.filters.end || proof.date <= this.filters.end;
-        const matchesStatus = !this.filters.status || proof.status === this.filters.status;
-        const matchesOrigin = !this.filters.origin || proof.origin === this.filters.origin;
-        return matchesSearch && matchesStart && matchesEnd && matchesStatus && matchesOrigin;
-      }).sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime());
+      return this.getProofs()
+        .filter((proof) => {
+          const haystack = [
+            proof.orderNumber,
+            proof.clientName,
+            proof.transactionId,
+            proof.note,
+            proof.origin
+          ].join(' ');
+
+          const matchesSearch = !this.filters.search || app.includesText(haystack, this.filters.search);
+          const matchesStart = !this.filters.start || proof.date >= this.filters.start;
+          const matchesEnd = !this.filters.end || proof.date <= this.filters.end;
+          const matchesStatus = !this.filters.status || proof.status === this.filters.status;
+          const matchesOrigin = !this.filters.origin || proof.origin === this.filters.origin;
+
+          return matchesSearch && matchesStart && matchesEnd && matchesStatus && matchesOrigin;
+        })
+        .sort((a, b) => {
+          const dateA = new Date(`${a.date || ''}T${a.time || '00:00'}`).getTime();
+          const dateB = new Date(`${b.date || ''}T${b.time || '00:00'}`).getTime();
+          return dateB - dateA;
+        });
     },
 
     renderAll() {
@@ -528,16 +665,22 @@
     renderMetrics() {
       const proofs = this.getProofs();
       const pending = proofs.filter((proof) => proof.status === 'Pendente de conferência');
-      const missing = this.getSales().filter((sale) => sale.paymentMethod === 'Pix' && sale.orderStatus !== 'Cancelado' && !sale.pixProof?.name);
-      const finishedPix = this.getSales().filter((sale) => sale.paymentMethod === 'Pix' && sale.orderStatus === 'Finalizado');
+      const missing = this.getSales().filter(
+        (sale) => sale.paymentMethod === 'Pix' && sale.orderStatus !== 'Cancelado' && !sale.pixProof?.name
+      );
+      const finishedPix = this.getSales().filter(
+        (sale) => sale.paymentMethod === 'Pix' && sale.orderStatus === 'Finalizado'
+      );
 
-      this.refs.proofsTotalCount.textContent = String(proofs.length);
-      this.refs.proofsPendingCount.textContent = String(pending.length);
-      this.refs.proofsMissingCount.textContent = String(missing.length);
-      this.refs.proofsFinishedPixCount.textContent = String(finishedPix.length);
+      if (this.refs.proofsTotalCount) this.refs.proofsTotalCount.textContent = String(proofs.length);
+      if (this.refs.proofsPendingCount) this.refs.proofsPendingCount.textContent = String(pending.length);
+      if (this.refs.proofsMissingCount) this.refs.proofsMissingCount.textContent = String(missing.length);
+      if (this.refs.proofsFinishedPixCount) this.refs.proofsFinishedPixCount.textContent = String(finishedPix.length);
     },
 
     renderProofsTable() {
+      if (!this.refs.proofsTableBody) return;
+
       const proofs = this.getFilteredProofs();
 
       if (!proofs.length) {
@@ -557,7 +700,9 @@
           <td>
             <div class="table-action-group">
               <button type="button" class="btn btn-secondary btn-small" data-action="view-proof" data-id="${proof.id}">Ver</button>
-              <button type="button" class="btn btn-secondary btn-small" data-action="validate-proof" data-id="${proof.id}">Conferir</button>
+              <button type="button" class="btn btn-secondary btn-small" data-action="validate-proof" data-id="${proof.id}">
+                ${proof.status === 'Conferido' || proof.status === 'Vinculado' ? 'Conferido' : 'Conferir'}
+              </button>
             </div>
           </td>
         </tr>
@@ -565,13 +710,19 @@
     },
 
     renderMissingProofsTable() {
+      if (!this.refs.proofsMissingTableBody) return;
+
       const sales = this.getSales()
         .filter((sale) => sale.paymentMethod === 'Pix' && sale.orderStatus !== 'Cancelado' && !sale.pixProof?.name)
-        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime())
+        .sort((a, b) => {
+          const dateA = new Date(`${a.date || ''}T${a.time || '00:00'}`).getTime();
+          const dateB = new Date(`${b.date || ''}T${b.time || '00:00'}`).getTime();
+          return dateB - dateA;
+        })
         .slice(0, 12);
 
       if (!sales.length) {
-        this.refs.proofsMissingTableBody.innerHTML = '<tr><td colspan="5">Nenhum pedido aguardando comprovante.</td></tr>';
+        this.refs.proofsMissingTableBody.innerHTML = '<tr><td colspan="4">Nenhum pedido aguardando comprovante.</td></tr>';
         return;
       }
 
@@ -580,13 +731,14 @@
           <td>${this.escapeHtml(sale.orderNumber || '-')}</td>
           <td>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</td>
           <td>${app.formatCurrency(sale.total || 0)}</td>
-          <td>${this.escapeHtml(sale.paymentStatus || '-')}</td>
           <td><button type="button" class="btn btn-secondary btn-small" data-action="attach-proof" data-id="${sale.id}">Anexar</button></td>
         </tr>
       `).join('');
     },
 
     renderValidatedProofs() {
+      if (!this.refs.validatedProofsList) return;
+
       const proofs = this.getProofs()
         .filter((proof) => proof.status === 'Conferido' || proof.status === 'Vinculado')
         .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))
@@ -617,9 +769,15 @@
     },
 
     renderFinishedProofs() {
+      if (!this.refs.finishedProofsTableBody) return;
+
       const sales = this.getSales()
         .filter((sale) => sale.paymentMethod === 'Pix' && sale.orderStatus === 'Finalizado' && sale.pixProof?.name)
-        .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime())
+        .sort((a, b) => {
+          const dateA = new Date(`${a.date || ''}T${a.time || '00:00'}`).getTime();
+          const dateB = new Date(`${b.date || ''}T${b.time || '00:00'}`).getTime();
+          return dateB - dateA;
+        })
         .slice(0, 12);
 
       if (!sales.length) {
@@ -639,7 +797,10 @@
     },
 
     renderLogs() {
+      if (!this.refs.proofsLogList) return;
+
       const logs = (this.getState().proofLogs || []).slice(0, 4);
+
       if (!logs.length) {
         this.refs.proofsLogList.innerHTML = `
           <div class="status-row"><span>Última ação</span><strong>Nenhuma ação registrada</strong></div>
@@ -685,26 +846,30 @@
     },
 
     handleFinishedTableActions(event) {
-      const row = event.target.closest('tr');
-      if (!row) return;
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
     },
 
     prepareFormForSale(saleId) {
       const sale = this.findSaleById(saleId);
+
       if (!sale) {
         app.showToast('Pedido não encontrado.', 'danger');
         return;
       }
 
       this.resetForm(true);
-      this.refs.proofOrderNumber.value = sale.id;
+
+      if (this.refs.proofOrderNumber) this.refs.proofOrderNumber.value = sale.id;
       this.onOrderChange();
       this.updateModeTag(`Pedido ${sale.orderNumber}`);
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     loadProofIntoForm(proofId) {
       const proof = this.findProofById(proofId);
+
       if (!proof) {
         app.showToast('Comprovante não encontrado.', 'danger');
         return;
@@ -713,36 +878,41 @@
       this.editingProofId = proof.id;
       this.fileDraft = proof.attachment || null;
 
-      this.refs.proofId.value = proof.id;
-      this.refs.proofDate.value = proof.date || app.todayISO();
-      this.refs.proofTime.value = proof.time || app.currentTimeHHMM();
-      this.refs.proofStatus.value = proof.status || 'Pendente de conferência';
-      this.refs.proofOrderNumber.value = proof.relatedSaleId || '';
-      this.refs.proofClientName.value = proof.clientName || '';
-      this.refs.proofPaymentMethod.value = proof.paymentMethod || 'Pix';
-      this.refs.proofAmount.value = proof.amount || '';
-      this.refs.proofOrigin.value = proof.origin || 'Cliente';
-      this.refs.proofTransactionId.value = proof.transactionId || '';
-      this.refs.proofNote.value = proof.note || '';
-      this.refs.proofMarkOrderPaid.checked = Boolean(proof.markOrderPaid ?? true);
-      this.refs.proofFinishOrderWhenValid.checked = Boolean(proof.finishOrderWhenValid);
+      if (this.refs.proofId) this.refs.proofId.value = proof.id;
+      if (this.refs.proofDate) this.refs.proofDate.value = proof.date || app.todayISO();
+      if (this.refs.proofTime) this.refs.proofTime.value = proof.time || app.currentTimeHHMM();
+      if (this.refs.proofStatus) this.refs.proofStatus.value = proof.status || 'Pendente de conferência';
+      if (this.refs.proofOrderNumber) this.refs.proofOrderNumber.value = proof.relatedSaleId || '';
+      if (this.refs.proofClientName) this.refs.proofClientName.value = proof.clientName || '';
+      if (this.refs.proofPaymentMethod) this.refs.proofPaymentMethod.value = proof.paymentMethod || 'Pix';
+      if (this.refs.proofAmount) this.refs.proofAmount.value = proof.amount || '';
+      if (this.refs.proofOrigin) this.refs.proofOrigin.value = proof.origin || 'Cliente';
+      if (this.refs.proofTransactionId) this.refs.proofTransactionId.value = proof.transactionId || '';
+      if (this.refs.proofNote) this.refs.proofNote.value = proof.note || '';
+      if (this.refs.proofMarkOrderPaid) this.refs.proofMarkOrderPaid.checked = Boolean(proof.markOrderPaid ?? true);
+      if (this.refs.proofFinishOrderWhenValid) {
+        this.refs.proofFinishOrderWhenValid.checked = Boolean(proof.finishOrderWhenValid);
+      }
       if (this.refs.proofFile) this.refs.proofFile.value = '';
 
       this.updateModeTag(`Editando ${proof.orderNumber}`);
       this.updateFilePreview();
       this.updateDocumentViewer();
       this.updateLiveSummary();
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     quickValidateProof(proofId) {
       const proof = this.findProofById(proofId);
+
       if (!proof) {
         app.showToast('Comprovante não encontrado.', 'danger');
         return;
       }
 
       const state = this.getState();
+
       const nextProof = {
         ...proof,
         status: 'Conferido',
@@ -754,10 +924,15 @@
       state.proofs = app.upsertItem(state.proofs || [], nextProof, 'id');
       this.applyProofToSale(state, nextProof);
       this.writeProofLog(state, nextProof, 'Comprovante conferido');
+
       this.setState(state);
       this.renderAll();
+
       app.showToast('Comprovante conferido com sucesso.', 'success');
-      app.log('Comprovante conferido.', { proofId: nextProof.id, orderNumber: nextProof.orderNumber });
+      app.log('Comprovante conferido.', {
+        proofId: nextProof.id,
+        orderNumber: nextProof.orderNumber
+      });
     },
 
     findProofById(id) {
