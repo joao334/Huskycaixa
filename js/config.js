@@ -36,7 +36,7 @@
       receiptFooterMessage: 'Obrigada pela preferência.'
     },
     cloud: {
-      provider: 'firebase',
+      provider: 'supabase',
       projectName: '',
       apiKey: '',
       url: '',
@@ -61,23 +61,29 @@
   };
 
   const DEFAULT_PASSWORD = '123456';
+  const DEFAULT_AVATAR = 'assets/img/avatar-user.png';
 
   const CONFIG_PAGE = {
     refs: {},
+    editingUserId: null,
     userFilters: {
       search: '',
-      role: ''
+      role: '',
+      status: ''
     },
     draftAssets: {
       logo: null,
       mascot: null
     },
+    draftUserAvatar: null,
 
     init() {
       if (!document.getElementById('company-settings-form')) return;
       this.cacheRefs();
       this.bindEvents();
       this.loadAllForms();
+      this.populateCloudDefaultsFromEnv();
+      this.resetUserForm(true);
       this.renderUsersTable();
       this.renderStatusBlocks();
       this.renderCards();
@@ -140,10 +146,36 @@
         btnResetSettingsHero: document.getElementById('btn-reset-settings-hero'),
         btnExportBackupTop: document.getElementById('btn-export-backup-top'),
 
+        userAccountForm: document.getElementById('user-account-form'),
+        userId: document.getElementById('user-id'),
+        userAccountModeTag: document.getElementById('user-account-mode-tag'),
+        userAvatarUpload: document.getElementById('user-avatar-upload'),
+        userAvatarPreview: document.getElementById('user-avatar-preview'),
+        userName: document.getElementById('user-name'),
+        userEmail: document.getElementById('user-email'),
+        userRole: document.getElementById('user-role'),
+        userStatus: document.getElementById('user-status'),
+        userDomain: document.getElementById('user-domain'),
+        userTempPassword: document.getElementById('user-temp-password'),
+        userNotes: document.getElementById('user-notes'),
+        userCanManageUsers: document.getElementById('user-can-manage-users'),
+        userCanViewFinancial: document.getElementById('user-can-view-financial'),
+        btnSaveUserAccount: document.getElementById('btn-save-user-account'),
+        btnUpdateUserAccount: document.getElementById('btn-update-user-account'),
+        btnBlockUserAccount: document.getElementById('btn-block-user-account'),
+
         usersSearch: document.getElementById('users-search'),
         usersFilterRole: document.getElementById('users-filter-role'),
+        usersFilterStatus: document.getElementById('users-filter-status'),
+        btnFilterUsers: document.getElementById('btn-filter-users'),
         btnNewUser: document.getElementById('btn-new-user'),
         usersTableBody: document.getElementById('users-table-body'),
+
+        userSummaryName: document.getElementById('user-summary-name'),
+        userSummaryStatus: document.getElementById('user-summary-status'),
+        userSummaryRole: document.getElementById('user-summary-role'),
+        userSummaryDomain: document.getElementById('user-summary-domain'),
+        userSummaryManageUsers: document.getElementById('user-summary-manage-users'),
 
         settingsCloudStatusCard: document.getElementById('settings-cloud-status-card'),
         settingsActiveUsersCard: document.getElementById('settings-active-users-card'),
@@ -174,7 +206,8 @@
       this.refs.btnExportBackupTop?.addEventListener('click', () => this.exportBackup());
       this.refs.btnImportBackup?.addEventListener('click', () => this.importBackup());
 
-      this.refs.btnNewUser?.addEventListener('click', () => this.createUser());
+      this.refs.btnNewUser?.addEventListener('click', () => this.resetUserForm());
+      this.refs.btnFilterUsers?.addEventListener('click', () => this.applyUserFilters());
       this.refs.usersSearch?.addEventListener('input', () => {
         this.userFilters.search = this.refs.usersSearch.value.trim();
         this.renderUsersTable();
@@ -183,10 +216,31 @@
         this.userFilters.role = this.refs.usersFilterRole.value || '';
         this.renderUsersTable();
       });
+      this.refs.usersFilterStatus?.addEventListener('change', () => {
+        this.userFilters.status = this.refs.usersFilterStatus.value || '';
+        this.renderUsersTable();
+      });
+
       this.refs.usersTableBody?.addEventListener('click', (event) => this.handleUsersTableActions(event));
 
       this.refs.logoUpload?.addEventListener('change', (event) => this.readAssetFile(event, 'logo'));
       this.refs.mascotUpload?.addEventListener('change', (event) => this.readAssetFile(event, 'mascot'));
+
+      this.refs.userAvatarUpload?.addEventListener('change', (event) => this.readUserAvatar(event));
+      this.refs.btnSaveUserAccount?.addEventListener('click', () => this.saveUserAccount());
+      this.refs.btnUpdateUserAccount?.addEventListener('click', () => this.updateUserAccount());
+      this.refs.btnBlockUserAccount?.addEventListener('click', () => this.blockSelectedUser());
+
+      [
+        this.refs.userName,
+        this.refs.userStatus,
+        this.refs.userRole,
+        this.refs.userDomain,
+        this.refs.userCanManageUsers
+      ].forEach((field) => {
+        field?.addEventListener('input', () => this.renderUserSummaryFromForm());
+        field?.addEventListener('change', () => this.renderUserSummaryFromForm());
+      });
     },
 
     getState() {
@@ -202,93 +256,221 @@
       return app.getAppState().settings || this.deepClone(DEFAULT_CONFIG);
     },
 
-    getUsers() {
+    getLocalUsers() {
       const key = app.getStorageKey('auth_users');
       try {
         const raw = localStorage.getItem(key);
         const parsed = raw ? JSON.parse(raw) : [];
         return Array.isArray(parsed) ? parsed : [];
       } catch (error) {
-        console.error('[Husky Config] erro ao ler usuários', error);
+        console.error('[Husky Config] erro ao ler usuários locais', error);
         return [];
       }
     },
 
+    getUsers() {
+      const localUsers = this.getLocalUsers();
+      const stateUsers = Array.isArray(this.getState().users) ? this.getState().users : [];
+      const merged = [];
+
+      const pushNormalized = (user) => {
+        if (!user) return;
+        const normalized = this.normalizeUser(user);
+        const index = merged.findIndex(
+          (entry) =>
+            (normalized.id && entry.id === normalized.id) ||
+            (normalized.email && entry.email.toLowerCase() === normalized.email.toLowerCase())
+        );
+
+        if (index >= 0) {
+          merged[index] = {
+            ...merged[index],
+            ...normalized,
+            permissions: {
+              ...merged[index].permissions,
+              ...normalized.permissions
+            }
+          };
+        } else {
+          merged.push(normalized);
+        }
+      };
+
+      localUsers.forEach(pushNormalized);
+      stateUsers.forEach(pushNormalized);
+
+      const currentUser = this.getState().currentUser;
+      if (currentUser) pushNormalized(currentUser);
+
+      return merged.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+    },
+
     saveUsers(users) {
-      localStorage.setItem(app.getStorageKey('auth_users'), JSON.stringify(users));
+      const normalizedUsers = users.map((user) => this.normalizeUser(user));
+      localStorage.setItem(app.getStorageKey('auth_users'), JSON.stringify(normalizedUsers));
 
       const state = this.getState();
-      state.users = users.map((user) => ({
+      state.users = normalizedUsers.map((user) => ({
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
         status: user.status,
-        lastAccess: user.lastAccess || null
+        avatar: user.avatar || DEFAULT_AVATAR,
+        lastAccess: user.lastAccess || null,
+        domain: user.domain || '',
+        notes: user.notes || '',
+        permissions: {
+          canManageUsers: Boolean(user.permissions?.canManageUsers),
+          canViewFinancial: Boolean(user.permissions?.canViewFinancial)
+        }
       }));
+
+      if (state.currentUser) {
+        const match = normalizedUsers.find(
+          (user) =>
+            user.id === state.currentUser.id ||
+            String(user.email || '').toLowerCase() === String(state.currentUser.email || '').toLowerCase()
+        );
+        if (match) {
+          state.currentUser = {
+            ...state.currentUser,
+            id: match.id,
+            name: match.name,
+            email: match.email,
+            role: match.role,
+            status: match.status,
+            avatar: match.avatar || DEFAULT_AVATAR,
+            lastAccess: match.lastAccess || state.currentUser.lastAccess || null,
+            domain: match.domain || '',
+            notes: match.notes || '',
+            permissions: {
+              canManageUsers: Boolean(match.permissions?.canManageUsers),
+              canViewFinancial: Boolean(match.permissions?.canViewFinancial)
+            }
+          };
+        }
+      }
+
       this.setState(state);
+    },
+
+    normalizeUser(user) {
+      return {
+        id: user.id || crypto.randomUUID(),
+        name: String(user.name || 'Usuário').trim(),
+        email: String(user.email || '').trim().toLowerCase(),
+        role: String(user.role || 'Operacional').trim(),
+        status: String(user.status || 'Ativo').trim(),
+        avatar: user.avatar || user.avatar_url || DEFAULT_AVATAR,
+        domain: String(user.domain || '').trim(),
+        notes: String(user.notes || '').trim(),
+        passwordHash: user.passwordHash || this.simpleHash(DEFAULT_PASSWORD),
+        createdAt: user.createdAt || new Date().toISOString(),
+        updatedAt: user.updatedAt || new Date().toISOString(),
+        lastAccess: user.lastAccess || null,
+        permissions: {
+          canManageUsers: Boolean(user.permissions?.canManageUsers),
+          canViewFinancial: user.permissions?.canViewFinancial !== false
+        }
+      };
     },
 
     loadAllForms() {
       const settings = this.deepMerge(this.deepClone(DEFAULT_CONFIG), this.getSettings());
       const { company, visual, print, cloud, security, backup } = settings;
 
-      this.refs.companyName.value = company.name || '';
-      this.refs.companyTradeName.value = company.tradeName || '';
-      this.refs.companyCnpj.value = company.cnpj || '';
-      this.refs.companyPhone.value = company.phone || '';
-      this.refs.companyEmail.value = company.email || '';
-      this.refs.companyInstagram.value = company.instagram || '';
-      this.refs.companyAddress.value = company.address || '';
+      if (this.refs.companyName) this.refs.companyName.value = company.name || '';
+      if (this.refs.companyTradeName) this.refs.companyTradeName.value = company.tradeName || '';
+      if (this.refs.companyCnpj) this.refs.companyCnpj.value = company.cnpj || '';
+      if (this.refs.companyPhone) this.refs.companyPhone.value = company.phone || '';
+      if (this.refs.companyEmail) this.refs.companyEmail.value = company.email || '';
+      if (this.refs.companyInstagram) this.refs.companyInstagram.value = company.instagram || '';
+      if (this.refs.companyAddress) this.refs.companyAddress.value = company.address || '';
 
-      this.refs.themeMode.value = visual.themeMode || 'husky-default';
-      this.refs.accentStyle.value = visual.accentStyle || 'original';
-      this.refs.enablePatternBackground.checked = Boolean(visual.enablePatternBackground);
-      this.refs.showMascotDashboard.checked = Boolean(visual.showMascotDashboard);
+      if (this.refs.themeMode) this.refs.themeMode.value = visual.themeMode || 'husky-default';
+      if (this.refs.accentStyle) this.refs.accentStyle.value = visual.accentStyle || 'original';
+      if (this.refs.enablePatternBackground) this.refs.enablePatternBackground.checked = Boolean(visual.enablePatternBackground);
+      if (this.refs.showMascotDashboard) this.refs.showMascotDashboard.checked = Boolean(visual.showMascotDashboard);
       this.draftAssets.logo = visual.logo || null;
       this.draftAssets.mascot = visual.mascot || null;
 
-      this.refs.receiptType.value = print.receiptType || 'comprovante';
-      this.refs.printerSize.value = print.printerSize || '80mm';
-      this.refs.printCompanyData.checked = Boolean(print.printCompanyData);
-      this.refs.printLogo.checked = Boolean(print.printLogo);
-      this.refs.printQrcodePix.checked = Boolean(print.printQrcodePix);
-      this.refs.autoPrintAfterSale.checked = Boolean(print.autoPrintAfterSale);
-      this.refs.receiptFooterMessage.value = print.receiptFooterMessage || '';
+      if (this.refs.receiptType) this.refs.receiptType.value = print.receiptType || 'comprovante';
+      if (this.refs.printerSize) this.refs.printerSize.value = print.printerSize || '80mm';
+      if (this.refs.printCompanyData) this.refs.printCompanyData.checked = Boolean(print.printCompanyData);
+      if (this.refs.printLogo) this.refs.printLogo.checked = Boolean(print.printLogo);
+      if (this.refs.printQrcodePix) this.refs.printQrcodePix.checked = Boolean(print.printQrcodePix);
+      if (this.refs.autoPrintAfterSale) this.refs.autoPrintAfterSale.checked = Boolean(print.autoPrintAfterSale);
+      if (this.refs.receiptFooterMessage) this.refs.receiptFooterMessage.value = print.receiptFooterMessage || '';
 
-      this.refs.cloudProvider.value = cloud.provider || 'firebase';
-      this.refs.cloudProjectName.value = cloud.projectName || '';
-      this.refs.cloudApiKey.value = cloud.apiKey || '';
-      this.refs.cloudUrl.value = cloud.url || '';
-      this.refs.cloudAutoSync.checked = Boolean(cloud.autoSync);
-      this.refs.cloudOfflineCache.checked = Boolean(cloud.offlineCache);
+      if (this.refs.cloudProvider) this.refs.cloudProvider.value = cloud.provider || 'supabase';
+      if (this.refs.cloudProjectName) this.refs.cloudProjectName.value = cloud.projectName || '';
+      if (this.refs.cloudApiKey) this.refs.cloudApiKey.value = cloud.apiKey || '';
+      if (this.refs.cloudUrl) this.refs.cloudUrl.value = cloud.url || '';
+      if (this.refs.cloudAutoSync) this.refs.cloudAutoSync.checked = Boolean(cloud.autoSync);
+      if (this.refs.cloudOfflineCache) this.refs.cloudOfflineCache.checked = Boolean(cloud.offlineCache);
 
-      this.refs.sessionTimeout.value = String(security.sessionTimeout || 60);
-      this.refs.passwordPolicy.value = security.passwordPolicy || 'basic';
-      this.refs.enableLoginProtection.checked = Boolean(security.enableLoginProtection);
-      this.refs.enable2FA.checked = Boolean(security.enable2FA);
-      this.refs.rememberLastUser.checked = Boolean(security.rememberLastUser);
-      this.refs.logUserActions.checked = Boolean(security.logUserActions);
+      if (this.refs.sessionTimeout) this.refs.sessionTimeout.value = String(security.sessionTimeout || 60);
+      if (this.refs.passwordPolicy) this.refs.passwordPolicy.value = security.passwordPolicy || 'basic';
+      if (this.refs.enableLoginProtection) this.refs.enableLoginProtection.checked = Boolean(security.enableLoginProtection);
+      if (this.refs.enable2FA) this.refs.enable2FA.checked = Boolean(security.enable2FA);
+      if (this.refs.rememberLastUser) this.refs.rememberLastUser.checked = Boolean(security.rememberLastUser);
+      if (this.refs.logUserActions) this.refs.logUserActions.checked = Boolean(security.logUserActions);
 
-      this.refs.backupFrequency.value = backup.frequency || 'manual';
-      this.refs.backupLocation.value = backup.location || 'local';
+      if (this.refs.backupFrequency) this.refs.backupFrequency.value = backup.frequency || 'manual';
+      if (this.refs.backupLocation) this.refs.backupLocation.value = backup.location || 'local';
 
       app.applySettingsToUI();
       this.renderCards();
       this.renderStatusBlocks();
     },
 
+    populateCloudDefaultsFromEnv() {
+      const current = this.getSettings().cloud || {};
+      let changed = false;
+
+      if (this.refs.cloudProvider && !this.refs.cloudProvider.value) {
+        this.refs.cloudProvider.value = 'supabase';
+      }
+
+      if (window.HUSKY_SUPABASE_URL && this.refs.cloudUrl && !this.refs.cloudUrl.value) {
+        this.refs.cloudUrl.value = window.HUSKY_SUPABASE_URL;
+        changed = true;
+      }
+
+      if (window.HUSKY_SUPABASE_KEY && this.refs.cloudApiKey && !this.refs.cloudApiKey.value) {
+        this.refs.cloudApiKey.value = window.HUSKY_SUPABASE_KEY;
+        changed = true;
+      }
+
+      if (this.refs.cloudProjectName && !this.refs.cloudProjectName.value && window.HUSKY_SUPABASE_URL) {
+        try {
+          const host = new URL(window.HUSKY_SUPABASE_URL).hostname;
+          this.refs.cloudProjectName.value = host.split('.')[0] || '';
+          changed = true;
+        } catch (error) {
+          console.warn('[Husky Config] não foi possível extrair nome do projeto do Supabase.');
+        }
+      }
+
+      if (changed && !current.url && !current.apiKey) {
+        app.updateSettings(this.collectCloudSettings());
+        this.renderCards();
+        this.renderStatusBlocks();
+      }
+    },
+
     collectCompanySettings() {
       return {
         company: {
           ...this.getSettings().company,
-          name: this.refs.companyName.value.trim(),
-          tradeName: this.refs.companyTradeName.value.trim(),
-          cnpj: this.refs.companyCnpj.value.trim(),
-          phone: this.refs.companyPhone.value.trim(),
-          email: this.refs.companyEmail.value.trim(),
-          instagram: this.refs.companyInstagram.value.trim(),
-          address: this.refs.companyAddress.value.trim()
+          name: this.refs.companyName?.value.trim() || '',
+          tradeName: this.refs.companyTradeName?.value.trim() || '',
+          cnpj: this.refs.companyCnpj?.value.trim() || '',
+          phone: this.refs.companyPhone?.value.trim() || '',
+          email: this.refs.companyEmail?.value.trim() || '',
+          instagram: this.refs.companyInstagram?.value.trim() || '',
+          address: this.refs.companyAddress?.value.trim() || ''
         }
       };
     },
@@ -297,10 +479,10 @@
       return {
         visual: {
           ...this.getSettings().visual,
-          themeMode: this.refs.themeMode.value,
-          accentStyle: this.refs.accentStyle.value,
-          enablePatternBackground: Boolean(this.refs.enablePatternBackground.checked),
-          showMascotDashboard: Boolean(this.refs.showMascotDashboard.checked),
+          themeMode: this.refs.themeMode?.value || 'husky-default',
+          accentStyle: this.refs.accentStyle?.value || 'original',
+          enablePatternBackground: Boolean(this.refs.enablePatternBackground?.checked),
+          showMascotDashboard: Boolean(this.refs.showMascotDashboard?.checked),
           logo: this.draftAssets.logo || this.getSettings().visual?.logo || null,
           mascot: this.draftAssets.mascot || this.getSettings().visual?.mascot || null
         }
@@ -311,13 +493,13 @@
       return {
         print: {
           ...this.getSettings().print,
-          receiptType: this.refs.receiptType.value,
-          printerSize: this.refs.printerSize.value,
-          printCompanyData: Boolean(this.refs.printCompanyData.checked),
-          printLogo: Boolean(this.refs.printLogo.checked),
-          printQrcodePix: Boolean(this.refs.printQrcodePix.checked),
-          autoPrintAfterSale: Boolean(this.refs.autoPrintAfterSale.checked),
-          receiptFooterMessage: this.refs.receiptFooterMessage.value.trim()
+          receiptType: this.refs.receiptType?.value || 'comprovante',
+          printerSize: this.refs.printerSize?.value || '80mm',
+          printCompanyData: Boolean(this.refs.printCompanyData?.checked),
+          printLogo: Boolean(this.refs.printLogo?.checked),
+          printQrcodePix: Boolean(this.refs.printQrcodePix?.checked),
+          autoPrintAfterSale: Boolean(this.refs.autoPrintAfterSale?.checked),
+          receiptFooterMessage: this.refs.receiptFooterMessage?.value.trim() || ''
         }
       };
     },
@@ -326,12 +508,12 @@
       return {
         cloud: {
           ...this.getSettings().cloud,
-          provider: this.refs.cloudProvider.value,
-          projectName: this.refs.cloudProjectName.value.trim(),
-          apiKey: this.refs.cloudApiKey.value.trim(),
-          url: this.refs.cloudUrl.value.trim(),
-          autoSync: Boolean(this.refs.cloudAutoSync.checked),
-          offlineCache: Boolean(this.refs.cloudOfflineCache.checked),
+          provider: this.refs.cloudProvider?.value || 'supabase',
+          projectName: this.refs.cloudProjectName?.value.trim() || '',
+          apiKey: this.refs.cloudApiKey?.value.trim() || '',
+          url: this.refs.cloudUrl?.value.trim() || '',
+          autoSync: Boolean(this.refs.cloudAutoSync?.checked),
+          offlineCache: Boolean(this.refs.cloudOfflineCache?.checked),
           ...overrides
         }
       };
@@ -341,12 +523,12 @@
       return {
         security: {
           ...this.getSettings().security,
-          sessionTimeout: Number(this.refs.sessionTimeout.value || 60),
-          passwordPolicy: this.refs.passwordPolicy.value,
-          enableLoginProtection: Boolean(this.refs.enableLoginProtection.checked),
-          enable2FA: Boolean(this.refs.enable2FA.checked),
-          rememberLastUser: Boolean(this.refs.rememberLastUser.checked),
-          logUserActions: Boolean(this.refs.logUserActions.checked)
+          sessionTimeout: Number(this.refs.sessionTimeout?.value || 60),
+          passwordPolicy: this.refs.passwordPolicy?.value || 'basic',
+          enableLoginProtection: Boolean(this.refs.enableLoginProtection?.checked),
+          enable2FA: Boolean(this.refs.enable2FA?.checked),
+          rememberLastUser: Boolean(this.refs.rememberLastUser?.checked),
+          logUserActions: Boolean(this.refs.logUserActions?.checked)
         }
       };
     },
@@ -355,15 +537,14 @@
       return {
         backup: {
           ...this.getSettings().backup,
-          frequency: this.refs.backupFrequency.value,
-          location: this.refs.backupLocation.value
+          frequency: this.refs.backupFrequency?.value || 'manual',
+          location: this.refs.backupLocation?.value || 'local'
         }
       };
     },
 
     saveCompanySettings(showToast = true) {
-      const companySettings = this.collectCompanySettings();
-      app.updateSettings(companySettings);
+      app.updateSettings(this.collectCompanySettings());
       this.refreshSessionUserName();
       this.renderCards();
       this.renderStatusBlocks();
@@ -372,8 +553,7 @@
     },
 
     saveVisualSettings(showToast = true) {
-      const visualSettings = this.collectVisualSettings();
-      app.updateSettings(visualSettings);
+      app.updateSettings(this.collectVisualSettings());
       app.applySettingsToUI();
       this.renderCards();
       this.renderStatusBlocks();
@@ -382,8 +562,7 @@
     },
 
     savePrintSettings(showToast = true) {
-      const printSettings = this.collectPrintSettings();
-      app.updateSettings(printSettings);
+      app.updateSettings(this.collectPrintSettings());
       this.renderCards();
       this.renderStatusBlocks();
       if (showToast) app.showToast('Configurações de impressão salvas com sucesso.', 'success');
@@ -392,12 +571,19 @@
 
     saveCloudSettings(showToast = true) {
       const currentCloud = this.getSettings().cloud || {};
-      const cloudSettings = this.collectCloudSettings({
-        connected: Boolean(currentCloud.connected),
-        lastSyncAt: currentCloud.lastSyncAt || null
-      });
-      app.updateSettings(cloudSettings);
-      app.setCloudStatus();
+      app.updateSettings(
+        this.collectCloudSettings({
+          connected: Boolean(currentCloud.connected),
+          lastSyncAt: currentCloud.lastSyncAt || null
+        })
+      );
+
+      if (typeof app.setCloudStatus === 'function') {
+        app.setCloudStatus();
+      } else if (typeof app.refreshShell === 'function') {
+        app.refreshShell();
+      }
+
       this.renderCards();
       this.renderStatusBlocks();
       if (showToast) app.showToast('Configurações da nuvem salvas com sucesso.', 'success');
@@ -405,8 +591,7 @@
     },
 
     saveSecuritySettings(showToast = true) {
-      const securitySettings = this.collectSecuritySettings();
-      app.updateSettings(securitySettings);
+      app.updateSettings(this.collectSecuritySettings());
       this.renderCards();
       this.renderStatusBlocks();
       if (showToast) app.showToast('Configurações de segurança salvas com sucesso.', 'success');
@@ -414,8 +599,7 @@
     },
 
     saveBackupSettings(showToast = true) {
-      const backupSettings = this.collectBackupSettings();
-      app.updateSettings(backupSettings);
+      app.updateSettings(this.collectBackupSettings());
       this.renderCards();
       this.renderStatusBlocks();
       if (showToast) app.showToast('Configurações de backup salvas com sucesso.', 'success');
@@ -442,16 +626,16 @@
       this.draftAssets.logo = null;
       this.draftAssets.mascot = null;
       this.loadAllForms();
-      app.setCloudStatus();
+      if (typeof app.setCloudStatus === 'function') app.setCloudStatus();
       app.showToast('Configurações restauradas para o padrão.', 'success');
       app.log('Configurações restauradas para padrão.');
     },
 
     validateCloudFields() {
-      const provider = this.refs.cloudProvider.value;
-      const projectName = this.refs.cloudProjectName.value.trim();
-      const apiKey = this.refs.cloudApiKey.value.trim();
-      const url = this.refs.cloudUrl.value.trim();
+      const provider = this.refs.cloudProvider?.value || '';
+      const projectName = this.refs.cloudProjectName?.value.trim() || '';
+      const apiKey = this.refs.cloudApiKey?.value.trim() || '';
+      const url = this.refs.cloudUrl?.value.trim() || '';
 
       if (!provider) return { ok: false, message: 'Selecione um provedor de nuvem.' };
       if (!projectName) return { ok: false, message: 'Informe o nome do projeto da nuvem.' };
@@ -460,23 +644,52 @@
       return { ok: true };
     },
 
-    testCloudConnection() {
+    async testCloudConnection() {
       const validation = this.validateCloudFields();
       if (!validation.ok) {
         app.showToast(validation.message, 'warning');
         return;
       }
 
-      const connectedSettings = this.collectCloudSettings({
-        connected: true,
-        lastSyncAt: new Date().toISOString()
-      });
-      app.updateSettings(connectedSettings);
-      app.setCloudStatus();
+      let connected = false;
+
+      try {
+        if (
+          this.refs.cloudProvider?.value === 'supabase' &&
+          window.HuskySupabase &&
+          typeof window.HuskySupabase.auth?.getSession === 'function'
+        ) {
+          const { error } = await window.HuskySupabase.auth.getSession();
+          connected = !error;
+        } else {
+          connected = true;
+        }
+      } catch (error) {
+        connected = false;
+      }
+
+      app.updateSettings(
+        this.collectCloudSettings({
+          connected,
+          lastSyncAt: connected ? new Date().toISOString() : null
+        })
+      );
+
+      if (typeof app.setCloudStatus === 'function') {
+        app.setCloudStatus();
+      } else if (typeof app.refreshShell === 'function') {
+        app.refreshShell();
+      }
+
       this.renderCards();
       this.renderStatusBlocks();
-      app.showToast('Conexão com a nuvem validada com sucesso.', 'success');
-      app.log('Teste de conexão com nuvem realizado com sucesso.');
+
+      if (connected) {
+        app.showToast('Conexão com a nuvem validada com sucesso.', 'success');
+        app.log('Teste de conexão com nuvem realizado com sucesso.');
+      } else {
+        app.showToast('Não foi possível validar a conexão da nuvem.', 'danger');
+      }
     },
 
     exportBackup() {
@@ -518,24 +731,21 @@
           app.setAppState(mergedState);
 
           if (Array.isArray(parsed.users) && parsed.users.length) {
-            const authUsers = parsed.users.map((user) => ({
-              id: user.id || crypto.randomUUID(),
-              name: user.name || 'Usuário',
-              email: user.email || '',
-              role: user.role || 'Operacional',
-              status: user.status || 'Ativo',
-              lastAccess: user.lastAccess || null,
-              passwordHash: user.passwordHash || this.simpleHash(DEFAULT_PASSWORD),
-              createdAt: user.createdAt || new Date().toISOString()
-            }));
+            const authUsers = parsed.users.map((user) =>
+              this.normalizeUser({
+                ...user,
+                passwordHash: user.passwordHash || this.simpleHash(DEFAULT_PASSWORD)
+              })
+            );
             this.saveUsers(authUsers);
           }
 
           this.loadAllForms();
+          this.resetUserForm(true);
           this.renderUsersTable();
           this.renderCards();
           this.renderStatusBlocks();
-          app.setCloudStatus();
+          if (typeof app.setCloudStatus === 'function') app.setCloudStatus();
           app.showToast('Backup importado com sucesso.', 'success');
           app.log('Backup importado manualmente.');
         } catch (error) {
@@ -546,41 +756,283 @@
       input.click();
     },
 
-    createUser() {
-      const name = window.prompt('Nome do novo usuário:');
-      if (!name) return;
+    getUserFromForm() {
+      const id = this.refs.userId?.value || crypto.randomUUID();
+      const email = String(this.refs.userEmail?.value || '').trim().toLowerCase();
 
-      const email = window.prompt('E-mail do novo usuário:');
-      if (!email) return;
+      return this.normalizeUser({
+        id,
+        name: this.refs.userName?.value.trim() || '',
+        email,
+        role: this.refs.userRole?.value || 'Operacional',
+        status: this.refs.userStatus?.value || 'Ativo',
+        domain: this.refs.userDomain?.value.trim() || '',
+        notes: this.refs.userNotes?.value.trim() || '',
+        avatar: this.draftUserAvatar || undefined,
+        passwordHash: this.refs.userTempPassword?.value
+          ? this.simpleHash(this.refs.userTempPassword.value)
+          : undefined,
+        permissions: {
+          canManageUsers: Boolean(this.refs.userCanManageUsers?.checked),
+          canViewFinancial: Boolean(this.refs.userCanViewFinancial?.checked)
+        }
+      });
+    },
 
-      const normalizedEmail = email.trim().toLowerCase();
+    validateUserPayload(user, currentId = null) {
+      if (!user.name) {
+        app.showToast('Informe o nome do usuário.', 'warning');
+        this.refs.userName?.focus();
+        return false;
+      }
+
+      if (!user.email) {
+        app.showToast('Informe o e-mail do usuário.', 'warning');
+        this.refs.userEmail?.focus();
+        return false;
+      }
+
       const users = this.getUsers();
-      if (users.some((user) => String(user.email || '').toLowerCase() === normalizedEmail)) {
+      const duplicated = users.find(
+        (entry) =>
+          entry.id !== currentId &&
+          String(entry.email || '').toLowerCase() === String(user.email || '').toLowerCase()
+      );
+
+      if (duplicated) {
         app.showToast('Já existe um usuário com esse e-mail.', 'warning');
+        this.refs.userEmail?.focus();
+        return false;
+      }
+
+      return true;
+    },
+
+    saveUserAccount() {
+      const currentId = this.refs.userId?.value || null;
+      const user = this.getUserFromForm();
+
+      if (!this.validateUserPayload(user, currentId)) return;
+
+      const users = this.getUsers();
+
+      if (currentId && users.some((entry) => entry.id === currentId)) {
+        app.showToast('Este usuário já existe. Use o botão editar.', 'warning');
         return;
       }
 
-      const role = window.prompt('Perfil do usuário (Administrador, Caixa, Gestão ou Operacional):', 'Operacional') || 'Operacional';
-      const password = window.prompt('Senha inicial do usuário:', DEFAULT_PASSWORD) || DEFAULT_PASSWORD;
+      if (!this.refs.userTempPassword?.value.trim()) {
+        user.passwordHash = this.simpleHash(DEFAULT_PASSWORD);
+      }
 
-      const nextUser = {
-        id: crypto.randomUUID(),
-        name: name.trim(),
-        email: normalizedEmail,
-        role: role.trim(),
-        status: 'Ativo',
-        passwordHash: this.simpleHash(password),
-        createdAt: new Date().toISOString(),
-        lastAccess: null
-      };
+      user.createdAt = new Date().toISOString();
+      user.updatedAt = new Date().toISOString();
 
-      users.unshift(nextUser);
+      users.unshift(user);
       this.saveUsers(users);
       this.renderUsersTable();
       this.renderCards();
       this.renderStatusBlocks();
-      app.showToast('Usuário criado com sucesso.', 'success');
-      app.log('Usuário criado.', { email: nextUser.email, role: nextUser.role });
+      this.loadUserIntoForm(user.id);
+      app.showToast('Usuário salvo com sucesso.', 'success');
+      app.log('Usuário salvo.', { email: user.email, role: user.role });
+    },
+
+    updateUserAccount() {
+      const currentId = this.refs.userId?.value || this.editingUserId;
+      if (!currentId) {
+        app.showToast('Selecione um usuário para editar.', 'warning');
+        return;
+      }
+
+      const users = this.getUsers();
+      const index = users.findIndex((entry) => entry.id === currentId);
+
+      if (index < 0) {
+        app.showToast('Usuário não encontrado.', 'danger');
+        return;
+      }
+
+      const existing = users[index];
+      const incoming = this.getUserFromForm();
+
+      if (!this.validateUserPayload(incoming, currentId)) return;
+
+      users[index] = this.normalizeUser({
+        ...existing,
+        ...incoming,
+        avatar: this.draftUserAvatar || existing.avatar || DEFAULT_AVATAR,
+        passwordHash: this.refs.userTempPassword?.value.trim()
+          ? this.simpleHash(this.refs.userTempPassword.value)
+          : existing.passwordHash,
+        updatedAt: new Date().toISOString()
+      });
+
+      this.saveUsers(users);
+      this.renderUsersTable();
+      this.renderCards();
+      this.renderStatusBlocks();
+      this.loadUserIntoForm(currentId);
+      app.showToast('Usuário atualizado com sucesso.', 'success');
+      app.log('Usuário atualizado.', { email: users[index].email, role: users[index].role });
+    },
+
+    blockSelectedUser() {
+      const currentId = this.refs.userId?.value || this.editingUserId;
+      if (!currentId) {
+        app.showToast('Selecione um usuário para bloquear.', 'warning');
+        return;
+      }
+
+      const users = this.getUsers();
+      const index = users.findIndex((entry) => entry.id === currentId);
+
+      if (index < 0) {
+        app.showToast('Usuário não encontrado.', 'danger');
+        return;
+      }
+
+      const user = users[index];
+      const nextStatus = user.status === 'Bloqueado' ? 'Ativo' : 'Bloqueado';
+      const actionLabel = nextStatus === 'Bloqueado' ? 'bloquear' : 'reativar';
+
+      if (!app.confirmAction(`Deseja ${actionLabel} o usuário ${user.name}?`)) return;
+
+      users[index] = {
+        ...user,
+        status: nextStatus,
+        updatedAt: new Date().toISOString()
+      };
+
+      this.saveUsers(users);
+      this.renderUsersTable();
+      this.renderCards();
+      this.renderStatusBlocks();
+      this.loadUserIntoForm(currentId);
+      app.showToast(
+        nextStatus === 'Bloqueado'
+          ? 'Usuário bloqueado com sucesso.'
+          : 'Usuário reativado com sucesso.',
+        'success'
+      );
+      app.log('Status do usuário alterado.', { email: user.email, status: nextStatus });
+    },
+
+    loadUserIntoForm(userId) {
+      const user = this.getUsers().find((entry) => entry.id === userId);
+      if (!user) {
+        app.showToast('Usuário não encontrado.', 'danger');
+        return;
+      }
+
+      this.editingUserId = user.id;
+      if (this.refs.userId) this.refs.userId.value = user.id;
+      if (this.refs.userName) this.refs.userName.value = user.name || '';
+      if (this.refs.userEmail) this.refs.userEmail.value = user.email || '';
+      if (this.refs.userRole) this.refs.userRole.value = user.role || 'Operacional';
+      if (this.refs.userStatus) this.refs.userStatus.value = user.status || 'Ativo';
+      if (this.refs.userDomain) this.refs.userDomain.value = user.domain || '';
+      if (this.refs.userTempPassword) this.refs.userTempPassword.value = '';
+      if (this.refs.userNotes) this.refs.userNotes.value = user.notes || '';
+      if (this.refs.userCanManageUsers) this.refs.userCanManageUsers.checked = Boolean(user.permissions?.canManageUsers);
+      if (this.refs.userCanViewFinancial) this.refs.userCanViewFinancial.checked = Boolean(user.permissions?.canViewFinancial);
+
+      this.draftUserAvatar = user.avatar || DEFAULT_AVATAR;
+      this.renderUserAvatarPreview(this.draftUserAvatar);
+      this.renderUserSummary(user);
+      this.updateUserModeTag(`Editando ${user.name}`);
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    resetUserForm(skipScroll = false) {
+      this.editingUserId = null;
+      this.draftUserAvatar = null;
+
+      if (this.refs.userAccountForm) this.refs.userAccountForm.reset();
+
+      if (this.refs.userId) this.refs.userId.value = '';
+      if (this.refs.userRole) this.refs.userRole.value = 'Administrador';
+      if (this.refs.userStatus) this.refs.userStatus.value = 'Ativo';
+      if (this.refs.userDomain) this.refs.userDomain.value = '';
+      if (this.refs.userTempPassword) this.refs.userTempPassword.value = '';
+      if (this.refs.userCanManageUsers) this.refs.userCanManageUsers.checked = false;
+      if (this.refs.userCanViewFinancial) this.refs.userCanViewFinancial.checked = true;
+
+      this.renderUserAvatarPreview(null);
+      this.renderUserSummaryFromForm();
+      this.updateUserModeTag('Novo usuário');
+
+      if (!skipScroll) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+
+    updateUserModeTag(label) {
+      if (this.refs.userAccountModeTag) {
+        this.refs.userAccountModeTag.textContent = label;
+      }
+    },
+
+    readUserAvatar(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.draftUserAvatar = reader.result;
+        this.renderUserAvatarPreview(this.draftUserAvatar);
+        this.renderUserSummaryFromForm();
+        app.showToast('Foto de perfil carregada com sucesso.', 'success');
+      };
+      reader.onerror = () => {
+        app.showToast('Não foi possível ler a foto de perfil.', 'danger');
+      };
+      reader.readAsDataURL(file);
+    },
+
+    renderUserAvatarPreview(src) {
+      if (!this.refs.userAvatarPreview) return;
+
+      if (!src) {
+        this.refs.userAvatarPreview.innerHTML = '<p>Nenhuma foto enviada.</p>';
+        return;
+      }
+
+      this.refs.userAvatarPreview.innerHTML = `
+        <div style="display:grid; gap:12px; align-items:start;">
+          <img src="${src}" alt="Foto de perfil do usuário" style="width:100%; max-width:180px; border-radius:18px; border:1px solid rgba(47,111,159,0.12);" />
+        </div>
+      `;
+    },
+
+    renderUserSummaryFromForm() {
+      this.renderUserSummary({
+        name: this.refs.userName?.value.trim() || '-',
+        status: this.refs.userStatus?.value || 'Ativo',
+        role: this.refs.userRole?.value || 'Administrador',
+        domain: this.refs.userDomain?.value.trim() || 'Livre',
+        permissions: {
+          canManageUsers: Boolean(this.refs.userCanManageUsers?.checked)
+        }
+      });
+    },
+
+    renderUserSummary(user) {
+      if (this.refs.userSummaryName) this.refs.userSummaryName.textContent = user?.name || '-';
+      if (this.refs.userSummaryStatus) this.refs.userSummaryStatus.textContent = user?.status || 'Ativo';
+      if (this.refs.userSummaryRole) this.refs.userSummaryRole.textContent = user?.role || 'Administrador';
+      if (this.refs.userSummaryDomain) this.refs.userSummaryDomain.textContent = user?.domain || 'Livre';
+      if (this.refs.userSummaryManageUsers) {
+        this.refs.userSummaryManageUsers.textContent = user?.permissions?.canManageUsers ? 'Sim' : 'Não';
+      }
+    },
+
+    applyUserFilters() {
+      this.userFilters.search = this.refs.usersSearch?.value.trim() || '';
+      this.userFilters.role = this.refs.usersFilterRole?.value || '';
+      this.userFilters.status = this.refs.usersFilterStatus?.value || '';
+      this.renderUsersTable();
     },
 
     handleUsersTableActions(event) {
@@ -591,40 +1043,18 @@
       const action = button.dataset.action;
 
       if (action === 'edit-user') {
-        this.editUser(userId);
+        this.loadUserIntoForm(userId);
+      }
+
+      if (action === 'toggle-user') {
+        this.editingUserId = userId;
+        if (this.refs.userId) this.refs.userId.value = userId;
+        this.blockSelectedUser();
       }
 
       if (action === 'permissions-user') {
         this.showPermissions(userId);
       }
-    },
-
-    editUser(userId) {
-      const users = this.getUsers();
-      const user = users.find((entry) => entry.id === userId);
-      if (!user) {
-        app.showToast('Usuário não encontrado.', 'danger');
-        return;
-      }
-
-      const name = window.prompt('Nome do usuário:', user.name || '') || user.name;
-      const role = window.prompt('Perfil do usuário:', user.role || 'Operacional') || user.role;
-      const status = window.prompt('Status do usuário (Ativo/Inativo):', user.status || 'Ativo') || user.status;
-      const resetPassword = window.prompt('Nova senha (deixe igual para manter a atual):', '');
-
-      user.name = name.trim();
-      user.role = role.trim();
-      user.status = status.trim();
-      if (resetPassword) {
-        user.passwordHash = this.simpleHash(resetPassword);
-      }
-
-      this.saveUsers(users);
-      this.renderUsersTable();
-      this.renderCards();
-      this.renderStatusBlocks();
-      app.showToast('Usuário atualizado com sucesso.', 'success');
-      app.log('Usuário atualizado.', { email: user.email, role: user.role, status: user.status });
     },
 
     showPermissions(userId) {
@@ -634,65 +1064,107 @@
         return;
       }
 
-      const role = String(user.role || '').toLowerCase();
-      let permissionText = 'Permissões não definidas.';
+      const pieces = [];
+      pieces.push(user.permissions?.canManageUsers ? 'gerencia usuários' : 'não gerencia usuários');
+      pieces.push(user.permissions?.canViewFinancial ? 'vê financeiro' : 'não vê financeiro');
+      pieces.push(user.domain ? `domínio ${user.domain}` : 'domínio livre');
 
-      if (role.includes('administrador')) permissionText = 'Acesso total a todas as telas e configurações.';
-      if (role.includes('caixa')) permissionText = 'Acesso a vendas, comprovantes e consulta básica.';
-      if (role.includes('gest')) permissionText = 'Acesso a financeiro, relatórios, clientes e vendas.';
-      if (role.includes('operacional')) permissionText = 'Acesso a estoque, produtos e apoio operacional.';
-
-      app.showToast(`${user.name}: ${permissionText}`, 'info');
+      app.showToast(`${user.name}: ${pieces.join(' • ')}`, 'info');
     },
 
     getFilteredUsers() {
-      return this.getUsers().filter((user) => {
-        const matchesSearch = !this.userFilters.search || app.includesText([user.name, user.email, user.role].join(' '), this.userFilters.search);
-        const matchesRole = !this.userFilters.role || user.role === this.userFilters.role;
-        return matchesSearch && matchesRole;
-      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+      return this.getUsers()
+        .filter((user) => {
+          const haystack = [user.name, user.email, user.role, user.domain, user.notes].join(' ');
+          const matchesSearch = !this.userFilters.search || app.includesText(haystack, this.userFilters.search);
+          const matchesRole = !this.userFilters.role || user.role === this.userFilters.role;
+          const matchesStatus = !this.userFilters.status || user.status === this.userFilters.status;
+          return matchesSearch && matchesRole && matchesStatus;
+        })
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
     },
 
     renderUsersTable() {
       const users = this.getFilteredUsers();
+      if (!this.refs.usersTableBody) return;
+
       if (!users.length) {
-        this.refs.usersTableBody.innerHTML = '<tr><td colspan="6">Nenhum usuário encontrado.</td></tr>';
+        this.refs.usersTableBody.innerHTML = '<tr><td colspan="7">Nenhum usuário encontrado.</td></tr>';
         return;
       }
 
-      this.refs.usersTableBody.innerHTML = users.map((user) => `
-        <tr>
-          <td>${this.escapeHtml(user.name || '-')}</td>
-          <td>${this.escapeHtml(user.email || '-')}</td>
-          <td>${this.escapeHtml(user.role || '-')}</td>
-          <td>${this.escapeHtml(user.status || '-')}</td>
-          <td>${user.lastAccess ? app.formatDateTime(user.lastAccess) : '-'}</td>
-          <td>
-            <div class="table-action-group">
-              <button type="button" class="btn btn-secondary btn-small" data-action="edit-user" data-id="${user.id}">Editar</button>
-              <button type="button" class="btn btn-secondary btn-small" data-action="permissions-user" data-id="${user.id}">Permissões</button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+      this.refs.usersTableBody.innerHTML = users
+        .map((user) => `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <img src="${this.escapeHtml(user.avatar || DEFAULT_AVATAR)}" alt="${this.escapeHtml(user.name || 'Usuário')}" style="width:34px; height:34px; border-radius:12px; object-fit:cover; border:1px solid rgba(47,111,159,0.12);" />
+                <span>${this.escapeHtml(user.name || '-')}</span>
+              </div>
+            </td>
+            <td>${this.escapeHtml(user.email || '-')}</td>
+            <td>${this.escapeHtml(user.role || '-')}</td>
+            <td>${this.escapeHtml(user.status || '-')}</td>
+            <td>${this.escapeHtml(user.domain || 'Livre')}</td>
+            <td>${user.lastAccess ? app.formatDateTime(user.lastAccess) : '-'}</td>
+            <td>
+              <div class="table-action-group">
+                <button type="button" class="btn btn-secondary btn-small" data-action="edit-user" data-id="${user.id}">Editar</button>
+                <button type="button" class="btn btn-secondary btn-small" data-action="permissions-user" data-id="${user.id}">Permissões</button>
+                <button type="button" class="btn btn-secondary btn-small" data-action="toggle-user" data-id="${user.id}">
+                  ${user.status === 'Bloqueado' ? 'Reativar' : 'Bloquear'}
+                </button>
+              </div>
+            </td>
+          </tr>
+        `)
+        .join('');
     },
 
     renderCards() {
       const settings = this.getSettings();
       const users = this.getUsers();
 
-      this.refs.settingsCloudStatusCard.textContent = settings.cloud?.connected ? 'Conectada' : 'Desconectada';
-      this.refs.settingsActiveUsersCard.textContent = String(users.filter((user) => user.status === 'Ativo').length);
-      this.refs.settingsLastBackupCard.textContent = settings.backup?.lastBackupAt ? app.formatDateTime(settings.backup.lastBackupAt) : '-';
-      this.refs.settingsCurrentThemeCard.textContent = this.getThemeLabel(settings.visual?.themeMode, settings.visual?.accentStyle);
+      if (this.refs.settingsCloudStatusCard) {
+        this.refs.settingsCloudStatusCard.textContent = settings.cloud?.connected ? 'Conectada' : 'Desconectada';
+      }
+
+      if (this.refs.settingsActiveUsersCard) {
+        this.refs.settingsActiveUsersCard.textContent = String(users.filter((user) => user.status === 'Ativo').length);
+      }
+
+      if (this.refs.settingsLastBackupCard) {
+        this.refs.settingsLastBackupCard.textContent = settings.backup?.lastBackupAt
+          ? app.formatDateTime(settings.backup.lastBackupAt)
+          : '-';
+      }
+
+      if (this.refs.settingsCurrentThemeCard) {
+        this.refs.settingsCurrentThemeCard.textContent = this.getThemeLabel(
+          settings.visual?.themeMode,
+          settings.visual?.accentStyle
+        );
+      }
     },
 
     renderStatusBlocks() {
       const settings = this.getSettings();
-      this.refs.systemLoginStatus.textContent = settings.security?.enableLoginProtection ? 'Ativo' : 'Desativado';
-      this.refs.systemCloudStatus.textContent = settings.cloud?.connected ? 'Conectada' : 'Desconectada';
-      this.refs.systemBackupStatus.textContent = this.getBackupFrequencyLabel(settings.backup?.frequency);
-      this.refs.systemLogsStatus.textContent = settings.security?.logUserActions ? 'Ativos' : 'Desativados';
+
+      if (this.refs.systemLoginStatus) {
+        this.refs.systemLoginStatus.textContent = settings.security?.enableLoginProtection ? 'Ativo' : 'Desativado';
+      }
+
+      if (this.refs.systemCloudStatus) {
+        this.refs.systemCloudStatus.textContent = settings.cloud?.connected ? 'Conectada' : 'Desconectada';
+      }
+
+      if (this.refs.systemBackupStatus) {
+        this.refs.systemBackupStatus.textContent = this.getBackupFrequencyLabel(settings.backup?.frequency);
+      }
+
+      if (this.refs.systemLogsStatus) {
+        this.refs.systemLogsStatus.textContent = settings.security?.logUserActions ? 'Ativos' : 'Desativados';
+      }
     },
 
     refreshSessionUserName() {
@@ -731,7 +1203,6 @@
 
       const accentMap = {
         original: 'Original',
-        caramelo: 'Caramelo',
         bege: 'Bege cremoso',
         premium: 'Premium escuro'
       };
@@ -774,7 +1245,10 @@
         if (Array.isArray(sourceValue)) {
           output[key] = [...sourceValue];
         } else if (sourceValue && typeof sourceValue === 'object') {
-          output[key] = this.deepMerge(targetValue && typeof targetValue === 'object' ? targetValue : {}, sourceValue);
+          output[key] = this.deepMerge(
+            targetValue && typeof targetValue === 'object' ? targetValue : {},
+            sourceValue
+          );
         } else {
           output[key] = sourceValue;
         }
