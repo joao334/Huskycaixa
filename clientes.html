@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+        <button type="button" class="btn btn-danger btn-full" id="btn-logout">Sair</button>
       </div>
     </aside>
 
@@ -67,9 +67,9 @@
           </button>
 
           <div class="page-heading">
-            <span class="eyebrow">Relacionamento e histórico</span>
+            <span class="eyebrow">Relacionamento</span>
             <h1>Clientes</h1>
-            <p>Cadastre contatos, preferências, histórico de pedidos e dados para atendimento da Husky.</p>
+            <p>Cadastre, acompanhe histórico, preferências e relacionamento com os clientes da Husky.</p>
           </div>
         </div>
 
@@ -90,10 +90,10 @@
         <section class="hero-panel hero-panel-compact">
           <div class="hero-content">
             <span class="eyebrow">Base de clientes</span>
-            <h2>Organize o relacionamento da Husky</h2>
+            <h2>Organize seus clientes com histórico e preferências</h2>
             <p>
-              Registre dados de contato, endereços, preferências, aniversários, observações,
-              histórico de compras e status dos clientes para um atendimento mais completo.
+              Cadastre contatos, preferências de pagamento, observações, aniversário,
+              endereço e acompanhe relacionamento, pedidos e clientes VIP.
             </p>
           </div>
 
@@ -107,25 +107,25 @@
           <article class="metric-card">
             <span class="metric-label">Clientes cadastrados</span>
             <strong id="clients-total-count">0</strong>
-            <small>Total da base</small>
+            <small>Total na base</small>
           </article>
 
           <article class="metric-card">
             <span class="metric-label">Clientes recorrentes</span>
             <strong id="clients-recurring-count">0</strong>
-            <small>Compraram mais de uma vez</small>
+            <small>Mais de um pedido</small>
           </article>
 
           <article class="metric-card">
             <span class="metric-label">Aniversários próximos</span>
             <strong id="clients-birthday-count">0</strong>
-            <small>Oportunidade de ação</small>
+            <small>Próximos 30 dias</small>
           </article>
 
           <article class="metric-card">
             <span class="metric-label">Melhor cliente</span>
             <strong id="clients-best-customer">-</strong>
-            <small>Maior valor acumulado</small>
+            <small>Maior relacionamento</small>
           </article>
         </section>
 
@@ -134,7 +134,7 @@
             <div class="panel-header">
               <div>
                 <h3>Cadastro de cliente</h3>
-                <p>Adicione ou edite os dados do cliente.</p>
+                <p>Adicione ou edite um cliente da Husky.</p>
               </div>
               <span class="tag" id="client-mode-tag">Novo cadastro</span>
             </div>
@@ -165,6 +165,7 @@
                     <option value="WhatsApp">WhatsApp</option>
                     <option value="Indicação">Indicação</option>
                     <option value="Loja física">Loja física</option>
+                    <option value="Site">Site</option>
                     <option value="Outro">Outro</option>
                   </select>
                 </div>
@@ -177,15 +178,15 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="client-short-name">Apelido / nome curto</label>
-                  <input type="text" id="client-short-name" placeholder="Como prefere ser chamado" />
+                  <label for="client-short-name">Nome curto</label>
+                  <input type="text" id="client-short-name" placeholder="Apelido / nome curto" />
                 </div>
               </div>
 
               <div class="form-grid cols-3">
                 <div class="form-group">
                   <label for="client-phone">Telefone</label>
-                  <input type="text" id="client-phone" placeholder="(00) 00000-0000" />
+                  <input type="text" id="client-phone" placeholder="(11) 99999-9999" />
                 </div>
 
                 <div class="form-group">
@@ -199,7 +200,7 @@
                 </div>
               </div>
 
-              <div class="form-grid cols-2">
+              <div class="form-grid cols-3">
                 <div class="form-group">
                   <label for="client-instagram">Instagram</label>
                   <input type="text" id="client-instagram" placeholder="@cliente" />
@@ -209,18 +210,6 @@
                   <label for="client-cpf">CPF</label>
                   <input type="text" id="client-cpf" placeholder="000.000.000-00" />
                 </div>
-              </div>
-
-              <div class="form-group">
-                <label for="client-address">Endereço principal</label>
-                <textarea id="client-address" rows="3" placeholder="Rua, número, complemento, bairro, cidade"></textarea>
-              </div>
-
-              <div class="form-grid cols-2">
-                <div class="form-group">
-                  <label for="client-delivery-reference">Referência de entrega</label>
-                  <input type="text" id="client-delivery-reference" placeholder="Ex.: portaria, casa azul, interfone" />
-                </div>
 
                 <div class="form-group">
                   <label for="client-payment-preference">Pagamento preferido</label>
@@ -229,32 +218,42 @@
                     <option value="Dinheiro">Dinheiro</option>
                     <option value="Débito">Débito</option>
                     <option value="Crédito">Crédito</option>
-                    <option value="Indiferente">Indiferente</option>
+                    <option value="Transferência">Transferência</option>
                   </select>
                 </div>
               </div>
 
+              <div class="form-group">
+                <label for="client-address">Endereço</label>
+                <input type="text" id="client-address" placeholder="Rua, número, bairro, cidade" />
+              </div>
+
               <div class="form-grid cols-2">
                 <div class="form-group">
-                  <label for="client-favorite-product">Produto favorito</label>
-                  <input type="text" id="client-favorite-product" placeholder="Ex.: brownie, prestígio, bolo de pote" />
+                  <label for="client-delivery-reference">Referência de entrega</label>
+                  <input type="text" id="client-delivery-reference" placeholder="Ex.: portaria, bloco, casa da esquina" />
                 </div>
 
                 <div class="form-group">
-                  <label for="client-tags">Tags / classificação</label>
-                  <input type="text" id="client-tags" placeholder="Ex.: recorrente, festa, corporativo" />
+                  <label for="client-favorite-product">Produto favorito</label>
+                  <input type="text" id="client-favorite-product" placeholder="Ex.: Uivo de Prestígio" />
                 </div>
               </div>
 
               <div class="form-group">
+                <label for="client-tags">Tags</label>
+                <input type="text" id="client-tags" placeholder="Ex.: vip, recorrente, festa, indicação" />
+              </div>
+
+              <div class="form-group">
                 <label for="client-notes">Observações</label>
-                <textarea id="client-notes" rows="4" placeholder="Preferências, restrições, observações importantes"></textarea>
+                <textarea id="client-notes" rows="4" placeholder="Observações importantes do cliente"></textarea>
               </div>
 
               <div class="form-grid cols-2">
                 <label class="checkbox-field checkbox-card">
                   <input type="checkbox" id="client-receive-offers" checked />
-                  <span>Aceita receber ofertas e novidades</span>
+                  <span>Recebe ofertas e campanhas</span>
                 </label>
 
                 <label class="checkbox-field checkbox-card">
@@ -276,7 +275,7 @@
               <div class="panel-header">
                 <div>
                   <h3>Resumo do cliente</h3>
-                  <p>Visão rápida do cadastro em edição.</p>
+                  <p>Visualização rápida do cadastro atual.</p>
                 </div>
               </div>
 
@@ -290,11 +289,11 @@
                   <strong id="client-summary-origin">Instagram</strong>
                 </div>
                 <div class="summary-line">
-                  <span>Pagamento preferido</span>
+                  <span>Pagamento</span>
                   <strong id="client-summary-payment">Pix</strong>
                 </div>
                 <div class="summary-line total-line">
-                  <span>Tipo de atendimento</span>
+                  <span>Prioridade</span>
                   <strong id="client-summary-priority">Padrão</strong>
                 </div>
                 <div class="summary-line">
@@ -308,7 +307,7 @@
               <div class="panel-header">
                 <div>
                   <h3>Status rápido</h3>
-                  <p>Dados complementares do cliente.</p>
+                  <p>Informações principais do cadastro.</p>
                 </div>
               </div>
 
@@ -335,25 +334,25 @@
             <article class="panel clientes-history-panel">
               <div class="panel-header">
                 <div>
-                  <h3>Histórico rápido</h3>
-                  <p>Resumo de compras do cliente selecionado.</p>
+                  <h3>Histórico resumido</h3>
+                  <p>Resumo do relacionamento com a Husky.</p>
                 </div>
               </div>
 
-              <div class="status-list">
-                <div class="status-row">
-                  <span>Total de pedidos</span>
+              <div class="sale-summary-box">
+                <div class="summary-line">
+                  <span>Pedidos</span>
                   <strong id="client-orders-count">0</strong>
                 </div>
-                <div class="status-row">
-                  <span>Valor acumulado</span>
+                <div class="summary-line">
+                  <span>Total gasto</span>
                   <strong id="client-total-spent">R$ 0,00</strong>
                 </div>
-                <div class="status-row">
-                  <span>Última compra</span>
+                <div class="summary-line">
+                  <span>Último pedido</span>
                   <strong id="client-last-order">-</strong>
                 </div>
-                <div class="status-row">
+                <div class="summary-line total-line">
                   <span>Ticket médio</span>
                   <strong id="client-average-ticket">R$ 0,00</strong>
                 </div>
@@ -366,12 +365,12 @@
           <div class="panel-header">
             <div>
               <h3>Lista de clientes</h3>
-              <p>Pesquise, filtre e encontre rapidamente seus contatos.</p>
+              <p>Busque, filtre e selecione clientes cadastrados.</p>
             </div>
           </div>
 
           <div class="toolbar-grid clientes-filter-grid">
-            <input type="text" id="clients-search" placeholder="Buscar por nome, telefone, e-mail, CPF ou Instagram" />
+            <input type="text" id="clients-search" placeholder="Buscar por nome, telefone, e-mail, origem ou tag" />
             <select id="clients-filter-status">
               <option value="">Todos os status</option>
               <option value="Ativo">Ativo</option>
@@ -385,6 +384,7 @@
               <option value="WhatsApp">WhatsApp</option>
               <option value="Indicação">Indicação</option>
               <option value="Loja física">Loja física</option>
+              <option value="Site">Site</option>
               <option value="Outro">Outro</option>
             </select>
             <select id="clients-filter-profile">
@@ -413,18 +413,7 @@
               </thead>
               <tbody id="clients-table-body">
                 <tr>
-                  <td>Cliente exemplo</td>
-                  <td>(00) 00000-0000</td>
-                  <td>Instagram</td>
-                  <td>Ativo</td>
-                  <td>--/--/----</td>
-                  <td>R$ 0,00</td>
-                  <td>
-                    <div class="table-action-group">
-                      <button type="button" class="btn btn-secondary btn-small">Editar</button>
-                      <button type="button" class="btn btn-secondary btn-small">Ver</button>
-                    </div>
-                  </td>
+                  <td colspan="7">Nenhum cliente encontrado.</td>
                 </tr>
               </tbody>
             </table>
@@ -435,10 +424,57 @@
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Histórico de pedidos do cliente</h3>
-                <p>Pedidos vinculados ao cliente selecionado.</p>
+                <h3>Clientes em destaque</h3>
+                <p>Melhores clientes da base.</p>
               </div>
-              <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
+            </div>
+
+            <div class="pix-proof-preview-list" id="featured-clients-list">
+              <div class="pix-proof-card">
+                <div>
+                  <strong>Nenhum cliente em destaque</strong>
+                  <p>Os clientes com maior relacionamento aparecerão aqui.</p>
+                </div>
+                <span class="tag">-</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Aniversários</h3>
+                <p>Clientes para campanhas e relacionamento.</p>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Aniversário</th>
+                    <th>Contato</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="clients-birthday-table-body">
+                  <tr>
+                    <td colspan="4">Nenhum aniversário cadastrado.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Pedidos do cliente</h3>
+                <p>Histórico do cliente selecionado.</p>
+              </div>
             </div>
 
             <div class="table-wrapper">
@@ -454,11 +490,7 @@
                 </thead>
                 <tbody id="client-orders-table-body">
                   <tr>
-                    <td>#0001</td>
-                    <td>--/--/----</td>
-                    <td>Pix</td>
-                    <td>Finalizado</td>
-                    <td>R$ 0,00</td>
+                    <td colspan="5">Nenhum cliente selecionado.</td>
                   </tr>
                 </tbody>
               </table>
@@ -468,65 +500,14 @@
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Clientes em destaque</h3>
-                <p>Lista rápida para relacionamento.</p>
-              </div>
-            </div>
-
-            <div class="report-list" id="featured-clients-list">
-              <div class="pix-proof-card">
-                <div>
-                  <strong>Cliente recorrente</strong>
-                  <p>Exemplo de destaque por recorrência.</p>
-                </div>
-                <span class="tag">VIP</span>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section class="content-grid two-columns">
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Aniversários próximos</h3>
-                <p>Oportunidades para ações e campanhas.</p>
-              </div>
-            </div>
-
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>Data</th>
-                    <th>Contato</th>
-                    <th>Ação</th>
-                  </tr>
-                </thead>
-                <tbody id="clients-birthday-table-body">
-                  <tr>
-                    <td>Cliente exemplo</td>
-                    <td>--/--/----</td>
-                    <td>(00) 00000-0000</td>
-                    <td><button type="button" class="btn btn-secondary btn-small">Marcar</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Preferências e observações</h3>
-                <p>Resumo rápido do cliente selecionado.</p>
+                <h3>Detalhes do cliente</h3>
+                <p>Informações adicionais do cliente selecionado.</p>
               </div>
             </div>
 
             <div class="status-list">
               <div class="status-row">
-                <span>Endereço principal</span>
+                <span>Endereço</span>
                 <strong id="client-selected-address">-</strong>
               </div>
               <div class="status-row">
@@ -534,7 +515,7 @@
                 <strong id="client-selected-reference">-</strong>
               </div>
               <div class="status-row">
-                <span>Preferência de pagamento</span>
+                <span>Pagamento preferido</span>
                 <strong id="client-selected-payment">-</strong>
               </div>
               <div class="status-row">
@@ -548,8 +529,10 @@
     </div>
   </div>
 
-  <script src="js/auth.js"></script>
-  <script src="js/clientes.js"></script>
   <script src="js/app.js"></script>
+  <script type="module" src="js/firebase-init.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cloud-sync.js"></script>
+  <script src="js/clientes.js"></script>
 </body>
 </html>
