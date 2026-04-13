@@ -1,10 +1,10 @@
 @media (max-width: 1440px) {
   .login-page-layout {
-    grid-template-columns: 1fr 0.92fr;
+    grid-template-columns: 1fr 0.95fr;
   }
 
   .hero-panel {
-    grid-template-columns: 1fr 0.82fr;
+    grid-template-columns: 1fr 0.88fr;
   }
 
   .cards-grid.metrics-grid,
@@ -22,7 +22,7 @@
   .despesas-main-grid,
   .clientes-main-grid,
   .comprovantes-main-grid {
-    grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
+    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
   }
 }
 
@@ -31,36 +31,39 @@
     --sidebar-width: 260px;
   }
 
-  .app-shell {
-    grid-template-columns: var(--sidebar-width) 1fr;
-  }
-
   .content-area {
-    padding: 20px 20px 40px;
+    padding: 20px 18px 36px;
   }
 
   .topbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 14px;
   }
 
   .topbar-left,
   .topbar-right {
-    justify-content: space-between;
     width: 100%;
+    justify-content: space-between;
     flex-wrap: wrap;
   }
 
-  .date-filter-bar,
-  .topbar-actions,
+  .hero-panel,
+  .hero-panel-compact {
+    grid-template-columns: 1fr;
+  }
+
   .hero-actions,
+  .topbar-actions,
   .section-actions,
   .form-actions,
-  .summary-action-list {
+  .summary-action-list,
+  .date-filter-bar {
     grid-auto-flow: row;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .toolbar-grid,
   .report-filter-grid,
   .sales-filter-grid,
   .products-filter-grid,
@@ -70,10 +73,6 @@
   .clientes-filter-grid,
   .comprovantes-filter-grid,
   .users-toolbar-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .form-grid.cols-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -93,89 +92,11 @@
   .despesas-side-column,
   .clientes-side-column,
   .comprovantes-side-column {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-  }
-
-  .login-brand-card,
-  .login-form-card {
-    min-height: auto;
-  }
-
-  .login-brand-mascot img {
-    width: min(240px, 100%);
-  }
-}
-
-@media (max-width: 1080px) {
-  .login-page-wrapper {
-    padding: 18px;
-  }
-
-  .login-page-layout {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .login-brand-card,
-  .login-form-card {
-    min-height: auto;
-  }
-
-  .login-brand-card {
-    gap: 18px;
-  }
-
-  .login-brand-mascot {
-    justify-content: center;
-  }
-
-  .login-feature-list {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-panel,
-  .hero-panel-compact {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-mascot {
-    justify-content: center;
-    align-items: center;
-  }
-
-  .page-heading h1,
-  .page-heading h2 {
-    font-size: 28px;
-  }
-
-  .report-filter-grid,
-  .sales-filter-grid,
-  .products-filter-grid,
-  .estoque-filter-grid,
-  .estoque-history-filter-grid,
-  .despesas-filter-grid,
-  .clientes-filter-grid,
-  .comprovantes-filter-grid,
-  .users-toolbar-grid,
-  .toolbar-grid.report-filter-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .sale-item-row {
-    grid-template-columns: 1.7fr 0.9fr 1fr 1fr auto;
-  }
-
-  .summary-cards {
     grid-template-columns: 1fr 1fr;
   }
-
-  .catalog-mini-card {
-    grid-template-columns: 80px 1fr;
-  }
 }
 
-@media (max-width: 920px) {
+@media (max-width: 992px) {
   :root {
     --topbar-height: auto;
   }
@@ -186,22 +107,17 @@
 
   .sidebar {
     position: fixed;
-    left: 0;
-    top: 0;
-    width: min(88vw, 320px);
+    inset: 0 auto 0 0;
+    width: min(86vw, 320px);
     height: 100vh;
-    transform: translateX(-102%);
+    transform: translateX(-105%);
     transition: transform 0.28s ease;
     z-index: 120;
+    padding: 20px 14px;
   }
 
   .sidebar.is-open {
     transform: translateX(0);
-  }
-
-  .content-area {
-    width: 100%;
-    padding: 18px 16px 34px;
   }
 
   .mobile-menu-btn {
@@ -210,12 +126,15 @@
     justify-content: center;
   }
 
-  .topbar-left {
-    align-items: flex-start;
+  .content-area {
+    width: 100%;
+    padding: 16px 14px 30px;
   }
 
+  .topbar-left,
   .topbar-right {
     align-items: stretch;
+    gap: 12px;
   }
 
   .sync-badge {
@@ -223,28 +142,18 @@
     justify-content: center;
   }
 
-  .topbar-actions,
-  .hero-actions,
-  .section-actions,
-  .form-actions,
-  .summary-action-list,
-  .date-filter-bar {
-    grid-template-columns: 1fr 1fr;
-    width: 100%;
-  }
-
   .cards-grid.metrics-grid,
   .metrics-grid-secondary,
   .quick-links-grid,
   .summary-cards,
+  .login-status-boxes,
+  .content-grid.two-columns,
   .sales-side-column,
   .products-side-column,
   .estoque-side-column,
   .despesas-side-column,
   .clientes-side-column,
-  .comprovantes-side-column,
-  .content-grid.two-columns,
-  .login-status-boxes {
+  .comprovantes-side-column {
     grid-template-columns: 1fr;
   }
 
@@ -255,10 +164,69 @@
     border-radius: 22px;
   }
 
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(159, 199, 227, 0.14), transparent 34%),
+      linear-gradient(180deg, #fcfaf7 0%, #f5ede4 100%);
+  }
+
+  .login-page-wrapper {
+    padding: 10px;
+    align-items: stretch;
+  }
+
+  .login-page-layout {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .login-brand-side {
+    display: none;
+  }
+
+  .login-form-side {
+    width: 100%;
+  }
+
+  .login-form-card {
+    min-height: calc(100vh - 20px);
+    justify-content: center;
+    padding: 22px 16px;
+    gap: 14px;
+    border-radius: 20px;
+  }
+
+  .login-form-header {
+    text-align: left;
+  }
+
+  .login-form-header h2 {
+    font-size: 24px;
+    margin-top: 10px;
+  }
+
+  .login-form-header p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .login-inline-actions,
+  .form-row.two-columns,
   .form-grid.cols-2,
   .form-grid.cols-3,
   .form-grid.cols-4,
-  .form-row.two-columns,
   .toolbar-grid,
   .report-filter-grid,
   .sales-filter-grid,
@@ -268,22 +236,195 @@
   .despesas-filter-grid,
   .clientes-filter-grid,
   .comprovantes-filter-grid,
-  .users-toolbar-grid {
-    grid-template-columns: 1fr 1fr;
+  .users-toolbar-grid,
+  .hero-actions,
+  .topbar-actions,
+  .section-actions,
+  .form-actions,
+  .summary-action-list,
+  .date-filter-bar {
+    grid-template-columns: 1fr;
   }
 
-  .sale-item-row-header {
+  .app-pattern {
+    opacity: 0.03;
+  }
+
+  .content-area {
+    padding: 12px 10px 26px;
+  }
+
+  .topbar {
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+
+  .topbar-left {
+    gap: 10px;
+  }
+
+  .page-heading {
+    width: 100%;
+  }
+
+  .page-heading h1,
+  .page-heading h2 {
+    font-size: 24px;
+    margin-top: 10px;
+    line-height: 1.1;
+  }
+
+  .page-heading p {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 100%;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    padding: 7px 11px;
+  }
+
+  .hero-panel {
+    padding: 18px 14px;
+    gap: 14px;
+  }
+
+  .hero-panel .hero-content p {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .hero-mascot,
+  .login-brand-mascot {
     display: none;
+  }
+
+  .metric-card {
+    min-height: auto;
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .metric-card strong {
+    font-size: 22px;
+  }
+
+  .metric-label {
+    font-size: 11px;
+  }
+
+  .panel {
+    padding: 16px 14px;
+    border-radius: 18px;
+  }
+
+  .panel-header,
+  .panel-subsection-header,
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .panel-header h3,
+  .panel-subsection-header h4 {
+    font-size: 17px;
+  }
+
+  .panel-header p,
+  .panel-subsection-header p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .panel-subsection {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .summary-line,
+  .status-row,
+  .pix-proof-card {
+    padding: 13px 14px;
+    border-radius: 14px;
+  }
+
+  .summary-line,
+  .status-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .summary-line strong,
+  .status-row strong {
+    font-size: 15px;
+  }
+
+  .btn,
+  .sync-badge,
+  .mobile-menu-btn,
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .toolbar-grid input,
+  .toolbar-grid select,
+  .date-filter-bar input {
+    min-height: 48px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0 14px;
+    font-size: 14px;
+    border-radius: 13px;
+  }
+
+  .btn-small {
+    width: 100%;
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .topbar-actions .btn,
+  .hero-actions .btn,
+  .section-actions .btn,
+  .form-actions .btn,
+  .summary-action-list .btn,
+  .table-action-group .btn {
+    width: 100%;
+  }
+
+  .form-group label {
+    font-size: 12px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 13px 14px;
+    border-radius: 13px;
+    font-size: 14px;
+  }
+
+  .checkbox-card {
+    min-height: auto;
+    padding: 12px 14px;
   }
 
   .sale-item-row {
     grid-template-columns: 1fr;
     gap: 10px;
-    padding: 14px;
-    background: rgba(255, 255, 255, 0.74);
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.72);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 14px;
     margin-bottom: 10px;
+  }
+
+  .sale-item-row-header {
+    display: none;
   }
 
   .sale-item-total-cell,
@@ -297,146 +438,57 @@
     padding-top: 0;
   }
 
-  .table-wrapper {
+  .quick-link-card,
+  .catalog-mini-card,
+  .product-preview-card,
+  .summary-card,
+  .status-box {
     border-radius: 16px;
   }
 
-  table {
-    min-width: 640px;
-  }
-}
-
-@media (max-width: 720px) {
-  .login-page-wrapper {
-    padding: 12px;
+  .quick-link-card,
+  .summary-card,
+  .status-box,
+  .catalog-mini-card {
+    padding: 14px;
   }
 
-  .login-brand-card {
-    padding: 18px 16px;
-    gap: 14px;
+  .quick-link-card h4,
+  .product-preview-card h4,
+  .catalog-mini-content h4 {
+    font-size: 15px;
   }
 
-  .login-form-card {
-    padding: 20px 16px;
-    gap: 14px;
-  }
-
-  .login-brand-content h1,
-  .hero-content h2 {
-    font-size: 28px;
-  }
-
-  .page-heading h1,
-  .page-heading h2 {
-    font-size: 24px;
-  }
-
-  .page-heading p,
-  .hero-content p,
-  .login-brand-content p,
-  .login-form-header p,
-  .panel-header p {
-    font-size: 14px;
-  }
-
-  .topbar {
-    margin-bottom: 18px;
-  }
-
-  .topbar-left,
-  .topbar-right {
-    gap: 12px;
-  }
-
-  .hero-panel,
-  .panel {
-    padding: 18px;
-  }
-
-  .metric-card {
-    min-height: auto;
-    padding: 18px;
-  }
-
-  .metric-card strong {
-    font-size: 26px;
-  }
-
-  .topbar-actions,
-  .hero-actions,
-  .section-actions,
-  .form-actions,
-  .summary-action-list,
-  .date-filter-bar,
-  .form-grid.cols-2,
-  .form-grid.cols-3,
-  .form-grid.cols-4,
-  .form-row.two-columns,
-  .toolbar-grid,
-  .report-filter-grid,
-  .sales-filter-grid,
-  .products-filter-grid,
-  .estoque-filter-grid,
-  .estoque-history-filter-grid,
-  .despesas-filter-grid,
-  .clientes-filter-grid,
-  .comprovantes-filter-grid,
-  .users-toolbar-grid,
-  .login-inline-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .btn,
-  .sync-badge,
-  .mobile-menu-btn,
-  .nav-item,
-  .form-group input,
-  .form-group select,
-  .form-group textarea,
-  .toolbar-grid input,
-  .toolbar-grid select,
-  .date-filter-bar input {
-    min-height: 46px;
-  }
-
-  .hero-actions .btn,
-  .topbar-actions .btn,
-  .section-actions .btn,
-  .form-actions .btn,
-  .summary-action-list .btn,
-  .topbar-actions a.btn,
-  .hero-actions a.btn,
-  .section-actions a.btn {
-    width: 100%;
+  .quick-link-card p,
+  .catalog-mini-content p,
+  .product-preview-content p,
+  .pix-proof-card p {
+    font-size: 13px;
+    line-height: 1.5;
   }
 
   .catalog-mini-card {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .catalog-mini-image {
-    min-height: 140px;
+    min-height: 120px;
   }
 
-  .pix-proof-card {
-    flex-direction: column;
-    align-items: flex-start;
+  .product-preview-image {
+    aspect-ratio: 16 / 11;
   }
 
-  .status-row,
-  .summary-line {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .summary-line strong,
-  .status-row strong {
-    font-size: 15px;
+  .product-preview-content {
+    padding: 14px;
+    gap: 8px;
   }
 
   .product-preview-footer {
     flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
   }
 
   .receipt-preview,
@@ -444,166 +496,11 @@
     padding: 14px;
   }
 
-  .receipt-header {
-    align-items: flex-start;
-  }
-
-  table {
-    min-width: 560px;
-  }
-}
-
-@media (max-width: 560px) {
-  body {
-    background:
-      radial-gradient(circle at top left, rgba(159, 199, 227, 0.18), transparent 36%),
-      linear-gradient(180deg, #fcfaf7 0%, #f5ede4 100%);
-  }
-
-  .content-area {
-    padding: 12px 12px 28px;
-  }
-
-  .login-page-wrapper {
-    padding: 10px;
-  }
-
-  .login-brand-side {
-    display: none;
-  }
-
-  .login-page-layout {
-    width: 100%;
-    max-width: 520px;
-  }
-
-  .login-form-card,
-  .hero-panel,
-  .panel,
-  .metric-card,
-  .quick-link-card,
-  .summary-card,
-  .product-preview-card,
-  .pix-proof-card,
-  .catalog-mini-card,
-  .status-box {
-    border-radius: 18px;
-  }
-
-  .login-form-card,
-  .hero-panel,
-  .panel {
-    padding: 16px;
-  }
-
-  .brand-logo {
-    width: 50px;
-    height: 50px;
-  }
-
-  .operator-avatar {
-    width: 40px;
-    height: 40px;
-  }
-
-  .brand-text strong {
-    font-size: 16px;
-  }
-
-  .eyebrow {
-    font-size: 11px;
-    padding: 7px 12px;
-  }
-
-  .login-form-header h2,
-  .login-brand-content h1,
-  .hero-content h2 {
-    font-size: 24px;
-  }
-
-  .page-heading h1,
-  .page-heading h2 {
-    font-size: 22px;
-  }
-
-  .page-heading p,
-  .hero-content p,
-  .login-brand-content p,
-  .login-form-header p,
-  .panel-header p,
-  .quick-link-card p,
-  .summary-line span,
-  .status-row span,
-  .status-row strong,
-  .summary-line strong,
-  .pix-proof-card p,
-  .alert-list li,
-  tbody td {
-    font-size: 13px;
-  }
-
-  .metric-card strong {
-    font-size: 22px;
-  }
-
-  .panel-header,
-  .panel-subsection-header,
-  .section-header,
-  .topbar-left,
-  .topbar-right {
-    gap: 10px;
-  }
-
-  .sync-badge {
-    font-size: 12px;
-    padding: 0 12px;
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  table {
-    min-width: 520px;
-  }
-
-  thead th,
-  tbody td {
-    padding: 10px 10px;
-  }
-
-  .btn {
-    padding: 0 14px;
-    font-size: 14px;
-  }
-
-  .btn-small {
-    width: 100%;
-  }
-
-  .table-action-group {
-    grid-auto-flow: row;
-    grid-template-columns: 1fr;
-    width: 100%;
-  }
-
-  .summary-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .login-status-boxes {
-    grid-template-columns: 1fr;
-  }
-
-  .status-box {
-    padding: 14px;
-  }
-
   .receipt-header,
   .print-receipt-template header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
 
   .receipt-logo,
@@ -611,22 +508,47 @@
     width: 44px;
     height: 44px;
   }
+
+  .tag {
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .table-wrapper {
+    border-radius: 14px;
+  }
+
+  table {
+    min-width: 600px;
+  }
+
+  thead th,
+  tbody td {
+    padding: 10px 10px;
+    font-size: 12px;
+  }
+
+  .table-action-group {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
 }
 
-@media (max-width: 420px) {
-  .sidebar {
-    width: min(92vw, 310px);
-    padding: 20px 14px;
-  }
-
+@media (max-width: 560px) {
   .content-area {
-    padding: 10px 10px 24px;
+    padding: 10px 8px 22px;
   }
 
-  .login-form-card,
-  .hero-panel,
-  .panel {
-    padding: 14px;
+  .sidebar {
+    width: min(90vw, 300px);
+    padding: 18px 12px;
+  }
+
+  .sidebar-top,
+  .sidebar-bottom {
+    gap: 14px;
   }
 
   .brand-box {
@@ -634,18 +556,129 @@
   }
 
   .brand-logo {
-    width: 46px;
-    height: 46px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
   }
 
-  .eyebrow {
-    font-size: 10px;
+  .brand-text strong {
+    font-size: 16px;
   }
 
-  .login-form-header h2,
-  .login-brand-content h1,
-  .hero-content h2 {
+  .brand-text span {
+    font-size: 12px;
+  }
+
+  .operator-box,
+  .cloud-box {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .operator-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .nav-item {
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+
+  .topbar {
+    gap: 8px;
+  }
+
+  .page-heading h1,
+  .page-heading h2 {
     font-size: 22px;
+  }
+
+  .page-heading p {
+    font-size: 12px;
+  }
+
+  .hero-panel,
+  .panel,
+  .login-form-card {
+    padding: 14px 12px;
+  }
+
+  .metric-card {
+    padding: 14px;
+  }
+
+  .metric-card strong {
+    font-size: 20px;
+  }
+
+  .panel-header h3,
+  .panel-subsection-header h4 {
+    font-size: 16px;
+  }
+
+  .panel-header p,
+  .panel-subsection-header p,
+  .summary-line span,
+  .status-row span,
+  .status-row strong,
+  .summary-line strong,
+  .alert-list li,
+  tbody td {
+    font-size: 12px;
+  }
+
+  .sync-badge {
+    font-size: 12px;
+    padding: 0 12px;
+    border-radius: 14px;
+  }
+
+  .btn {
+    font-size: 13px;
+    min-height: 46px;
+  }
+
+  .mobile-menu-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 14px;
+  }
+
+  .status-list,
+  .alert-list,
+  .report-list,
+  .pix-proof-preview-list {
+    gap: 10px;
+  }
+
+  .pix-proof-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  table {
+    min-width: 520px;
+  }
+}
+
+@media (max-width: 420px) {
+  .content-area {
+    padding: 8px 7px 18px;
+  }
+
+  .sidebar {
+    width: min(92vw, 290px);
+    padding: 16px 10px;
   }
 
   .page-heading h1,
@@ -654,7 +687,33 @@
   }
 
   .metric-card strong {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  .panel,
+  .hero-panel,
+  .login-form-card {
+    border-radius: 16px;
+    padding: 12px 10px;
+  }
+
+  .summary-line,
+  .status-row,
+  .pix-proof-card,
+  .quick-link-card,
+  .summary-card,
+  .status-box {
+    border-radius: 12px;
+  }
+
+  .btn {
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  .eyebrow {
+    font-size: 9px;
+    padding: 6px 10px;
   }
 
   table {
