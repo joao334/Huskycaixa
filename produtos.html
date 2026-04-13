@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tela de produtos do sistema da Husky Confeitaria" />
+  <title>Husky Confeitaria | Produtos</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="app-page-body">
+  <div class="app-pattern" aria-hidden="true">
+    <img src="assets/img/pattern-husky.svg" alt="" />
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <a href="home.html" class="brand-box">
+          <img src="assets/img/logo-husky.png" alt="Logo da Husky Confeitaria" class="brand-logo" />
+          <div class="brand-text">
+            <strong>Husky Confeitaria</strong>
+            <span>Sistema Empresarial</span>
+          </div>
+        </a>
+
+        <div class="operator-box">
+          <img src="assets/img/avatar-user.png" alt="Usuário logado" class="operator-avatar" />
+          <div class="operator-info">
+            <strong id="logged-user-name">Administrador</strong>
+            <span id="logged-user-role">Gestão / Caixa</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a href="home.html" class="nav-item">Início</a>
+        <a href="vendas.html" class="nav-item">Vendas</a>
+        <a href="produtos.html" class="nav-item active">Produtos</a>
+        <a href="estoque.html" class="nav-item">Estoque</a>
+        <a href="despesas.html" class="nav-item">Despesas</a>
+        <a href="relatorios.html" class="nav-item">Relatórios</a>
+        <a href="clientes.html" class="nav-item">Clientes</a>
+        <a href="comprovantes.html" class="nav-item">Comprovantes</a>
+        <a href="configuracoes.html" class="nav-item">Configurações</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="cloud-box">
+          <span class="cloud-dot"></span>
+          <div>
+            <strong>Nuvem</strong>
+            <small id="sidebar-cloud-status">Pronto para sincronização</small>
+          </div>
+        </div>
+
+        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span class="eyebrow">Cadastro e catálogo</span>
+            <h1>Produtos</h1>
+            <p>Cadastre, edite e organize os produtos da Husky com custo, preço, imagem e status.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-badge">
+            <span class="status-indicator"></span>
+            <span id="topbar-sync-status">Sincronização online preparada</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" id="btn-new-product-top" class="btn btn-primary">Novo produto</button>
+            <a href="estoque.html" class="btn btn-secondary">Ir para estoque</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="hero-panel hero-panel-compact">
+          <div class="hero-content">
+            <span class="eyebrow">Gestão do catálogo</span>
+            <h2>Organize todos os produtos da Husky</h2>
+            <p>
+              Cadastre doces, combos, encomendas e itens sazonais com preço, custo, estoque inicial,
+              categoria, status, foto e descrição detalhada.
+            </p>
+          </div>
+
+          <div class="hero-actions">
+            <button type="button" id="btn-new-product-hero" class="btn btn-primary">Criar produto</button>
+            <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
+          </div>
+        </section>
+
+        <section class="cards-grid metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Produtos ativos</span>
+            <strong id="products-active-count">0</strong>
+            <small>Disponíveis para venda</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Categorias</span>
+            <strong id="products-category-count">0</strong>
+            <small>Organização do catálogo</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Estoque baixo</span>
+            <strong id="products-low-stock-count">0</strong>
+            <small>Itens abaixo do mínimo</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Maior margem</span>
+            <strong id="products-best-margin">R$ 0,00</strong>
+            <small>Produto mais rentável</small>
+          </article>
+        </section>
+
+        <section class="content-grid products-main-grid">
+          <article class="panel products-form-panel">
+            <div class="panel-header">
+              <div>
+                <h3>Cadastro de produto</h3>
+                <p>Adicione ou edite um item do catálogo.</p>
+              </div>
+              <span class="tag" id="product-mode-tag">Novo cadastro</span>
+            </div>
+
+            <form id="product-form" class="form">
+              <input type="hidden" id="product-id" />
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="product-code">Código interno</label>
+                  <input type="text" id="product-code" placeholder="Gerado automaticamente" readonly />
+                </div>
+
+                <div class="form-group">
+                  <label for="product-status">Status</label>
+                  <select id="product-status">
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
+                    <option value="Sazonal">Sazonal</option>
+                    <option value="Esgotado">Esgotado</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="product-category">Categoria</label>
+                  <select id="product-category">
+                    <option value="">Selecione</option>
+                    <option value="Brigadeiro">Brigadeiro</option>
+                    <option value="Bolo">Bolo</option>
+                    <option value="Brownie">Brownie</option>
+                    <option value="Combo">Combo</option>
+                    <option value="Encomenda">Encomenda</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="product-name">Nome do produto</label>
+                  <input type="text" id="product-name" placeholder="Ex.: Uivo de Prestígio" />
+                </div>
+
+                <div class="form-group">
+                  <label for="product-short-name">Nome curto / etiqueta</label>
+                  <input type="text" id="product-short-name" placeholder="Ex.: Prestígio" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-4">
+                <div class="form-group">
+                  <label for="product-sale-price">Preço de venda</label>
+                  <input type="number" id="product-sale-price" placeholder="0,00" />
+                </div>
+
+                <div class="form-group">
+                  <label for="product-cost-price">Custo unitário</label>
+                  <input type="number" id="product-cost-price" placeholder="0,00" />
+                </div>
+
+                <div class="form-group">
+                  <label for="product-stock">Estoque inicial</label>
+                  <input type="number" id="product-stock" placeholder="0" />
+                </div>
+
+                <div class="form-group">
+                  <label for="product-min-stock">Estoque mínimo</label>
+                  <input type="number" id="product-min-stock" placeholder="0" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="product-unit">Unidade</label>
+                  <select id="product-unit">
+                    <option value="un">Unidade</option>
+                    <option value="kg">Quilo</option>
+                    <option value="g">Grama</option>
+                    <option value="cx">Caixa</option>
+                    <option value="kit">Kit</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="product-sku">SKU / código de barras</label>
+                  <input type="text" id="product-sku" placeholder="SKU opcional" />
+                </div>
+
+                <div class="form-group">
+                  <label for="product-production-time">Tempo de produção</label>
+                  <input type="text" id="product-production-time" placeholder="Ex.: 1 dia" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="product-description">Descrição completa</label>
+                <textarea id="product-description" rows="5" placeholder="Descreva o produto, ingredientes, observações ou detalhes da encomenda"></textarea>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="product-image">Imagem do produto</label>
+                  <input type="file" id="product-image" accept="image/*" />
+                </div>
+
+                <div class="form-group">
+                  <label for="product-tags">Tags / palavras-chave</label>
+                  <input type="text" id="product-tags" placeholder="Ex.: chocolate, premium, festa" />
+                </div>
+              </div>
+
+              <div class="upload-preview-box" id="product-image-preview">
+                <p>Nenhuma imagem enviada.</p>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="product-featured" />
+                  <span>Destacar produto no catálogo</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="product-allow-sale" checked />
+                  <span>Permitir venda no sistema</span>
+                </label>
+              </div>
+
+              <div class="form-actions sticky-form-actions">
+                <button type="button" id="btn-save-product" class="btn btn-primary">Salvar produto</button>
+                <button type="button" id="btn-update-product" class="btn btn-secondary">Editar produto</button>
+                <button type="button" id="btn-duplicate-product" class="btn btn-secondary">Duplicar</button>
+                <button type="button" id="btn-delete-product" class="btn btn-danger">Excluir</button>
+              </div>
+            </form>
+          </article>
+
+          <aside class="products-side-column">
+            <article class="panel products-summary-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Resumo do produto</h3>
+                  <p>Indicadores automáticos do item.</p>
+                </div>
+              </div>
+
+              <div class="sale-summary-box">
+                <div class="summary-line">
+                  <span>Preço de venda</span>
+                  <strong id="product-summary-price">R$ 0,00</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Custo unitário</span>
+                  <strong id="product-summary-cost">R$ 0,00</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Lucro unitário</span>
+                  <strong id="product-summary-profit">R$ 0,00</strong>
+                </div>
+                <div class="summary-line total-line">
+                  <span>Margem estimada</span>
+                  <strong id="product-summary-margin">0%</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Estoque atual</span>
+                  <strong id="product-summary-stock">0</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel products-preview-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Prévia do card</h3>
+                  <p>Como o produto poderá aparecer no sistema.</p>
+                </div>
+              </div>
+
+              <div class="product-preview-card" id="product-preview-card">
+                <div class="product-preview-image">
+                  <img src="assets/img/logo-husky.png" alt="Prévia do produto" id="product-preview-image" />
+                </div>
+                <div class="product-preview-content">
+                  <span class="tag" id="product-preview-category">Categoria</span>
+                  <h4 id="product-preview-name">Nome do produto</h4>
+                  <p id="product-preview-description">Descrição resumida do produto.</p>
+                  <div class="product-preview-footer">
+                    <strong id="product-preview-price">R$ 0,00</strong>
+                    <span id="product-preview-status">Ativo</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel products-status-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Status rápido</h3>
+                  <p>Resumo operacional do item em edição.</p>
+                </div>
+              </div>
+
+              <div class="status-list">
+                <div class="status-row">
+                  <span>Status</span>
+                  <strong id="product-status-summary">Ativo</strong>
+                </div>
+                <div class="status-row">
+                  <span>Categoria</span>
+                  <strong id="product-category-summary">-</strong>
+                </div>
+                <div class="status-row">
+                  <span>Venda liberada</span>
+                  <strong id="product-sale-summary">Sim</strong>
+                </div>
+                <div class="status-row">
+                  <span>Destaque</span>
+                  <strong id="product-featured-summary">Não</strong>
+                </div>
+              </div>
+            </article>
+          </aside>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Lista de produtos</h3>
+              <p>Pesquise, filtre e edite os itens cadastrados.</p>
+            </div>
+          </div>
+
+          <div class="toolbar-grid products-filter-grid">
+            <input type="text" id="products-search" placeholder="Buscar por nome, código, SKU ou tag" />
+            <select id="products-filter-category">
+              <option value="">Todas as categorias</option>
+              <option value="Brigadeiro">Brigadeiro</option>
+              <option value="Bolo">Bolo</option>
+              <option value="Brownie">Brownie</option>
+              <option value="Combo">Combo</option>
+              <option value="Encomenda">Encomenda</option>
+              <option value="Outro">Outro</option>
+            </select>
+            <select id="products-filter-status">
+              <option value="">Todos os status</option>
+              <option value="Ativo">Ativo</option>
+              <option value="Inativo">Inativo</option>
+              <option value="Sazonal">Sazonal</option>
+              <option value="Esgotado">Esgotado</option>
+            </select>
+            <select id="products-filter-stock">
+              <option value="">Todos os estoques</option>
+              <option value="ok">Estoque normal</option>
+              <option value="low">Estoque baixo</option>
+              <option value="zero">Sem estoque</option>
+            </select>
+            <button type="button" id="btn-filter-products" class="btn btn-secondary">Filtrar</button>
+            <button type="button" id="btn-clear-products-filter" class="btn btn-secondary">Limpar</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Código</th>
+                  <th>Categoria</th>
+                  <th>Preço</th>
+                  <th>Custo</th>
+                  <th>Estoque</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="products-table-body">
+                <tr>
+                  <td>Uivo de Prestígio</td>
+                  <td>PRD-0001</td>
+                  <td>Brigadeiro</td>
+                  <td>R$ 0,00</td>
+                  <td>R$ 0,00</td>
+                  <td>0</td>
+                  <td>Ativo</td>
+                  <td>
+                    <div class="table-action-group">
+                      <button type="button" class="btn btn-secondary btn-small">Editar</button>
+                      <button type="button" class="btn btn-secondary btn-small">Ver</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Produtos em destaque</h3>
+                <p>Itens marcados como destaque no sistema.</p>
+              </div>
+            </div>
+
+            <div class="catalog-mini-grid" id="featured-products-grid">
+              <article class="catalog-mini-card">
+                <div class="catalog-mini-image">
+                  <img src="assets/img/logo-husky.png" alt="Produto em destaque" />
+                </div>
+                <div class="catalog-mini-content">
+                  <h4>Produto destaque</h4>
+                  <p>Prévia do card destacado.</p>
+                  <strong>R$ 0,00</strong>
+                </div>
+              </article>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Produtos com estoque baixo</h3>
+                <p>Itens que precisam de reposição.</p>
+              </div>
+              <a href="estoque.html" class="btn btn-secondary">Abrir estoque</a>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Atual</th>
+                    <th>Mínimo</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="low-stock-products-table">
+                  <tr>
+                    <td>Produto exemplo</td>
+                    <td>0</td>
+                    <td>5</td>
+                    <td>Baixo</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/produtos.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

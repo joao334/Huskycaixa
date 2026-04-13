@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tela de comprovantes do sistema da Husky Confeitaria" />
+  <title>Husky Confeitaria | Comprovantes</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="app-page-body">
+  <div class="app-pattern" aria-hidden="true">
+    <img src="assets/img/pattern-husky.svg" alt="" />
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <a href="home.html" class="brand-box">
+          <img src="assets/img/logo-husky.png" alt="Logo da Husky Confeitaria" class="brand-logo" />
+          <div class="brand-text">
+            <strong>Husky Confeitaria</strong>
+            <span>Sistema Empresarial</span>
+          </div>
+        </a>
+
+        <div class="operator-box">
+          <img src="assets/img/avatar-user.png" alt="Usuário logado" class="operator-avatar" />
+          <div class="operator-info">
+            <strong id="logged-user-name">Administrador</strong>
+            <span id="logged-user-role">Gestão / Caixa</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a href="home.html" class="nav-item">Início</a>
+        <a href="vendas.html" class="nav-item">Vendas</a>
+        <a href="produtos.html" class="nav-item">Produtos</a>
+        <a href="estoque.html" class="nav-item">Estoque</a>
+        <a href="despesas.html" class="nav-item">Despesas</a>
+        <a href="relatorios.html" class="nav-item">Relatórios</a>
+        <a href="clientes.html" class="nav-item">Clientes</a>
+        <a href="comprovantes.html" class="nav-item active">Comprovantes</a>
+        <a href="configuracoes.html" class="nav-item">Configurações</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="cloud-box">
+          <span class="cloud-dot"></span>
+          <div>
+            <strong>Nuvem</strong>
+            <small id="sidebar-cloud-status">Pronto para sincronização</small>
+          </div>
+        </div>
+
+        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span class="eyebrow">Conferência e anexos</span>
+            <h1>Comprovantes</h1>
+            <p>Suba, visualize e vincule comprovantes Pix aos pedidos da Husky.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-badge">
+            <span class="status-indicator"></span>
+            <span id="topbar-sync-status">Sincronização online preparada</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" id="btn-new-proof-top" class="btn btn-primary">Novo comprovante</button>
+            <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="hero-panel hero-panel-compact">
+          <div class="hero-content">
+            <span class="eyebrow">Pix e finalização</span>
+            <h2>Central de comprovantes da Husky</h2>
+            <p>
+              Faça upload de imagem ou PDF, vincule ao pedido, marque conferência,
+              visualize o histórico e acompanhe quais vendas ainda precisam de comprovante.
+            </p>
+          </div>
+
+          <div class="hero-actions">
+            <button type="button" id="btn-new-proof-hero" class="btn btn-primary">Enviar comprovante</button>
+            <a href="vendas.html" class="btn btn-secondary">Pedidos Pix</a>
+          </div>
+        </section>
+
+        <section class="cards-grid metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Comprovantes enviados</span>
+            <strong id="proofs-total-count">0</strong>
+            <small>Total registrado</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Pendentes de conferência</span>
+            <strong id="proofs-pending-count">0</strong>
+            <small>Aguardando validação</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Pedidos sem comprovante</span>
+            <strong id="proofs-missing-count">0</strong>
+            <small>Precisam de anexo</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Finalizados com Pix</span>
+            <strong id="proofs-finished-pix-count">0</strong>
+            <small>Pedidos encerrados</small>
+          </article>
+        </section>
+
+        <section class="content-grid comprovantes-main-grid">
+          <article class="panel comprovantes-form-panel">
+            <div class="panel-header">
+              <div>
+                <h3>Upload de comprovante</h3>
+                <p>Envie e vincule o comprovante ao pedido correto.</p>
+              </div>
+              <span class="tag" id="proof-mode-tag">Novo envio</span>
+            </div>
+
+            <form id="proof-form" class="form">
+              <input type="hidden" id="proof-id" />
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="proof-date">Data</label>
+                  <input type="date" id="proof-date" />
+                </div>
+
+                <div class="form-group">
+                  <label for="proof-time">Horário</label>
+                  <input type="time" id="proof-time" />
+                </div>
+
+                <div class="form-group">
+                  <label for="proof-status">Status</label>
+                  <select id="proof-status">
+                    <option value="Pendente de conferência">Pendente de conferência</option>
+                    <option value="Conferido">Conferido</option>
+                    <option value="Recusado">Recusado</option>
+                    <option value="Vinculado">Vinculado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="proof-order-number">Número do pedido</label>
+                  <select id="proof-order-number">
+                    <option value="">Selecione o pedido</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="proof-client-name">Cliente</label>
+                  <input type="text" id="proof-client-name" placeholder="Preenchido automaticamente ou manual" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="proof-payment-method">Forma de pagamento</label>
+                  <select id="proof-payment-method">
+                    <option value="Pix">Pix</option>
+                    <option value="Transferência">Transferência</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="proof-amount">Valor do comprovante</label>
+                  <input type="number" id="proof-amount" placeholder="0,00" />
+                </div>
+
+                <div class="form-group">
+                  <label for="proof-origin">Origem</label>
+                  <select id="proof-origin">
+                    <option value="Cliente">Cliente</option>
+                    <option value="Interno">Interno</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Instagram">Instagram</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="proof-file">Arquivo do comprovante</label>
+                  <input type="file" id="proof-file" accept="image/*,.pdf" />
+                </div>
+
+                <div class="form-group">
+                  <label for="proof-transaction-id">ID da transação</label>
+                  <input type="text" id="proof-transaction-id" placeholder="Código ou identificação da transação" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="proof-note">Observação</label>
+                <textarea id="proof-note" rows="4" placeholder="Ex.: enviado pelo cliente às 14:32, aguardando conferência"></textarea>
+              </div>
+
+              <div class="upload-preview-box proof-preview-box" id="proof-file-preview">
+                <p>Nenhum comprovante anexado.</p>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="proof-mark-order-paid" checked />
+                  <span>Marcar pedido como pago ao vincular</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="proof-finish-order-when-valid" />
+                  <span>Finalizar pedido automaticamente quando conferido</span>
+                </label>
+              </div>
+
+              <div class="form-actions sticky-form-actions">
+                <button type="button" id="btn-save-proof" class="btn btn-primary">Salvar comprovante</button>
+                <button type="button" id="btn-update-proof" class="btn btn-secondary">Editar comprovante</button>
+                <button type="button" id="btn-delete-proof" class="btn btn-danger">Excluir comprovante</button>
+              </div>
+            </form>
+          </article>
+
+          <aside class="comprovantes-side-column">
+            <article class="panel comprovantes-summary-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Resumo do comprovante</h3>
+                  <p>Dados rápidos do envio atual.</p>
+                </div>
+              </div>
+
+              <div class="sale-summary-box">
+                <div class="summary-line">
+                  <span>Pedido</span>
+                  <strong id="proof-summary-order">-</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Cliente</span>
+                  <strong id="proof-summary-client">-</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Valor</span>
+                  <strong id="proof-summary-amount">R$ 0,00</strong>
+                </div>
+                <div class="summary-line total-line">
+                  <span>Status</span>
+                  <strong id="proof-summary-status">Pendente de conferência</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Origem</span>
+                  <strong id="proof-summary-origin">Cliente</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel comprovantes-status-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Status rápido</h3>
+                  <p>Situação do pedido vinculado.</p>
+                </div>
+              </div>
+
+              <div class="status-list">
+                <div class="status-row">
+                  <span>Pagamento</span>
+                  <strong id="proof-order-payment-status">Aguardando pagamento</strong>
+                </div>
+                <div class="status-row">
+                  <span>Pedido</span>
+                  <strong id="proof-order-status">Pendente</strong>
+                </div>
+                <div class="status-row">
+                  <span>Arquivo</span>
+                  <strong id="proof-file-status">Não enviado</strong>
+                </div>
+                <div class="status-row">
+                  <span>Conferência</span>
+                  <strong id="proof-validation-status">Pendente</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel comprovantes-viewer-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Pré-visualização</h3>
+                  <p>Visualização do arquivo anexado.</p>
+                </div>
+              </div>
+
+              <div class="document-viewer-box" id="proof-document-viewer">
+                <p>Nenhum documento selecionado.</p>
+              </div>
+            </article>
+          </aside>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Lista de comprovantes</h3>
+              <p>Pesquise, filtre e valide os anexos enviados.</p>
+            </div>
+          </div>
+
+          <div class="toolbar-grid comprovantes-filter-grid">
+            <input type="text" id="proofs-search" placeholder="Buscar por pedido, cliente, transação ou observação" />
+            <input type="date" id="proofs-filter-start" />
+            <input type="date" id="proofs-filter-end" />
+            <select id="proofs-filter-status">
+              <option value="">Todos os status</option>
+              <option value="Pendente de conferência">Pendente de conferência</option>
+              <option value="Conferido">Conferido</option>
+              <option value="Recusado">Recusado</option>
+              <option value="Vinculado">Vinculado</option>
+            </select>
+            <select id="proofs-filter-origin">
+              <option value="">Todas as origens</option>
+              <option value="Cliente">Cliente</option>
+              <option value="Interno">Interno</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Instagram">Instagram</option>
+            </select>
+            <button type="button" id="btn-filter-proofs" class="btn btn-secondary">Filtrar</button>
+            <button type="button" id="btn-clear-proofs-filter" class="btn btn-secondary">Limpar</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Cliente</th>
+                  <th>Data</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th>Origem</th>
+                  <th>Arquivo</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="proofs-table-body">
+                <tr>
+                  <td>#0001</td>
+                  <td>Cliente exemplo</td>
+                  <td>--/--/----</td>
+                  <td>R$ 0,00</td>
+                  <td>Pendente de conferência</td>
+                  <td>Cliente</td>
+                  <td>Não</td>
+                  <td>
+                    <div class="table-action-group">
+                      <button type="button" class="btn btn-secondary btn-small">Ver</button>
+                      <button type="button" class="btn btn-secondary btn-small">Conferir</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Pedidos aguardando comprovante</h3>
+                <p>Vendas em Pix que ainda não receberam arquivo.</p>
+              </div>
+              <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="proofs-missing-table-body">
+                  <tr>
+                    <td>#0002</td>
+                    <td>Cliente exemplo</td>
+                    <td>R$ 0,00</td>
+                    <td>Aguardando pagamento</td>
+                    <td><button type="button" class="btn btn-secondary btn-small">Anexar</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Comprovantes conferidos recentemente</h3>
+                <p>Últimos anexos já validados.</p>
+              </div>
+            </div>
+
+            <div class="pix-proof-preview-list" id="validated-proofs-list">
+              <div class="pix-proof-card">
+                <div>
+                  <strong>Pedido #0003</strong>
+                  <p>Cliente exemplo • Conferido</p>
+                </div>
+                <span class="tag">OK</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Pedidos finalizados com comprovante</h3>
+                <p>Histórico pronto para consulta.</p>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Data</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="finished-proofs-table-body">
+                  <tr>
+                    <td>#0004</td>
+                    <td>Cliente exemplo</td>
+                    <td>--/--/----</td>
+                    <td>R$ 0,00</td>
+                    <td>Finalizado</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Logs de conferência</h3>
+                <p>Últimas ações realizadas nos comprovantes.</p>
+              </div>
+            </div>
+
+            <div class="status-list" id="proofs-log-list">
+              <div class="status-row">
+                <span>Última ação</span>
+                <strong>Nenhuma ação registrada</strong>
+              </div>
+              <div class="status-row">
+                <span>Última conferência</span>
+                <strong>-</strong>
+              </div>
+              <div class="status-row">
+                <span>Último pedido vinculado</span>
+                <strong>-</strong>
+              </div>
+              <div class="status-row">
+                <span>Operador</span>
+                <strong>Administrador</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/comprovantes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

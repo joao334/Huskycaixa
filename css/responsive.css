@@ -1,0 +1,666 @@
+@media (max-width: 1440px) {
+  .login-page-layout {
+    grid-template-columns: 1fr 0.92fr;
+  }
+
+  .hero-panel {
+    grid-template-columns: 1fr 0.78fr;
+  }
+
+  .cards-grid.metrics-grid,
+  .metrics-grid-secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-links-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sales-main-grid,
+  .products-main-grid,
+  .estoque-main-grid,
+  .despesas-main-grid,
+  .clientes-main-grid,
+  .comprovantes-main-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  }
+}
+
+@media (max-width: 1280px) {
+  :root {
+    --sidebar-width: 260px;
+  }
+
+  .app-shell {
+    grid-template-columns: var(--sidebar-width) 1fr;
+  }
+
+  .content-area {
+    padding: 20px 20px 40px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .date-filter-bar,
+  .topbar-actions,
+  .hero-actions,
+  .section-actions,
+  .form-actions,
+  .summary-action-list {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .report-filter-grid,
+  .sales-filter-grid,
+  .products-filter-grid,
+  .estoque-filter-grid,
+  .estoque-history-filter-grid,
+  .despesas-filter-grid,
+  .clientes-filter-grid,
+  .comprovantes-filter-grid,
+  .users-toolbar-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .form-grid.cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sales-main-grid,
+  .products-main-grid,
+  .estoque-main-grid,
+  .despesas-main-grid,
+  .clientes-main-grid,
+  .comprovantes-main-grid,
+  .content-grid.two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-side-column,
+  .products-side-column,
+  .estoque-side-column,
+  .despesas-side-column,
+  .clientes-side-column,
+  .comprovantes-side-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .login-brand-card,
+  .login-form-card {
+    min-height: 640px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .login-page-wrapper {
+    padding: 22px;
+  }
+
+  .login-page-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand-card,
+  .login-form-card {
+    min-height: auto;
+  }
+
+  .login-brand-card {
+    gap: 20px;
+  }
+
+  .login-brand-mascot {
+    justify-content: center;
+  }
+
+  .hero-panel,
+  .hero-panel-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-mascot {
+    justify-content: center;
+    align-items: center;
+  }
+
+  .page-heading h1,
+  .page-heading h2 {
+    font-size: 28px;
+  }
+
+  .report-filter-grid,
+  .sales-filter-grid,
+  .products-filter-grid,
+  .estoque-filter-grid,
+  .estoque-history-filter-grid,
+  .despesas-filter-grid,
+  .clientes-filter-grid,
+  .comprovantes-filter-grid,
+  .users-toolbar-grid,
+  .toolbar-grid.report-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sale-item-row {
+    grid-template-columns: 1.7fr 0.9fr 1fr 1fr auto;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .catalog-mini-card {
+    grid-template-columns: 80px 1fr;
+  }
+}
+
+@media (max-width: 920px) {
+  :root {
+    --topbar-height: auto;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: min(88vw, 320px);
+    height: 100vh;
+    transform: translateX(-102%);
+    transition: transform 0.28s ease;
+    z-index: 120;
+  }
+
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .content-area {
+    width: 100%;
+    padding: 18px 16px 34px;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .topbar-left {
+    align-items: flex-start;
+  }
+
+  .topbar-right {
+    align-items: stretch;
+  }
+
+  .sync-badge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .topbar-actions,
+  .hero-actions,
+  .section-actions,
+  .form-actions,
+  .summary-action-list,
+  .date-filter-bar {
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .cards-grid.metrics-grid,
+  .metrics-grid-secondary,
+  .quick-links-grid,
+  .summary-cards,
+  .sales-side-column,
+  .products-side-column,
+  .estoque-side-column,
+  .despesas-side-column,
+  .clientes-side-column,
+  .comprovantes-side-column,
+  .content-grid.two-columns,
+  .login-status-boxes {
+    grid-template-columns: 1fr;
+  }
+
+  .panel,
+  .hero-panel,
+  .login-brand-card,
+  .login-form-card {
+    border-radius: 22px;
+  }
+
+  .form-grid.cols-2,
+  .form-grid.cols-3,
+  .form-grid.cols-4,
+  .form-row.two-columns,
+  .toolbar-grid,
+  .report-filter-grid,
+  .sales-filter-grid,
+  .products-filter-grid,
+  .estoque-filter-grid,
+  .estoque-history-filter-grid,
+  .despesas-filter-grid,
+  .clientes-filter-grid,
+  .comprovantes-filter-grid,
+  .users-toolbar-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sale-item-row-header {
+    display: none;
+  }
+
+  .sale-item-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 10px;
+  }
+
+  .sale-item-total-cell,
+  .sale-item-action-cell {
+    min-height: auto;
+  }
+
+  .sticky-form-actions {
+    position: static;
+    background: transparent;
+    padding-top: 0;
+  }
+
+  .table-wrapper {
+    border-radius: 16px;
+  }
+
+  table {
+    min-width: 640px;
+  }
+}
+
+@media (max-width: 720px) {
+  .login-page-wrapper {
+    padding: 14px;
+  }
+
+  .login-brand-card,
+  .login-form-card {
+    padding: 22px 18px;
+  }
+
+  .login-brand-content h1,
+  .hero-content h2 {
+    font-size: 30px;
+  }
+
+  .page-heading h1,
+  .page-heading h2 {
+    font-size: 24px;
+  }
+
+  .page-heading p,
+  .hero-content p,
+  .login-brand-content p,
+  .login-form-header p,
+  .panel-header p {
+    font-size: 14px;
+  }
+
+  .topbar {
+    margin-bottom: 18px;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    gap: 12px;
+  }
+
+  .hero-panel,
+  .panel {
+    padding: 18px;
+  }
+
+  .metric-card {
+    min-height: auto;
+    padding: 18px;
+  }
+
+  .metric-card strong {
+    font-size: 26px;
+  }
+
+  .topbar-actions,
+  .hero-actions,
+  .section-actions,
+  .form-actions,
+  .summary-action-list,
+  .date-filter-bar,
+  .form-grid.cols-2,
+  .form-grid.cols-3,
+  .form-grid.cols-4,
+  .form-row.two-columns,
+  .toolbar-grid,
+  .report-filter-grid,
+  .sales-filter-grid,
+  .products-filter-grid,
+  .estoque-filter-grid,
+  .estoque-history-filter-grid,
+  .despesas-filter-grid,
+  .clientes-filter-grid,
+  .comprovantes-filter-grid,
+  .users-toolbar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn,
+  .sync-badge,
+  .mobile-menu-btn,
+  .nav-item,
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .toolbar-grid input,
+  .toolbar-grid select,
+  .date-filter-bar input {
+    min-height: 46px;
+  }
+
+  .hero-actions .btn,
+  .topbar-actions .btn,
+  .section-actions .btn,
+  .form-actions .btn,
+  .summary-action-list .btn,
+  .topbar-actions a.btn,
+  .hero-actions a.btn,
+  .section-actions a.btn {
+    width: 100%;
+  }
+
+  .catalog-mini-card {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-mini-image {
+    min-height: 140px;
+  }
+
+  .pix-proof-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .status-row,
+  .summary-line {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summary-line strong,
+  .status-row strong {
+    font-size: 15px;
+  }
+
+  .product-preview-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .receipt-preview,
+  .print-receipt-template {
+    padding: 14px;
+  }
+
+  .receipt-header {
+    align-items: flex-start;
+  }
+
+  table {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(217, 176, 140, 0.18), transparent 36%),
+      linear-gradient(180deg, #fbf7f4 0%, #f6eee8 100%);
+  }
+
+  .content-area {
+    padding: 12px 12px 28px;
+  }
+
+  .login-page-wrapper {
+    padding: 10px;
+  }
+
+  .login-brand-card,
+  .login-form-card,
+  .hero-panel,
+  .panel,
+  .metric-card,
+  .quick-link-card,
+  .summary-card,
+  .product-preview-card,
+  .pix-proof-card,
+  .catalog-mini-card,
+  .status-box {
+    border-radius: 18px;
+  }
+
+  .login-brand-card,
+  .login-form-card,
+  .hero-panel,
+  .panel {
+    padding: 16px;
+  }
+
+  .brand-logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .operator-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .brand-text strong {
+    font-size: 16px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    padding: 7px 12px;
+  }
+
+  .login-brand-content h1,
+  .hero-content h2 {
+    font-size: 26px;
+  }
+
+  .page-heading h1,
+  .page-heading h2 {
+    font-size: 22px;
+  }
+
+  .page-heading p,
+  .hero-content p,
+  .login-brand-content p,
+  .login-form-header p,
+  .panel-header p,
+  .quick-link-card p,
+  .summary-line span,
+  .status-row span,
+  .status-row strong,
+  .summary-line strong,
+  .pix-proof-card p,
+  .alert-list li,
+  tbody td {
+    font-size: 13px;
+  }
+
+  .metric-card strong {
+    font-size: 22px;
+  }
+
+  .panel-header,
+  .panel-subsection-header,
+  .section-header,
+  .topbar-left,
+  .topbar-right {
+    gap: 10px;
+  }
+
+  .sync-badge {
+    font-size: 12px;
+    padding: 0 12px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 520px;
+  }
+
+  thead th,
+  tbody td {
+    padding: 10px 10px;
+  }
+
+  .btn {
+    padding: 0 14px;
+    font-size: 14px;
+  }
+
+  .btn-small {
+    width: 100%;
+  }
+
+  .table-action-group {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .login-feature-card,
+  .highlight-card,
+  .summary-card,
+  .metric-card,
+  .quick-link-card,
+  .status-box {
+    padding: 16px;
+  }
+
+  .receipt-header,
+  .print-receipt-template header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .receipt-logo,
+  .print-receipt-template header img {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 420px) {
+  .sidebar {
+    width: min(92vw, 310px);
+    padding: 20px 14px;
+  }
+
+  .content-area {
+    padding: 10px 10px 24px;
+  }
+
+  .login-brand-card,
+  .login-form-card,
+  .hero-panel,
+  .panel {
+    padding: 14px;
+  }
+
+  .brand-box {
+    gap: 10px;
+  }
+
+  .brand-logo {
+    width: 46px;
+    height: 46px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+  }
+
+  .login-brand-content h1,
+  .hero-content h2 {
+    font-size: 23px;
+  }
+
+  .page-heading h1,
+  .page-heading h2 {
+    font-size: 20px;
+  }
+
+  .metric-card strong {
+    font-size: 20px;
+  }
+
+  table {
+    min-width: 480px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .btn,
+  .nav-item,
+  .mobile-menu-btn,
+  .btn-small,
+  .btn-link {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:hover,
+  .nav-item:hover,
+  .quick-link-card:hover {
+    transform: none;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .toolbar-grid input,
+  .toolbar-grid select,
+  .date-filter-bar input {
+    font-size: 16px;
+  }
+}

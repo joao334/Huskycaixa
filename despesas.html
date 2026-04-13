@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tela de despesas do sistema da Husky Confeitaria" />
+  <title>Husky Confeitaria | Despesas</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="app-page-body">
+  <div class="app-pattern" aria-hidden="true">
+    <img src="assets/img/pattern-husky.svg" alt="" />
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <a href="home.html" class="brand-box">
+          <img src="assets/img/logo-husky.png" alt="Logo da Husky Confeitaria" class="brand-logo" />
+          <div class="brand-text">
+            <strong>Husky Confeitaria</strong>
+            <span>Sistema Empresarial</span>
+          </div>
+        </a>
+
+        <div class="operator-box">
+          <img src="assets/img/avatar-user.png" alt="Usuário logado" class="operator-avatar" />
+          <div class="operator-info">
+            <strong id="logged-user-name">Administrador</strong>
+            <span id="logged-user-role">Gestão / Caixa</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a href="home.html" class="nav-item">Início</a>
+        <a href="vendas.html" class="nav-item">Vendas</a>
+        <a href="produtos.html" class="nav-item">Produtos</a>
+        <a href="estoque.html" class="nav-item">Estoque</a>
+        <a href="despesas.html" class="nav-item active">Despesas</a>
+        <a href="relatorios.html" class="nav-item">Relatórios</a>
+        <a href="clientes.html" class="nav-item">Clientes</a>
+        <a href="comprovantes.html" class="nav-item">Comprovantes</a>
+        <a href="configuracoes.html" class="nav-item">Configurações</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="cloud-box">
+          <span class="cloud-dot"></span>
+          <div>
+            <strong>Nuvem</strong>
+            <small id="sidebar-cloud-status">Pronto para sincronização</small>
+          </div>
+        </div>
+
+        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span class="eyebrow">Controle financeiro</span>
+            <h1>Despesas</h1>
+            <p>Gerencie compras, perdas, embalagens, taxas e custos operacionais da Husky.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-badge">
+            <span class="status-indicator"></span>
+            <span id="topbar-sync-status">Sincronização online preparada</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" id="btn-new-expense-top" class="btn btn-primary">Nova despesa</button>
+            <a href="relatorios.html" class="btn btn-secondary">Ver relatórios</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="hero-panel hero-panel-compact">
+          <div class="hero-content">
+            <span class="eyebrow">Saídas e custos</span>
+            <h2>Controle as despesas da Husky com precisão</h2>
+            <p>
+              Registre compras, perdas de material, embalagens, transporte, taxas e demais custos.
+              Filtre por período, categoria e forma de pagamento para acompanhar a saúde financeira.
+            </p>
+          </div>
+
+          <div class="hero-actions">
+            <button type="button" id="btn-new-expense-hero" class="btn btn-primary">Lançar despesa</button>
+            <a href="estoque.html" class="btn btn-secondary">Abrir estoque</a>
+          </div>
+        </section>
+
+        <section class="cards-grid metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Despesas do dia</span>
+            <strong id="expenses-day-total">R$ 0,00</strong>
+            <small>Total lançado hoje</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Despesas do mês</span>
+            <strong id="expenses-month-total">R$ 0,00</strong>
+            <small>Acumulado do mês</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Maior categoria</span>
+            <strong id="expenses-top-category">-</strong>
+            <small>Categoria com maior impacto</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Perdas registradas</span>
+            <strong id="expenses-loss-total">R$ 0,00</strong>
+            <small>Desperdício / quebra</small>
+          </article>
+        </section>
+
+        <section class="content-grid despesas-main-grid">
+          <article class="panel despesas-form-panel">
+            <div class="panel-header">
+              <div>
+                <h3>Lançamento de despesa</h3>
+                <p>Cadastre e edite custos do negócio.</p>
+              </div>
+              <span class="tag" id="expense-mode-tag">Novo lançamento</span>
+            </div>
+
+            <form id="expense-form" class="form">
+              <input type="hidden" id="expense-id" />
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="expense-date">Data</label>
+                  <input type="date" id="expense-date" />
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-time">Horário</label>
+                  <input type="time" id="expense-time" />
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-status">Status</label>
+                  <select id="expense-status">
+                    <option value="Pago">Pago</option>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Parcelado">Parcelado</option>
+                    <option value="Cancelado">Cancelado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="expense-title">Descrição</label>
+                  <input type="text" id="expense-title" placeholder="Ex.: compra de leite condensado" />
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-category">Categoria</label>
+                  <select id="expense-category">
+                    <option value="Compras">Compras</option>
+                    <option value="Perda de material">Perda de material</option>
+                    <option value="Embalagens">Embalagens</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Taxas">Taxas</option>
+                    <option value="Funcionamento">Funcionamento</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-4">
+                <div class="form-group">
+                  <label for="expense-value">Valor</label>
+                  <input type="number" id="expense-value" placeholder="0,00" />
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-payment-method">Forma de pagamento</label>
+                  <select id="expense-payment-method">
+                    <option value="Pix">Pix</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Débito">Débito</option>
+                    <option value="Crédito">Crédito</option>
+                    <option value="Boleto">Boleto</option>
+                    <option value="Transferência">Transferência</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-due-date">Vencimento</label>
+                  <input type="date" id="expense-due-date" />
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-installments">Parcelas</label>
+                  <input type="number" id="expense-installments" min="1" placeholder="1" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="expense-supplier">Fornecedor / origem</label>
+                  <input type="text" id="expense-supplier" placeholder="Fornecedor, loja ou origem da despesa" />
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-reference">Referência</label>
+                  <input type="text" id="expense-reference" placeholder="Compra, taxa, manutenção, etc." />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="expense-note">Observação</label>
+                <textarea id="expense-note" rows="4" placeholder="Detalhes adicionais da despesa"></textarea>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="expense-attachment">Anexo / comprovante</label>
+                  <input type="file" id="expense-attachment" accept="image/*,.pdf" />
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-related-product">Produto relacionado</label>
+                  <select id="expense-related-product">
+                    <option value="">Nenhum</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="upload-preview-box" id="expense-attachment-preview">
+                <p>Nenhum anexo enviado.</p>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="expense-affects-profit" checked />
+                  <span>Considerar no cálculo de lucro</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="expense-repeat-monthly" />
+                  <span>Despesa recorrente mensal</span>
+                </label>
+              </div>
+
+              <div class="form-actions sticky-form-actions">
+                <button type="button" id="btn-save-expense" class="btn btn-primary">Salvar despesa</button>
+                <button type="button" id="btn-update-expense" class="btn btn-secondary">Editar despesa</button>
+                <button type="button" id="btn-delete-expense" class="btn btn-danger">Excluir despesa</button>
+              </div>
+            </form>
+          </article>
+
+          <aside class="despesas-side-column">
+            <article class="panel despesas-summary-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Resumo do lançamento</h3>
+                  <p>Visualização rápida do impacto da despesa.</p>
+                </div>
+              </div>
+
+              <div class="sale-summary-box">
+                <div class="summary-line">
+                  <span>Valor</span>
+                  <strong id="expense-summary-value">R$ 0,00</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Categoria</span>
+                  <strong id="expense-summary-category">-</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Status</span>
+                  <strong id="expense-summary-status">Pago</strong>
+                </div>
+                <div class="summary-line total-line">
+                  <span>Forma de pagamento</span>
+                  <strong id="expense-summary-payment">Pix</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Impacta lucro</span>
+                  <strong id="expense-summary-profit-impact">Sim</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel despesas-status-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Status rápido</h3>
+                  <p>Condição do lançamento atual.</p>
+                </div>
+              </div>
+
+              <div class="status-list">
+                <div class="status-row">
+                  <span>Fornecedor</span>
+                  <strong id="expense-status-supplier">-</strong>
+                </div>
+                <div class="status-row">
+                  <span>Vencimento</span>
+                  <strong id="expense-status-due-date">-</strong>
+                </div>
+                <div class="status-row">
+                  <span>Parcelas</span>
+                  <strong id="expense-status-installments">1</strong>
+                </div>
+                <div class="status-row">
+                  <span>Anexo</span>
+                  <strong id="expense-status-attachment">Não enviado</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel despesas-alert-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Alertas financeiros</h3>
+                  <p>Itens que merecem atenção.</p>
+                </div>
+              </div>
+
+              <div class="alert-list-card" id="expense-alert-list">
+                <div class="pix-proof-card">
+                  <div>
+                    <strong>Nenhum alerta crítico</strong>
+                    <p>Despesas vencidas ou pendentes aparecerão aqui.</p>
+                  </div>
+                  <span class="tag">OK</span>
+                </div>
+              </div>
+            </article>
+          </aside>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Lista de despesas</h3>
+              <p>Pesquise e filtre lançamentos por período, categoria e status.</p>
+            </div>
+          </div>
+
+          <div class="toolbar-grid despesas-filter-grid">
+            <input type="text" id="expenses-search" placeholder="Buscar por descrição, fornecedor ou referência" />
+            <input type="date" id="expenses-filter-start" />
+            <input type="date" id="expenses-filter-end" />
+            <select id="expenses-filter-category">
+              <option value="">Todas as categorias</option>
+              <option value="Compras">Compras</option>
+              <option value="Perda de material">Perda de material</option>
+              <option value="Embalagens">Embalagens</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Taxas">Taxas</option>
+              <option value="Funcionamento">Funcionamento</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Outros">Outros</option>
+            </select>
+            <select id="expenses-filter-status">
+              <option value="">Todos os status</option>
+              <option value="Pago">Pago</option>
+              <option value="Pendente">Pendente</option>
+              <option value="Parcelado">Parcelado</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+            <select id="expenses-filter-payment">
+              <option value="">Todos os pagamentos</option>
+              <option value="Pix">Pix</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Débito">Débito</option>
+              <option value="Crédito">Crédito</option>
+              <option value="Boleto">Boleto</option>
+              <option value="Transferência">Transferência</option>
+            </select>
+            <button type="button" id="btn-filter-expenses" class="btn btn-secondary">Filtrar</button>
+            <button type="button" id="btn-clear-expenses-filter" class="btn btn-secondary">Limpar</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Categoria</th>
+                  <th>Fornecedor</th>
+                  <th>Pagamento</th>
+                  <th>Status</th>
+                  <th>Valor</th>
+                  <th>Anexo</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="expenses-table-body">
+                <tr>
+                  <td>--/--/----</td>
+                  <td>Despesa exemplo</td>
+                  <td>Compras</td>
+                  <td>Fornecedor exemplo</td>
+                  <td>Pix</td>
+                  <td>Pago</td>
+                  <td>R$ 0,00</td>
+                  <td>Não</td>
+                  <td>
+                    <div class="table-action-group">
+                      <button type="button" class="btn btn-secondary btn-small">Editar</button>
+                      <button type="button" class="btn btn-secondary btn-small">Ver</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Despesas por categoria</h3>
+                <p>Distribuição dos custos no período.</p>
+              </div>
+            </div>
+
+            <div class="chart-area" id="expenses-category-chart">
+              <p>O gráfico por categoria será inserido pelo JavaScript.</p>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Despesas recorrentes</h3>
+                <p>Controle dos lançamentos mensais fixos.</p>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                  </tr>
+                </thead>
+                <tbody id="recurring-expenses-table-body">
+                  <tr>
+                    <td>Despesa recorrente exemplo</td>
+                    <td>Funcionamento</td>
+                    <td>R$ 0,00</td>
+                    <td>--/--/----</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Perdas e desperdícios</h3>
+                <p>Resumo dos lançamentos relacionados a perdas.</p>
+              </div>
+              <a href="estoque.html" class="btn btn-secondary">Abrir estoque</a>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Produto</th>
+                    <th>Motivo</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody id="loss-expenses-table-body">
+                  <tr>
+                    <td>--/--/----</td>
+                    <td>Produto exemplo</td>
+                    <td>Quebra</td>
+                    <td>R$ 0,00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Últimos anexos</h3>
+                <p>Comprovantes vinculados às despesas.</p>
+              </div>
+            </div>
+
+            <div class="pix-proof-preview-list" id="expenses-attachments-preview-list">
+              <div class="pix-proof-card">
+                <div>
+                  <strong>Despesa exemplo</strong>
+                  <p>Fornecedor exemplo • Pix</p>
+                </div>
+                <span class="tag">Sem arquivo</span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/despesas.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

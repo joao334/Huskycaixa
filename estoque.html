@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tela de estoque do sistema da Husky Confeitaria" />
+  <title>Husky Confeitaria | Estoque</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="app-page-body">
+  <div class="app-pattern" aria-hidden="true">
+    <img src="assets/img/pattern-husky.svg" alt="" />
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <a href="home.html" class="brand-box">
+          <img src="assets/img/logo-husky.png" alt="Logo da Husky Confeitaria" class="brand-logo" />
+          <div class="brand-text">
+            <strong>Husky Confeitaria</strong>
+            <span>Sistema Empresarial</span>
+          </div>
+        </a>
+
+        <div class="operator-box">
+          <img src="assets/img/avatar-user.png" alt="Usuário logado" class="operator-avatar" />
+          <div class="operator-info">
+            <strong id="logged-user-name">Administrador</strong>
+            <span id="logged-user-role">Gestão / Caixa</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a href="home.html" class="nav-item">Início</a>
+        <a href="vendas.html" class="nav-item">Vendas</a>
+        <a href="produtos.html" class="nav-item">Produtos</a>
+        <a href="estoque.html" class="nav-item active">Estoque</a>
+        <a href="despesas.html" class="nav-item">Despesas</a>
+        <a href="relatorios.html" class="nav-item">Relatórios</a>
+        <a href="clientes.html" class="nav-item">Clientes</a>
+        <a href="comprovantes.html" class="nav-item">Comprovantes</a>
+        <a href="configuracoes.html" class="nav-item">Configurações</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="cloud-box">
+          <span class="cloud-dot"></span>
+          <div>
+            <strong>Nuvem</strong>
+            <small id="sidebar-cloud-status">Pronto para sincronização</small>
+          </div>
+        </div>
+
+        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span class="eyebrow">Controle operacional</span>
+            <h1>Estoque</h1>
+            <p>Gerencie entradas, saídas, perdas, ajustes e alertas de reposição da Husky.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-badge">
+            <span class="status-indicator"></span>
+            <span id="topbar-sync-status">Sincronização online preparada</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" id="btn-new-stock-movement-top" class="btn btn-primary">Nova movimentação</button>
+            <a href="produtos.html" class="btn btn-secondary">Abrir produtos</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="hero-panel hero-panel-compact">
+          <div class="hero-content">
+            <span class="eyebrow">Reposição e controle</span>
+            <h2>Controle completo de estoque</h2>
+            <p>
+              Acompanhe níveis atuais, faça entradas e saídas, registre perdas,
+              ajuste quantidades e acompanhe histórico com filtros por período.
+            </p>
+          </div>
+
+          <div class="hero-actions">
+            <button type="button" id="btn-new-stock-movement-hero" class="btn btn-primary">Movimentar estoque</button>
+            <a href="relatorios.html" class="btn btn-secondary">Ver relatórios</a>
+          </div>
+        </section>
+
+        <section class="cards-grid metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Produtos cadastrados</span>
+            <strong id="stock-products-count">0</strong>
+            <small>Total de itens no sistema</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Estoque baixo</span>
+            <strong id="stock-low-count">0</strong>
+            <small>Abaixo do estoque mínimo</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Sem estoque</span>
+            <strong id="stock-zero-count">0</strong>
+            <small>Precisam de reposição urgente</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Perdas no período</span>
+            <strong id="stock-loss-value">R$ 0,00</strong>
+            <small>Controle de desperdício</small>
+          </article>
+        </section>
+
+        <section class="content-grid estoque-main-grid">
+          <article class="panel estoque-form-panel">
+            <div class="panel-header">
+              <div>
+                <h3>Movimentação de estoque</h3>
+                <p>Registre entradas, saídas, perdas e ajustes.</p>
+              </div>
+              <span class="tag" id="stock-mode-tag">Nova movimentação</span>
+            </div>
+
+            <form id="stock-form" class="form">
+              <input type="hidden" id="stock-movement-id" />
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="stock-date">Data</label>
+                  <input type="date" id="stock-date" />
+                </div>
+
+                <div class="form-group">
+                  <label for="stock-time">Horário</label>
+                  <input type="time" id="stock-time" />
+                </div>
+
+                <div class="form-group">
+                  <label for="stock-type">Tipo de movimentação</label>
+                  <select id="stock-type">
+                    <option value="entrada">Entrada</option>
+                    <option value="saida">Saída</option>
+                    <option value="perda">Perda</option>
+                    <option value="ajuste">Ajuste manual</option>
+                    <option value="producao">Produção</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="stock-product">Produto</label>
+                  <select id="stock-product">
+                    <option value="">Selecione um produto</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="stock-quantity">Quantidade</label>
+                  <input type="number" id="stock-quantity" min="1" placeholder="0" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="stock-unit-cost">Custo unitário</label>
+                  <input type="number" id="stock-unit-cost" placeholder="0,00" />
+                </div>
+
+                <div class="form-group">
+                  <label for="stock-total-cost">Custo total</label>
+                  <input type="number" id="stock-total-cost" placeholder="0,00" readonly />
+                </div>
+
+                <div class="form-group">
+                  <label for="stock-reference">Referência</label>
+                  <input type="text" id="stock-reference" placeholder="Compra, produção, ajuste, venda" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="stock-origin">Origem / destino</label>
+                  <input type="text" id="stock-origin" placeholder="Fornecedor, produção interna, venda, descarte" />
+                </div>
+
+                <div class="form-group">
+                  <label for="stock-responsible">Responsável</label>
+                  <input type="text" id="stock-responsible" placeholder="Quem realizou a movimentação" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="stock-reason">Motivo / observação</label>
+                <textarea id="stock-reason" rows="4" placeholder="Ex.: reposição de produção, quebra, ajuste de inventário"></textarea>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="stock-generate-expense" />
+                  <span>Gerar despesa automática desta movimentação</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="stock-alert-management" checked />
+                  <span>Notificar gestão se virar estoque crítico</span>
+                </label>
+              </div>
+
+              <div class="form-actions sticky-form-actions">
+                <button type="button" id="btn-save-stock-movement" class="btn btn-primary">Salvar movimentação</button>
+                <button type="button" id="btn-edit-stock-movement" class="btn btn-secondary">Editar movimentação</button>
+                <button type="button" id="btn-delete-stock-movement" class="btn btn-danger">Excluir movimentação</button>
+              </div>
+            </form>
+          </article>
+
+          <aside class="estoque-side-column">
+            <article class="panel estoque-summary-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Resumo da movimentação</h3>
+                  <p>Impacto automático no estoque.</p>
+                </div>
+              </div>
+
+              <div class="sale-summary-box">
+                <div class="summary-line">
+                  <span>Produto selecionado</span>
+                  <strong id="stock-summary-product">-</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Estoque atual</span>
+                  <strong id="stock-summary-current">0</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Movimentação</span>
+                  <strong id="stock-summary-type">Entrada</strong>
+                </div>
+                <div class="summary-line total-line">
+                  <span>Estoque após ação</span>
+                  <strong id="stock-summary-after">0</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Custo estimado</span>
+                  <strong id="stock-summary-cost">R$ 0,00</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel estoque-status-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Status rápido</h3>
+                  <p>Condição do item selecionado.</p>
+                </div>
+              </div>
+
+              <div class="status-list">
+                <div class="status-row">
+                  <span>Status do estoque</span>
+                  <strong id="stock-status-summary">Normal</strong>
+                </div>
+                <div class="status-row">
+                  <span>Estoque mínimo</span>
+                  <strong id="stock-min-summary">0</strong>
+                </div>
+                <div class="status-row">
+                  <span>Última movimentação</span>
+                  <strong id="stock-last-movement-summary">-</strong>
+                </div>
+                <div class="status-row">
+                  <span>Necessita reposição</span>
+                  <strong id="stock-replenishment-summary">Não</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel estoque-alert-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Alertas de reposição</h3>
+                  <p>Itens que merecem atenção agora.</p>
+                </div>
+              </div>
+
+              <div class="alert-list-card" id="stock-alert-list">
+                <div class="pix-proof-card">
+                  <div>
+                    <strong>Sem alertas críticos</strong>
+                    <p>Os itens aparecerão aqui quando houver necessidade.</p>
+                  </div>
+                  <span class="tag">OK</span>
+                </div>
+              </div>
+            </article>
+          </aside>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Status atual do estoque</h3>
+              <p>Consulte todos os produtos com filtros rápidos.</p>
+            </div>
+          </div>
+
+          <div class="toolbar-grid estoque-filter-grid">
+            <input type="text" id="stock-search" placeholder="Buscar por produto, código, SKU ou categoria" />
+            <select id="stock-filter-category">
+              <option value="">Todas as categorias</option>
+            </select>
+            <select id="stock-filter-status">
+              <option value="">Todos os status</option>
+              <option value="ok">Estoque normal</option>
+              <option value="low">Estoque baixo</option>
+              <option value="zero">Sem estoque</option>
+            </select>
+            <button type="button" id="btn-filter-stock-status" class="btn btn-secondary">Filtrar</button>
+            <button type="button" id="btn-clear-stock-status-filter" class="btn btn-secondary">Limpar</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Código</th>
+                  <th>Categoria</th>
+                  <th>Atual</th>
+                  <th>Mínimo</th>
+                  <th>Status</th>
+                  <th>Última movimentação</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="stock-status-table-body">
+                <tr>
+                  <td>Produto exemplo</td>
+                  <td>PRD-0001</td>
+                  <td>Brigadeiro</td>
+                  <td>0</td>
+                  <td>5</td>
+                  <td>Baixo</td>
+                  <td>--/--/----</td>
+                  <td>
+                    <div class="table-action-group">
+                      <button type="button" class="btn btn-secondary btn-small">Movimentar</button>
+                      <button type="button" class="btn btn-secondary btn-small">Ver</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Histórico de movimentações</h3>
+              <p>Filtre entradas, saídas, perdas e ajustes por período.</p>
+            </div>
+          </div>
+
+          <div class="toolbar-grid estoque-history-filter-grid">
+            <input type="date" id="stock-history-start" />
+            <input type="date" id="stock-history-end" />
+            <select id="stock-history-type">
+              <option value="">Todos os tipos</option>
+              <option value="entrada">Entrada</option>
+              <option value="saida">Saída</option>
+              <option value="perda">Perda</option>
+              <option value="ajuste">Ajuste manual</option>
+              <option value="producao">Produção</option>
+            </select>
+            <select id="stock-history-product">
+              <option value="">Todos os produtos</option>
+            </select>
+            <button type="button" id="btn-filter-stock-history" class="btn btn-secondary">Filtrar</button>
+            <button type="button" id="btn-clear-stock-history-filter" class="btn btn-secondary">Limpar</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Hora</th>
+                  <th>Produto</th>
+                  <th>Tipo</th>
+                  <th>Qtd</th>
+                  <th>Custo</th>
+                  <th>Referência</th>
+                  <th>Responsável</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="stock-history-table-body">
+                <tr>
+                  <td>--/--/----</td>
+                  <td>--:--</td>
+                  <td>Produto exemplo</td>
+                  <td>Entrada</td>
+                  <td>0</td>
+                  <td>R$ 0,00</td>
+                  <td>Compra</td>
+                  <td>Administrador</td>
+                  <td>
+                    <div class="table-action-group">
+                      <button type="button" class="btn btn-secondary btn-small">Editar</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Itens para reposição</h3>
+                <p>Produtos que exigem ação imediata.</p>
+              </div>
+              <a href="produtos.html" class="btn btn-secondary">Abrir produtos</a>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Atual</th>
+                    <th>Mínimo</th>
+                    <th>Repor</th>
+                  </tr>
+                </thead>
+                <tbody id="restock-table-body">
+                  <tr>
+                    <td>Produto exemplo</td>
+                    <td>0</td>
+                    <td>5</td>
+                    <td>5</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Perdas recentes</h3>
+                <p>Controle de desperdício e quebra.</p>
+              </div>
+              <a href="despesas.html" class="btn btn-secondary">Abrir despesas</a>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Data</th>
+                    <th>Qtd</th>
+                    <th>Custo</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-loss-table-body">
+                  <tr>
+                    <td>Produto exemplo</td>
+                    <td>--/--/----</td>
+                    <td>0</td>
+                    <td>R$ 0,00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/estoque.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

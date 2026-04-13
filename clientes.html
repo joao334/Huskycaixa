@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tela de clientes do sistema da Husky Confeitaria" />
+  <title>Husky Confeitaria | Clientes</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="app-page-body">
+  <div class="app-pattern" aria-hidden="true">
+    <img src="assets/img/pattern-husky.svg" alt="" />
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <a href="home.html" class="brand-box">
+          <img src="assets/img/logo-husky.png" alt="Logo da Husky Confeitaria" class="brand-logo" />
+          <div class="brand-text">
+            <strong>Husky Confeitaria</strong>
+            <span>Sistema Empresarial</span>
+          </div>
+        </a>
+
+        <div class="operator-box">
+          <img src="assets/img/avatar-user.png" alt="Usuário logado" class="operator-avatar" />
+          <div class="operator-info">
+            <strong id="logged-user-name">Administrador</strong>
+            <span id="logged-user-role">Gestão / Caixa</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a href="home.html" class="nav-item">Início</a>
+        <a href="vendas.html" class="nav-item">Vendas</a>
+        <a href="produtos.html" class="nav-item">Produtos</a>
+        <a href="estoque.html" class="nav-item">Estoque</a>
+        <a href="despesas.html" class="nav-item">Despesas</a>
+        <a href="relatorios.html" class="nav-item">Relatórios</a>
+        <a href="clientes.html" class="nav-item active">Clientes</a>
+        <a href="comprovantes.html" class="nav-item">Comprovantes</a>
+        <a href="configuracoes.html" class="nav-item">Configurações</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="cloud-box">
+          <span class="cloud-dot"></span>
+          <div>
+            <strong>Nuvem</strong>
+            <small id="sidebar-cloud-status">Pronto para sincronização</small>
+          </div>
+        </div>
+
+        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span class="eyebrow">Relacionamento e histórico</span>
+            <h1>Clientes</h1>
+            <p>Cadastre contatos, preferências, histórico de pedidos e dados para atendimento da Husky.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-badge">
+            <span class="status-indicator"></span>
+            <span id="topbar-sync-status">Sincronização online preparada</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" id="btn-new-client-top" class="btn btn-primary">Novo cliente</button>
+            <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="hero-panel hero-panel-compact">
+          <div class="hero-content">
+            <span class="eyebrow">Base de clientes</span>
+            <h2>Organize o relacionamento da Husky</h2>
+            <p>
+              Registre dados de contato, endereços, preferências, aniversários, observações,
+              histórico de compras e status dos clientes para um atendimento mais completo.
+            </p>
+          </div>
+
+          <div class="hero-actions">
+            <button type="button" id="btn-new-client-hero" class="btn btn-primary">Cadastrar cliente</button>
+            <a href="relatorios.html" class="btn btn-secondary">Ver relatórios</a>
+          </div>
+        </section>
+
+        <section class="cards-grid metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Clientes cadastrados</span>
+            <strong id="clients-total-count">0</strong>
+            <small>Total da base</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Clientes recorrentes</span>
+            <strong id="clients-recurring-count">0</strong>
+            <small>Compraram mais de uma vez</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Aniversários próximos</span>
+            <strong id="clients-birthday-count">0</strong>
+            <small>Oportunidade de ação</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Melhor cliente</span>
+            <strong id="clients-best-customer">-</strong>
+            <small>Maior valor acumulado</small>
+          </article>
+        </section>
+
+        <section class="content-grid clientes-main-grid">
+          <article class="panel clientes-form-panel">
+            <div class="panel-header">
+              <div>
+                <h3>Cadastro de cliente</h3>
+                <p>Adicione ou edite os dados do cliente.</p>
+              </div>
+              <span class="tag" id="client-mode-tag">Novo cadastro</span>
+            </div>
+
+            <form id="client-form" class="form">
+              <input type="hidden" id="client-id" />
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="client-code">Código</label>
+                  <input type="text" id="client-code" placeholder="Gerado automaticamente" readonly />
+                </div>
+
+                <div class="form-group">
+                  <label for="client-status">Status</label>
+                  <select id="client-status">
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
+                    <option value="VIP">VIP</option>
+                    <option value="Bloqueado">Bloqueado</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="client-origin">Origem</label>
+                  <select id="client-origin">
+                    <option value="Instagram">Instagram</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Indicação">Indicação</option>
+                    <option value="Loja física">Loja física</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="client-name">Nome completo</label>
+                  <input type="text" id="client-name" placeholder="Nome do cliente" />
+                </div>
+
+                <div class="form-group">
+                  <label for="client-short-name">Apelido / nome curto</label>
+                  <input type="text" id="client-short-name" placeholder="Como prefere ser chamado" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="client-phone">Telefone</label>
+                  <input type="text" id="client-phone" placeholder="(00) 00000-0000" />
+                </div>
+
+                <div class="form-group">
+                  <label for="client-email">E-mail</label>
+                  <input type="email" id="client-email" placeholder="cliente@email.com" />
+                </div>
+
+                <div class="form-group">
+                  <label for="client-birthday">Aniversário</label>
+                  <input type="date" id="client-birthday" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="client-instagram">Instagram</label>
+                  <input type="text" id="client-instagram" placeholder="@cliente" />
+                </div>
+
+                <div class="form-group">
+                  <label for="client-cpf">CPF</label>
+                  <input type="text" id="client-cpf" placeholder="000.000.000-00" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="client-address">Endereço principal</label>
+                <textarea id="client-address" rows="3" placeholder="Rua, número, complemento, bairro, cidade"></textarea>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="client-delivery-reference">Referência de entrega</label>
+                  <input type="text" id="client-delivery-reference" placeholder="Ex.: portaria, casa azul, interfone" />
+                </div>
+
+                <div class="form-group">
+                  <label for="client-payment-preference">Pagamento preferido</label>
+                  <select id="client-payment-preference">
+                    <option value="Pix">Pix</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Débito">Débito</option>
+                    <option value="Crédito">Crédito</option>
+                    <option value="Indiferente">Indiferente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="client-favorite-product">Produto favorito</label>
+                  <input type="text" id="client-favorite-product" placeholder="Ex.: brownie, prestígio, bolo de pote" />
+                </div>
+
+                <div class="form-group">
+                  <label for="client-tags">Tags / classificação</label>
+                  <input type="text" id="client-tags" placeholder="Ex.: recorrente, festa, corporativo" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="client-notes">Observações</label>
+                <textarea id="client-notes" rows="4" placeholder="Preferências, restrições, observações importantes"></textarea>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="client-receive-offers" checked />
+                  <span>Aceita receber ofertas e novidades</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="client-priority-service" />
+                  <span>Atendimento prioritário / VIP</span>
+                </label>
+              </div>
+
+              <div class="form-actions sticky-form-actions">
+                <button type="button" id="btn-save-client" class="btn btn-primary">Salvar cliente</button>
+                <button type="button" id="btn-update-client" class="btn btn-secondary">Editar cliente</button>
+                <button type="button" id="btn-delete-client" class="btn btn-danger">Excluir cliente</button>
+              </div>
+            </form>
+          </article>
+
+          <aside class="clientes-side-column">
+            <article class="panel clientes-summary-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Resumo do cliente</h3>
+                  <p>Visão rápida do cadastro em edição.</p>
+                </div>
+              </div>
+
+              <div class="sale-summary-box">
+                <div class="summary-line">
+                  <span>Status</span>
+                  <strong id="client-summary-status">Ativo</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Origem</span>
+                  <strong id="client-summary-origin">Instagram</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Pagamento preferido</span>
+                  <strong id="client-summary-payment">Pix</strong>
+                </div>
+                <div class="summary-line total-line">
+                  <span>Tipo de atendimento</span>
+                  <strong id="client-summary-priority">Padrão</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Recebe ofertas</span>
+                  <strong id="client-summary-offers">Sim</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel clientes-status-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Status rápido</h3>
+                  <p>Dados complementares do cliente.</p>
+                </div>
+              </div>
+
+              <div class="status-list">
+                <div class="status-row">
+                  <span>Telefone</span>
+                  <strong id="client-status-phone">-</strong>
+                </div>
+                <div class="status-row">
+                  <span>E-mail</span>
+                  <strong id="client-status-email">-</strong>
+                </div>
+                <div class="status-row">
+                  <span>Aniversário</span>
+                  <strong id="client-status-birthday">-</strong>
+                </div>
+                <div class="status-row">
+                  <span>Produto favorito</span>
+                  <strong id="client-status-favorite">-</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel clientes-history-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Histórico rápido</h3>
+                  <p>Resumo de compras do cliente selecionado.</p>
+                </div>
+              </div>
+
+              <div class="status-list">
+                <div class="status-row">
+                  <span>Total de pedidos</span>
+                  <strong id="client-orders-count">0</strong>
+                </div>
+                <div class="status-row">
+                  <span>Valor acumulado</span>
+                  <strong id="client-total-spent">R$ 0,00</strong>
+                </div>
+                <div class="status-row">
+                  <span>Última compra</span>
+                  <strong id="client-last-order">-</strong>
+                </div>
+                <div class="status-row">
+                  <span>Ticket médio</span>
+                  <strong id="client-average-ticket">R$ 0,00</strong>
+                </div>
+              </div>
+            </article>
+          </aside>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Lista de clientes</h3>
+              <p>Pesquise, filtre e encontre rapidamente seus contatos.</p>
+            </div>
+          </div>
+
+          <div class="toolbar-grid clientes-filter-grid">
+            <input type="text" id="clients-search" placeholder="Buscar por nome, telefone, e-mail, CPF ou Instagram" />
+            <select id="clients-filter-status">
+              <option value="">Todos os status</option>
+              <option value="Ativo">Ativo</option>
+              <option value="Inativo">Inativo</option>
+              <option value="VIP">VIP</option>
+              <option value="Bloqueado">Bloqueado</option>
+            </select>
+            <select id="clients-filter-origin">
+              <option value="">Todas as origens</option>
+              <option value="Instagram">Instagram</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Indicação">Indicação</option>
+              <option value="Loja física">Loja física</option>
+              <option value="Outro">Outro</option>
+            </select>
+            <select id="clients-filter-profile">
+              <option value="">Todos os perfis</option>
+              <option value="recorrente">Recorrente</option>
+              <option value="vip">VIP</option>
+              <option value="aniversario">Aniversário próximo</option>
+              <option value="semcompra">Sem compra recente</option>
+            </select>
+            <button type="button" id="btn-filter-clients" class="btn btn-secondary">Filtrar</button>
+            <button type="button" id="btn-clear-clients-filter" class="btn btn-secondary">Limpar</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Contato</th>
+                  <th>Origem</th>
+                  <th>Status</th>
+                  <th>Última compra</th>
+                  <th>Total gasto</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="clients-table-body">
+                <tr>
+                  <td>Cliente exemplo</td>
+                  <td>(00) 00000-0000</td>
+                  <td>Instagram</td>
+                  <td>Ativo</td>
+                  <td>--/--/----</td>
+                  <td>R$ 0,00</td>
+                  <td>
+                    <div class="table-action-group">
+                      <button type="button" class="btn btn-secondary btn-small">Editar</button>
+                      <button type="button" class="btn btn-secondary btn-small">Ver</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Histórico de pedidos do cliente</h3>
+                <p>Pedidos vinculados ao cliente selecionado.</p>
+              </div>
+              <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Data</th>
+                    <th>Pagamento</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="client-orders-table-body">
+                  <tr>
+                    <td>#0001</td>
+                    <td>--/--/----</td>
+                    <td>Pix</td>
+                    <td>Finalizado</td>
+                    <td>R$ 0,00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Clientes em destaque</h3>
+                <p>Lista rápida para relacionamento.</p>
+              </div>
+            </div>
+
+            <div class="report-list" id="featured-clients-list">
+              <div class="pix-proof-card">
+                <div>
+                  <strong>Cliente recorrente</strong>
+                  <p>Exemplo de destaque por recorrência.</p>
+                </div>
+                <span class="tag">VIP</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Aniversários próximos</h3>
+                <p>Oportunidades para ações e campanhas.</p>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Data</th>
+                    <th>Contato</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="clients-birthday-table-body">
+                  <tr>
+                    <td>Cliente exemplo</td>
+                    <td>--/--/----</td>
+                    <td>(00) 00000-0000</td>
+                    <td><button type="button" class="btn btn-secondary btn-small">Marcar</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Preferências e observações</h3>
+                <p>Resumo rápido do cliente selecionado.</p>
+              </div>
+            </div>
+
+            <div class="status-list">
+              <div class="status-row">
+                <span>Endereço principal</span>
+                <strong id="client-selected-address">-</strong>
+              </div>
+              <div class="status-row">
+                <span>Referência</span>
+                <strong id="client-selected-reference">-</strong>
+              </div>
+              <div class="status-row">
+                <span>Preferência de pagamento</span>
+                <strong id="client-selected-payment">-</strong>
+              </div>
+              <div class="status-row">
+                <span>Observações</span>
+                <strong id="client-selected-notes">-</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/clientes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

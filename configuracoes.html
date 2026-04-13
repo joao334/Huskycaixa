@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tela de configurações do sistema da Husky Confeitaria" />
+  <title>Husky Confeitaria | Configurações</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="app-page-body">
+  <div class="app-pattern" aria-hidden="true">
+    <img src="assets/img/pattern-husky.svg" alt="" />
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <a href="home.html" class="brand-box">
+          <img src="assets/img/logo-husky.png" alt="Logo da Husky Confeitaria" class="brand-logo" />
+          <div class="brand-text">
+            <strong>Husky Confeitaria</strong>
+            <span>Sistema Empresarial</span>
+          </div>
+        </a>
+
+        <div class="operator-box">
+          <img src="assets/img/avatar-user.png" alt="Usuário logado" class="operator-avatar" />
+          <div class="operator-info">
+            <strong id="logged-user-name">Administrador</strong>
+            <span id="logged-user-role">Gestão / Caixa</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a href="home.html" class="nav-item">Início</a>
+        <a href="vendas.html" class="nav-item">Vendas</a>
+        <a href="produtos.html" class="nav-item">Produtos</a>
+        <a href="estoque.html" class="nav-item">Estoque</a>
+        <a href="despesas.html" class="nav-item">Despesas</a>
+        <a href="relatorios.html" class="nav-item">Relatórios</a>
+        <a href="clientes.html" class="nav-item">Clientes</a>
+        <a href="comprovantes.html" class="nav-item">Comprovantes</a>
+        <a href="configuracoes.html" class="nav-item active">Configurações</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="cloud-box">
+          <span class="cloud-dot"></span>
+          <div>
+            <strong>Nuvem</strong>
+            <small id="sidebar-cloud-status">Pronto para sincronização</small>
+          </div>
+        </div>
+
+        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span class="eyebrow">Preferências e administração</span>
+            <h1>Configurações</h1>
+            <p>Gerencie dados da empresa, aparência, nuvem, impressão, segurança e usuários do sistema.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-badge">
+            <span class="status-indicator"></span>
+            <span id="topbar-sync-status">Sincronização online preparada</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" id="btn-save-all-settings-top" class="btn btn-primary">Salvar alterações</button>
+            <button type="button" id="btn-export-backup-top" class="btn btn-secondary">Exportar backup</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="hero-panel hero-panel-compact">
+          <div class="hero-content">
+            <span class="eyebrow">Configuração geral</span>
+            <h2>Personalize o sistema da Husky</h2>
+            <p>
+              Ajuste dados da empresa, preferências visuais, impressão de comprovantes,
+              sincronização em nuvem, segurança de acesso e usuários autorizados.
+            </p>
+          </div>
+
+          <div class="hero-actions">
+            <button type="button" id="btn-save-all-settings-hero" class="btn btn-primary">Salvar tudo</button>
+            <button type="button" id="btn-reset-settings-hero" class="btn btn-secondary">Restaurar padrão</button>
+          </div>
+        </section>
+
+        <section class="cards-grid metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Status da nuvem</span>
+            <strong id="settings-cloud-status-card">Desconectada</strong>
+            <small>Sincronização em tempo real</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Usuários ativos</span>
+            <strong id="settings-active-users-card">1</strong>
+            <small>Acessos cadastrados</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Último backup</span>
+            <strong id="settings-last-backup-card">-</strong>
+            <small>Segurança dos dados</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Tema atual</span>
+            <strong id="settings-current-theme-card">Husky padrão</strong>
+            <small>Aparência ativa</small>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Dados da empresa</h3>
+                <p>Informações institucionais usadas no sistema e nos comprovantes.</p>
+              </div>
+            </div>
+
+            <form id="company-settings-form" class="form">
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="company-name">Nome da empresa</label>
+                  <input type="text" id="company-name" value="Husky Confeitaria" />
+                </div>
+
+                <div class="form-group">
+                  <label for="company-trade-name">Nome fantasia</label>
+                  <input type="text" id="company-trade-name" value="Husky Confeitaria" />
+                </div>
+
+                <div class="form-group">
+                  <label for="company-cnpj">CNPJ</label>
+                  <input type="text" id="company-cnpj" placeholder="00.000.000/0000-00" />
+                </div>
+
+                <div class="form-group">
+                  <label for="company-phone">Telefone</label>
+                  <input type="text" id="company-phone" placeholder="(00) 00000-0000" />
+                </div>
+
+                <div class="form-group">
+                  <label for="company-email">E-mail</label>
+                  <input type="email" id="company-email" placeholder="contato@husky.com" />
+                </div>
+
+                <div class="form-group">
+                  <label for="company-instagram">Instagram</label>
+                  <input type="text" id="company-instagram" placeholder="@huskyconfeiteiro" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="company-address">Endereço</label>
+                <textarea id="company-address" rows="3" placeholder="Rua, número, complemento, bairro, cidade"></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" id="btn-save-company-settings" class="btn btn-primary">Salvar dados da empresa</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Identidade visual</h3>
+                <p>Defina aparência, logos e elementos visuais do sistema.</p>
+              </div>
+            </div>
+
+            <form id="visual-settings-form" class="form">
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="theme-mode">Tema visual</label>
+                  <select id="theme-mode">
+                    <option value="husky-default">Husky padrão</option>
+                    <option value="light">Claro</option>
+                    <option value="dark">Escuro</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="accent-style">Variação da paleta</label>
+                  <select id="accent-style">
+                    <option value="original">Original Husky</option>
+                    <option value="caramelo">Caramelo</option>
+                    <option value="bege">Bege cremoso</option>
+                    <option value="premium">Premium escuro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="logo-upload">Logo principal</label>
+                  <input type="file" id="logo-upload" accept="image/*" />
+                </div>
+
+                <div class="form-group">
+                  <label for="mascot-upload">Mascote 3D</label>
+                  <input type="file" id="mascot-upload" accept="image/*" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="enable-pattern-background" checked />
+                  <span>Usar pattern padrão da Husky no fundo</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="show-mascot-dashboard" checked />
+                  <span>Exibir mascote 3D nas telas principais</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" id="btn-save-visual-settings" class="btn btn-primary">Salvar identidade visual</button>
+              </div>
+            </form>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Impressão e comprovantes</h3>
+                <p>Defina como os comprovantes e notas simplificadas serão gerados.</p>
+              </div>
+            </div>
+
+            <form id="print-settings-form" class="form">
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="receipt-type">Tipo padrão de impressão</label>
+                  <select id="receipt-type">
+                    <option value="comprovante">Comprovante</option>
+                    <option value="recibo">Recibo</option>
+                    <option value="nota-simplificada">Nota simplificada</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="printer-size">Formato</label>
+                  <select id="printer-size">
+                    <option value="58mm">58mm</option>
+                    <option value="80mm">80mm</option>
+                    <option value="a4">A4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="print-company-data" checked />
+                  <span>Exibir dados da empresa nos comprovantes</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="print-logo" checked />
+                  <span>Exibir logo nos comprovantes</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="print-qrcode-pix" />
+                  <span>Exibir QR Code Pix quando disponível</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="auto-print-after-sale" />
+                  <span>Imprimir automaticamente após finalizar venda</span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label for="receipt-footer-message">Mensagem final do comprovante</label>
+                <textarea id="receipt-footer-message" rows="3" placeholder="Obrigada pela preferência."></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" id="btn-save-print-settings" class="btn btn-primary">Salvar impressão</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Nuvem e sincronização</h3>
+                <p>Configure a base online para usar no celular e no computador.</p>
+              </div>
+            </div>
+
+            <form id="cloud-settings-form" class="form">
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="cloud-provider">Provedor</label>
+                  <select id="cloud-provider">
+                    <option value="firebase">Firebase</option>
+                    <option value="supabase">Supabase</option>
+                    <option value="custom">API própria</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="cloud-project-name">Projeto</label>
+                  <input type="text" id="cloud-project-name" placeholder="Nome do projeto" />
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="cloud-api-key">API Key</label>
+                  <input type="text" id="cloud-api-key" placeholder="Chave da API" />
+                </div>
+
+                <div class="form-group">
+                  <label for="cloud-url">URL do projeto</label>
+                  <input type="text" id="cloud-url" placeholder="https://..." />
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="cloud-auto-sync" checked />
+                  <span>Sincronizar automaticamente em tempo real</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="cloud-offline-cache" checked />
+                  <span>Permitir cache local offline</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" id="btn-test-cloud-connection" class="btn btn-secondary">Testar conexão</button>
+                <button type="button" id="btn-save-cloud-settings" class="btn btn-primary">Salvar nuvem</button>
+              </div>
+            </form>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Segurança e acesso</h3>
+                <p>Controle de login, senha e proteção do sistema.</p>
+              </div>
+            </div>
+
+            <form id="security-settings-form" class="form">
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="session-timeout">Tempo de sessão</label>
+                  <select id="session-timeout">
+                    <option value="15">15 minutos</option>
+                    <option value="30">30 minutos</option>
+                    <option value="60">1 hora</option>
+                    <option value="120">2 horas</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="password-policy">Política de senha</label>
+                  <select id="password-policy">
+                    <option value="basic">Básica</option>
+                    <option value="strong">Forte</option>
+                    <option value="very-strong">Muito forte</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid cols-2">
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="enable-login-protection" checked />
+                  <span>Bloquear o sistema sem login</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="enable-2fa" />
+                  <span>Habilitar verificação em duas etapas</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="remember-last-user" checked />
+                  <span>Lembrar último usuário no login</span>
+                </label>
+
+                <label class="checkbox-field checkbox-card">
+                  <input type="checkbox" id="log-user-actions" checked />
+                  <span>Registrar ações dos usuários no sistema</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" id="btn-save-security-settings" class="btn btn-primary">Salvar segurança</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Backup e restauração</h3>
+                <p>Proteja e recupere os dados do sistema.</p>
+              </div>
+            </div>
+
+            <form id="backup-settings-form" class="form">
+              <div class="form-grid cols-2">
+                <div class="form-group">
+                  <label for="backup-frequency">Frequência automática</label>
+                  <select id="backup-frequency">
+                    <option value="manual">Manual</option>
+                    <option value="daily">Diária</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly">Mensal</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="backup-location">Destino do backup</label>
+                  <select id="backup-location">
+                    <option value="local">Arquivo local</option>
+                    <option value="cloud">Nuvem</option>
+                    <option value="both">Local + nuvem</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" id="btn-export-backup" class="btn btn-secondary">Exportar backup</button>
+                <button type="button" id="btn-import-backup" class="btn btn-secondary">Importar backup</button>
+                <button type="button" id="btn-save-backup-settings" class="btn btn-primary">Salvar backup</button>
+              </div>
+            </form>
+          </article>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Usuários do sistema</h3>
+              <p>Cadastre acessos e permissões internas.</p>
+            </div>
+          </div>
+
+          <div class="toolbar-grid users-toolbar-grid">
+            <input type="text" id="users-search" placeholder="Buscar usuário por nome ou e-mail" />
+            <select id="users-filter-role">
+              <option value="">Todos os perfis</option>
+              <option value="Administrador">Administrador</option>
+              <option value="Caixa">Caixa</option>
+              <option value="Gestão">Gestão</option>
+              <option value="Operacional">Operacional</option>
+            </select>
+            <button type="button" id="btn-new-user" class="btn btn-primary">Novo usuário</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Usuário</th>
+                  <th>E-mail</th>
+                  <th>Perfil</th>
+                  <th>Status</th>
+                  <th>Último acesso</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <tr>
+                  <td>Administrador</td>
+                  <td>admin@husky.com</td>
+                  <td>Administrador</td>
+                  <td>Ativo</td>
+                  <td>-</td>
+                  <td>
+                    <div class="table-action-group">
+                      <button type="button" class="btn btn-secondary btn-small">Editar</button>
+                      <button type="button" class="btn btn-secondary btn-small">Permissões</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Resumo de permissões</h3>
+                <p>Controle rápido do que cada perfil acessa.</p>
+              </div>
+            </div>
+
+            <div class="status-list">
+              <div class="status-row">
+                <span>Administrador</span>
+                <strong>Acesso total</strong>
+              </div>
+              <div class="status-row">
+                <span>Caixa</span>
+                <strong>Vendas e comprovantes</strong>
+              </div>
+              <div class="status-row">
+                <span>Gestão</span>
+                <strong>Financeiro e relatórios</strong>
+              </div>
+              <div class="status-row">
+                <span>Operacional</span>
+                <strong>Estoque e apoio</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Status geral do sistema</h3>
+                <p>Indicadores técnicos rápidos.</p>
+              </div>
+            </div>
+
+            <div class="status-list">
+              <div class="status-row">
+                <span>Login protegido</span>
+                <strong id="system-login-status">Ativo</strong>
+              </div>
+              <div class="status-row">
+                <span>Nuvem</span>
+                <strong id="system-cloud-status">Desconectada</strong>
+              </div>
+              <div class="status-row">
+                <span>Backup automático</span>
+                <strong id="system-backup-status">Manual</strong>
+              </div>
+              <div class="status-row">
+                <span>Logs do sistema</span>
+                <strong id="system-logs-status">Ativos</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

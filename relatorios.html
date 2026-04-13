@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tela de relatórios do sistema da Husky Confeitaria" />
+  <title>Husky Confeitaria | Relatórios</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="app-page-body">
+  <div class="app-pattern" aria-hidden="true">
+    <img src="assets/img/pattern-husky.svg" alt="" />
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <a href="home.html" class="brand-box">
+          <img src="assets/img/logo-husky.png" alt="Logo da Husky Confeitaria" class="brand-logo" />
+          <div class="brand-text">
+            <strong>Husky Confeitaria</strong>
+            <span>Sistema Empresarial</span>
+          </div>
+        </a>
+
+        <div class="operator-box">
+          <img src="assets/img/avatar-user.png" alt="Usuário logado" class="operator-avatar" />
+          <div class="operator-info">
+            <strong id="logged-user-name">Administrador</strong>
+            <span id="logged-user-role">Gestão / Caixa</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a href="home.html" class="nav-item">Início</a>
+        <a href="vendas.html" class="nav-item">Vendas</a>
+        <a href="produtos.html" class="nav-item">Produtos</a>
+        <a href="estoque.html" class="nav-item">Estoque</a>
+        <a href="despesas.html" class="nav-item">Despesas</a>
+        <a href="relatorios.html" class="nav-item active">Relatórios</a>
+        <a href="clientes.html" class="nav-item">Clientes</a>
+        <a href="comprovantes.html" class="nav-item">Comprovantes</a>
+        <a href="configuracoes.html" class="nav-item">Configurações</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="cloud-box">
+          <span class="cloud-dot"></span>
+          <div>
+            <strong>Nuvem</strong>
+            <small id="sidebar-cloud-status">Pronto para sincronização</small>
+          </div>
+        </div>
+
+        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span class="eyebrow">Análise e performance</span>
+            <h1>Relatórios</h1>
+            <p>Visualize resultados por período, desempenho mensal, produtos, vendas, despesas e estoque.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-badge">
+            <span class="status-indicator"></span>
+            <span id="topbar-sync-status">Sincronização online preparada</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" id="btn-export-report-pdf-top" class="btn btn-secondary">Exportar PDF</button>
+            <button type="button" id="btn-export-report-excel-top" class="btn btn-primary">Exportar Excel</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="hero-panel hero-panel-compact">
+          <div class="hero-content">
+            <span class="eyebrow">Visão estratégica</span>
+            <h2>Relatórios completos da Husky</h2>
+            <p>
+              Consulte faturamento, lucro, custos, despesas, ticket médio, produtos mais vendidos,
+              evolução mensal e relatórios filtrados por período para apoiar sua tomada de decisão.
+            </p>
+          </div>
+
+          <div class="hero-actions">
+            <button type="button" id="btn-generate-report-hero" class="btn btn-primary">Gerar relatório</button>
+            <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Filtros do relatório</h3>
+              <p>Defina o período e o tipo de análise.</p>
+            </div>
+          </div>
+
+          <form id="report-filter-form" class="form">
+            <div class="toolbar-grid report-filter-grid">
+              <input type="date" id="report-start-date" />
+              <input type="date" id="report-end-date" />
+
+              <select id="report-type">
+                <option value="geral">Relatório geral</option>
+                <option value="mensal">Relatório mensal</option>
+                <option value="vendas">Relatório de vendas</option>
+                <option value="despesas">Relatório de despesas</option>
+                <option value="estoque">Relatório de estoque</option>
+                <option value="produtos">Relatório de produtos</option>
+                <option value="clientes">Relatório de clientes</option>
+              </select>
+
+              <select id="report-period-preset">
+                <option value="">Período personalizado</option>
+                <option value="today">Hoje</option>
+                <option value="yesterday">Ontem</option>
+                <option value="7days">Últimos 7 dias</option>
+                <option value="15days">Últimos 15 dias</option>
+                <option value="30days">Últimos 30 dias</option>
+                <option value="currentMonth">Mês atual</option>
+                <option value="lastMonth">Mês passado</option>
+                <option value="year">Ano atual</option>
+              </select>
+
+              <select id="report-payment-filter">
+                <option value="">Todos os pagamentos</option>
+                <option value="Pix">Pix</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Débito">Débito</option>
+                <option value="Crédito">Crédito</option>
+                <option value="Misto">Misto</option>
+              </select>
+
+              <select id="report-category-filter">
+                <option value="">Todas as categorias</option>
+                <option value="Compras">Compras</option>
+                <option value="Perda de material">Perda de material</option>
+                <option value="Embalagens">Embalagens</option>
+                <option value="Transporte">Transporte</option>
+                <option value="Taxas">Taxas</option>
+                <option value="Funcionamento">Funcionamento</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Brigadeiro">Brigadeiro</option>
+                <option value="Bolo">Bolo</option>
+                <option value="Brownie">Brownie</option>
+                <option value="Combo">Combo</option>
+              </select>
+
+              <button type="button" id="btn-generate-report" class="btn btn-primary">Gerar</button>
+              <button type="button" id="btn-clear-report-filter" class="btn btn-secondary">Limpar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="cards-grid metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Faturamento no período</span>
+            <strong id="report-total-sales">R$ 0,00</strong>
+            <small>Total bruto de vendas</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Custos no período</span>
+            <strong id="report-total-costs">R$ 0,00</strong>
+            <small>Custos dos produtos vendidos</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Despesas no período</span>
+            <strong id="report-total-expenses">R$ 0,00</strong>
+            <small>Saídas operacionais</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Lucro líquido</span>
+            <strong id="report-total-profit">R$ 0,00</strong>
+            <small>Resultado final do período</small>
+          </article>
+        </section>
+
+        <section class="cards-grid metrics-grid metrics-grid-secondary">
+          <article class="metric-card">
+            <span class="metric-label">Ticket médio</span>
+            <strong id="report-average-ticket">R$ 0,00</strong>
+            <small>Média por venda</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Total de pedidos</span>
+            <strong id="report-orders-count">0</strong>
+            <small>Quantidade de vendas registradas</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Margem líquida</span>
+            <strong id="report-profit-margin">0%</strong>
+            <small>Lucratividade do período</small>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Perdas registradas</span>
+            <strong id="report-losses-total">R$ 0,00</strong>
+            <small>Impacto em desperdício</small>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Desempenho mensal</h3>
+                <p>Comparativo de vendas, despesas e lucro mês a mês.</p>
+              </div>
+            </div>
+            <div id="monthly-report-chart" class="chart-area">
+              <p>O gráfico mensal será inserido pelo JavaScript.</p>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Fluxo financeiro</h3>
+                <p>Entradas, saídas e saldo por período.</p>
+              </div>
+            </div>
+            <div id="financial-flow-chart" class="chart-area">
+              <p>O gráfico financeiro será inserido pelo JavaScript.</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Produtos mais vendidos</h3>
+                <p>Ranking de destaque do período.</p>
+              </div>
+            </div>
+            <div id="top-products-report" class="report-list">
+              <div class="pix-proof-card">
+                <div>
+                  <strong>Sem dados ainda</strong>
+                  <p>Os produtos mais vendidos aparecerão aqui.</p>
+                </div>
+                <span class="tag">0</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Categorias com maior gasto</h3>
+                <p>Despesas organizadas por categoria.</p>
+              </div>
+            </div>
+            <div id="top-expense-categories" class="report-list">
+              <div class="pix-proof-card">
+                <div>
+                  <strong>Sem dados ainda</strong>
+                  <p>As categorias de despesa aparecerão aqui.</p>
+                </div>
+                <span class="tag">R$ 0,00</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Formas de pagamento</h3>
+                <p>Distribuição de pagamentos nas vendas.</p>
+              </div>
+            </div>
+            <div id="payment-method-chart" class="chart-area">
+              <p>O gráfico de pagamentos será inserido pelo JavaScript.</p>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Status operacional</h3>
+                <p>Indicadores complementares do período.</p>
+              </div>
+            </div>
+
+            <div class="status-list">
+              <div class="status-row">
+                <span>Pedidos finalizados</span>
+                <strong id="report-finished-orders">0</strong>
+              </div>
+              <div class="status-row">
+                <span>Pedidos pendentes</span>
+                <strong id="report-pending-orders">0</strong>
+              </div>
+              <div class="status-row">
+                <span>Pix com comprovante</span>
+                <strong id="report-pix-with-proof">0</strong>
+              </div>
+              <div class="status-row">
+                <span>Itens com estoque crítico</span>
+                <strong id="report-critical-stock">0</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Tabela analítica</h3>
+              <p>Resumo detalhado dos números do período.</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Período</th>
+                  <th>Vendas</th>
+                  <th>Custos</th>
+                  <th>Despesas</th>
+                  <th>Lucro</th>
+                  <th>Margem</th>
+                </tr>
+              </thead>
+              <tbody id="report-table-body">
+                <tr>
+                  <td>Período atual</td>
+                  <td>R$ 0,00</td>
+                  <td>R$ 0,00</td>
+                  <td>R$ 0,00</td>
+                  <td>R$ 0,00</td>
+                  <td>0%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Resumo de vendas</h3>
+                <p>Detalhamento das vendas do período.</p>
+              </div>
+              <a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Pagamento</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="report-sales-table-body">
+                  <tr>
+                    <td>#0001</td>
+                    <td>Consumidor final</td>
+                    <td>Pix</td>
+                    <td>R$ 0,00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Resumo de despesas</h3>
+                <p>Detalhamento das saídas do período.</p>
+              </div>
+              <a href="despesas.html" class="btn btn-secondary">Abrir despesas</a>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody id="report-expenses-table-body">
+                  <tr>
+                    <td>--/--/----</td>
+                    <td>Compras</td>
+                    <td>Despesa exemplo</td>
+                    <td>R$ 0,00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid two-columns">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Produtos com melhor margem</h3>
+                <p>Itens mais rentáveis do período.</p>
+              </div>
+            </div>
+            <div id="best-margin-products" class="report-list">
+              <div class="pix-proof-card">
+                <div>
+                  <strong>Sem dados ainda</strong>
+                  <p>Os produtos mais rentáveis aparecerão aqui.</p>
+                </div>
+                <span class="tag">0%</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Estoque e perdas</h3>
+                <p>Resumo operacional do estoque no período.</p>
+              </div>
+              <a href="estoque.html" class="btn btn-secondary">Abrir estoque</a>
+            </div>
+
+            <div class="status-list">
+              <div class="status-row">
+                <span>Movimentações registradas</span>
+                <strong id="report-stock-movements">0</strong>
+              </div>
+              <div class="status-row">
+                <span>Itens com estoque baixo</span>
+                <strong id="report-low-stock">0</strong>
+              </div>
+              <div class="status-row">
+                <span>Itens sem estoque</span>
+                <strong id="report-zero-stock">0</strong>
+              </div>
+              <div class="status-row">
+                <span>Perdas no período</span>
+                <strong id="report-stock-losses">R$ 0,00</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/relatorios.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
