@@ -1576,3 +1576,11 @@ tbody tr:hover {
     min-width: 500px;
   }
 }
+
+sidebar-overlay {
+  pointer-events: none;
+}
+
+.sidebar.is-open + #sidebar-overlay {
+  pointer-events: auto;
+}
