@@ -62,9 +62,6 @@
     <div class="content-area">
       <header class="topbar">
         <div class="topbar-left">
-          <button type="button" class="btn btn-secondary" id="btn-toggle-theme" data-action="toggle-theme">
-        Tema
-        </button>
           <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
             ☰
           </button>
@@ -83,6 +80,9 @@
           </div>
 
           <div class="topbar-actions">
+            <button type="button" class="btn btn-secondary" id="btn-toggle-theme" data-action="toggle-theme">
+              Tema
+            </button>
             <button type="button" id="btn-new-sale-top" class="btn btn-primary">Nova venda</button>
             <button type="button" id="btn-print-current-top" class="btn btn-secondary">Imprimir</button>
           </div>
@@ -113,70 +113,70 @@
         </section>
 
         <section class="panel sales-filter-panel">
-  <div class="panel-header">
-    <div>
-      <h3>Filtros de vendas</h3>
-      <p>Pesquise por período, status e pagamento.</p>
-    </div>
-  </div>
+          <div class="panel-header">
+            <div>
+              <h3>Filtros de vendas</h3>
+              <p>Pesquise por período, status e pagamento.</p>
+            </div>
+          </div>
 
-  <div class="sales-filter-grid sales-filter-grid-pretty">
-    <div class="form-group">
-      <label for="sales-search">Buscar</label>
-      <input type="text" id="sales-search" placeholder="Pedido, cliente ou telefone" />
-    </div>
+          <div class="sales-filter-grid sales-filter-grid-pretty">
+            <div class="form-group">
+              <label for="sales-search">Buscar</label>
+              <input type="text" id="sales-search" placeholder="Pedido, cliente ou telefone" />
+            </div>
 
-    <div class="form-group">
-      <label for="sales-filter-start">Data inicial</label>
-      <input type="date" id="sales-filter-start" />
-    </div>
+            <div class="form-group">
+              <label for="sales-filter-start">Data inicial</label>
+              <input type="date" id="sales-filter-start" />
+            </div>
 
-    <div class="form-group">
-      <label for="sales-filter-end">Data final</label>
-      <input type="date" id="sales-filter-end" />
-    </div>
+            <div class="form-group">
+              <label for="sales-filter-end">Data final</label>
+              <input type="date" id="sales-filter-end" />
+            </div>
 
-    <div class="form-group">
-      <label for="sales-filter-payment">Pagamento</label>
-      <select id="sales-filter-payment">
-        <option value="">Todos</option>
-        <option value="Pix">Pix</option>
-        <option value="Dinheiro">Dinheiro</option>
-        <option value="Débito">Débito</option>
-        <option value="Crédito">Crédito</option>
-        <option value="Misto">Misto</option>
-      </select>
-    </div>
+            <div class="form-group">
+              <label for="sales-filter-payment">Pagamento</label>
+              <select id="sales-filter-payment">
+                <option value="">Todos</option>
+                <option value="Pix">Pix</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Débito">Débito</option>
+                <option value="Crédito">Crédito</option>
+                <option value="Misto">Misto</option>
+              </select>
+            </div>
 
-    <div class="form-group">
-      <label for="sales-filter-order-status">Status do pedido</label>
-      <select id="sales-filter-order-status">
-        <option value="">Todos</option>
-        <option value="Pendente">Pendente</option>
-        <option value="Em produção">Em produção</option>
-        <option value="Pronto">Pronto</option>
-        <option value="Finalizado">Finalizado</option>
-        <option value="Cancelado">Cancelado</option>
-      </select>
-    </div>
+            <div class="form-group">
+              <label for="sales-filter-order-status">Status do pedido</label>
+              <select id="sales-filter-order-status">
+                <option value="">Todos</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Em produção">Em produção</option>
+                <option value="Pronto">Pronto</option>
+                <option value="Finalizado">Finalizado</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+            </div>
 
-    <div class="form-group">
-      <label for="sales-filter-payment-status">Status do pagamento</label>
-      <select id="sales-filter-payment-status">
-        <option value="">Todos</option>
-        <option value="Aguardando pagamento">Aguardando pagamento</option>
-        <option value="Pago">Pago</option>
-        <option value="Parcial">Parcial</option>
-        <option value="Cancelado">Cancelado</option>
-      </select>
-    </div>
+            <div class="form-group">
+              <label for="sales-filter-payment-status">Status do pagamento</label>
+              <select id="sales-filter-payment-status">
+                <option value="">Todos</option>
+                <option value="Aguardando pagamento">Aguardando pagamento</option>
+                <option value="Pago">Pago</option>
+                <option value="Parcial">Parcial</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+            </div>
 
-    <div class="sales-filter-actions">
-      <button type="button" id="btn-filter-sales" class="btn btn-primary">Aplicar filtro</button>
-      <button type="button" id="btn-clear-sales-filter" class="btn btn-secondary">Limpar</button>
-    </div>
-  </div>
-</section>
+            <div class="sales-filter-actions">
+              <button type="button" id="btn-filter-sales" class="btn btn-primary">Aplicar filtro</button>
+              <button type="button" id="btn-clear-sales-filter" class="btn btn-secondary">Limpar</button>
+            </div>
+          </div>
+        </section>
 
         <section class="sales-compact-grid">
           <article class="panel sales-fast-form">
@@ -290,30 +290,6 @@
                     <span>Preço</span>
                     <span>Total</span>
                     <span>Ação</span>
-                  </div>
-
-                  <div class="sale-item-row">
-                    <div class="form-group compact-field">
-                      <select class="sale-item-product">
-                        <option value="">Selecione um produto</option>
-                      </select>
-                    </div>
-
-                    <div class="form-group compact-field">
-                      <input type="number" class="sale-item-quantity" value="1" min="1" />
-                    </div>
-
-                    <div class="form-group compact-field">
-                      <input type="number" class="sale-item-unit-price" placeholder="0,00" />
-                    </div>
-
-                    <div class="sale-item-total-cell">
-                      <strong>R$ 0,00</strong>
-                    </div>
-
-                    <div class="sale-item-action-cell">
-                      <button type="button" class="btn btn-danger btn-small">Remover</button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -466,14 +442,7 @@
                   </thead>
                   <tbody id="sales-table-body">
                     <tr>
-                      <td>#0001</td>
-                      <td>Consumidor final</td>
-                      <td>R$ 0,00</td>
-                      <td>
-                        <div class="table-action-group">
-                          <button type="button" class="btn btn-secondary btn-small">Editar</button>
-                        </div>
-                      </td>
+                      <td colspan="4">Nenhuma venda encontrada.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -486,53 +455,28 @@
           <article class="panel">
             <div class="panel-header">
               <div>
-                <h3>Filtros</h3>
-                <p>Pesquise pedidos.</p>
-              </div>
-            </div>
-
-            <div class="toolbar-grid sales-filter-grid">
-              <input type="text" id="sales-search" placeholder="Buscar pedido ou cliente" />
-              <input type="date" id="sales-filter-start" />
-              <input type="date" id="sales-filter-end" />
-              <select id="sales-filter-payment">
-                <option value="">Pagamento</option>
-                <option value="Pix">Pix</option>
-                <option value="Dinheiro">Dinheiro</option>
-                <option value="Débito">Débito</option>
-                <option value="Crédito">Crédito</option>
-                <option value="Misto">Misto</option>
-              </select>
-              <select id="sales-filter-order-status">
-                <option value="">Status pedido</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Em produção">Em produção</option>
-                <option value="Pronto">Pronto</option>
-                <option value="Finalizado">Finalizado</option>
-                <option value="Cancelado">Cancelado</option>
-              </select>
-              <select id="sales-filter-payment-status">
-                <option value="">Status pagamento</option>
-                <option value="Aguardando pagamento">Aguardando pagamento</option>
-                <option value="Pago">Pago</option>
-                <option value="Parcial">Parcial</option>
-                <option value="Cancelado">Cancelado</option>
-              </select>
-              <button type="button" id="btn-filter-sales" class="btn btn-secondary">Filtrar</button>
-              <button type="button" id="btn-clear-sales-filter" class="btn btn-secondary">Limpar</button>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-header">
-              <div>
                 <h3>Atalhos</h3>
+                <p>Acesso rápido às áreas principais.</p>
               </div>
             </div>
 
             <div class="summary-action-list">
               <a href="comprovantes.html" class="btn btn-secondary btn-full">Abrir comprovantes</a>
               <button type="button" id="btn-new-sale-hero" class="btn btn-primary btn-full">Criar nova venda</button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Impressão</h3>
+                <p>Use para gerar recibo e nota simples.</p>
+              </div>
+            </div>
+
+            <div class="summary-action-list">
+              <button type="button" id="btn-generate-receipt-copy" class="btn btn-secondary btn-full" onclick="document.getElementById('btn-generate-receipt').click()">Atualizar comprovante</button>
+              <button type="button" id="btn-print-receipt-copy" class="btn btn-secondary btn-full" onclick="document.getElementById('btn-print-receipt').click()">Imprimir comprovante</button>
             </div>
           </article>
         </section>
@@ -557,10 +501,7 @@
                 </thead>
                 <tbody id="pix-pending-sales-table">
                   <tr>
-                    <td>#0001</td>
-                    <td>Cliente exemplo</td>
-                    <td>R$ 0,00</td>
-                    <td><button type="button" class="btn btn-secondary btn-small">Anexar</button></td>
+                    <td colspan="4">Nenhum pedido aguardando comprovante Pix.</td>
                   </tr>
                 </tbody>
               </table>
@@ -586,10 +527,7 @@
                 </thead>
                 <tbody id="finished-sales-table">
                   <tr>
-                    <td>#0002</td>
-                    <td>Cliente exemplo</td>
-                    <td>R$ 0,00</td>
-                    <td><button type="button" class="btn btn-secondary btn-small">Ver</button></td>
+                    <td colspan="4">Nenhum pedido finalizado ainda.</td>
                   </tr>
                 </tbody>
               </table>

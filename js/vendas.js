@@ -32,29 +32,40 @@
       app.log('Tela de vendas carregada.');
     },
 
+    getDefaultPeriod() {
+      const today = this.todayISO();
+      return {
+        start: `${today.slice(0, 7)}-01`,
+        end: today
+      };
+    },
+
     loadSavedPeriod() {
       try {
         const raw = localStorage.getItem(app.getStorageKey(this.filterStorageKey));
         const saved = raw ? JSON.parse(raw) : null;
+        const defaults = this.getDefaultPeriod();
 
-        const today = this.todayISO();
-        const monthStart = `${today.slice(0, 7)}-01`;
+        this.filters = {
+          search: '',
+          start: saved?.start || defaults.start,
+          end: saved?.end || defaults.end,
+          payment: '',
+          orderStatus: '',
+          paymentStatus: ''
+        };
 
-        this.filters.start = saved?.start || monthStart;
-        this.filters.end = saved?.end || today;
+        this.syncFiltersToForm();
+      } catch (error) {
+        console.error('[Husky Vendas] erro ao carregar período salvo', error);
+        const defaults = this.getDefaultPeriod();
+        this.filters.start = defaults.start;
+        this.filters.end = defaults.end;
         this.filters.search = '';
         this.filters.payment = '';
         this.filters.orderStatus = '';
         this.filters.paymentStatus = '';
-
-        if (this.refs.salesSearch) this.refs.salesSearch.value = '';
-        if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = this.filters.start;
-        if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = this.filters.end;
-        if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = '';
-        if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = '';
-        if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = '';
-      } catch (error) {
-        console.error('[Husky Vendas] erro ao carregar período salvo', error);
+        this.syncFiltersToForm();
       }
     },
 
@@ -70,6 +81,29 @@
       } catch (error) {
         console.error('[Husky Vendas] erro ao salvar período', error);
       }
+    },
+
+    syncFiltersToForm() {
+      if (this.refs.salesSearch) this.refs.salesSearch.value = this.filters.search || '';
+      if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = this.filters.start || '';
+      if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = this.filters.end || '';
+      if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = this.filters.payment || '';
+      if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = this.filters.orderStatus || '';
+      if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = this.filters.paymentStatus || '';
+    },
+
+    resetListFiltersToDefault(syncForm = false) {
+      const defaults = this.getDefaultPeriod();
+      this.filters = {
+        search: '',
+        start: defaults.start,
+        end: defaults.end,
+        payment: '',
+        orderStatus: '',
+        paymentStatus: ''
+      };
+      this.savePeriodOnly();
+      if (syncForm) this.syncFiltersToForm();
     },
 
     cacheRefs() {
@@ -637,6 +671,8 @@
       const previousSale = this.findSaleById(sale.id);
       const nextState = this.applySaleToState(sale, previousSale);
       this.setState(nextState);
+
+      this.resetListFiltersToDefault(true);
       this.renderAll();
 
       app.showToast(
@@ -667,6 +703,8 @@
       const previousSale = this.findSaleById(sale.id);
       const nextState = this.applySaleToState(sale, previousSale);
       this.setState(nextState);
+
+      this.resetListFiltersToDefault(true);
       this.renderAll();
 
       app.showToast('Pedido finalizado com sucesso.', 'success');
@@ -700,6 +738,8 @@
 
       const nextState = this.applySaleToState(cancelledSale, existingSale);
       this.setState(nextState);
+
+      this.resetListFiltersToDefault(true);
       this.renderAll();
 
       app.showToast('Pedido cancelado.', 'warning');
@@ -888,26 +928,7 @@
     },
 
     clearFilters() {
-      const today = this.todayISO();
-      const monthStart = `${today.slice(0, 7)}-01`;
-
-      this.filters = {
-        search: '',
-        start: monthStart,
-        end: today,
-        payment: '',
-        orderStatus: '',
-        paymentStatus: ''
-      };
-
-      if (this.refs.salesSearch) this.refs.salesSearch.value = '';
-      if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = monthStart;
-      if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = today;
-      if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = '';
-      if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = '';
-      if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = '';
-
-      this.savePeriodOnly();
+      this.resetListFiltersToDefault(true);
       this.renderAll();
     },
 
@@ -977,7 +998,7 @@
     renderSalesTable() {
       if (!this.refs.salesTableBody) return;
 
-      const sales = this.getFilteredSales().slice(0, 20);
+      const sales = this.getFilteredSales();
 
       if (!sales.length) {
         this.refs.salesTableBody.innerHTML = `
@@ -1017,8 +1038,7 @@
           const dateA = new Date(`${this.getSaleDateValue(a)}T${a.time || '00:00'}`).getTime();
           const dateB = new Date(`${this.getSaleDateValue(b)}T${b.time || '00:00'}`).getTime();
           return dateB - dateA;
-        })
-        .slice(0, 10);
+        });
 
       if (!pendingPixSales.length) {
         this.refs.pixPendingSalesTable.innerHTML = `
@@ -1052,8 +1072,7 @@
           const dateA = new Date(`${this.getSaleDateValue(a)}T${a.time || '00:00'}`).getTime();
           const dateB = new Date(`${this.getSaleDateValue(b)}T${b.time || '00:00'}`).getTime();
           return dateB - dateA;
-        })
-        .slice(0, 10);
+        });
 
       if (!finishedSales.length) {
         this.refs.finishedSalesTable.innerHTML = `
