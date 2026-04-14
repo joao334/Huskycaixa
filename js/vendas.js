@@ -9,6 +9,7 @@
   }
 
   const SALES_PAGE = {
+    filterStorageKey: 'husky_sales_filters',
     refs: {},
     filters: {
       search: '',
@@ -22,13 +23,57 @@
     pixProofDraft: null,
 
     init() {
-      if (!document.getElementById('sale-form')) return;
-      this.cacheRefs();
-      this.bindEvents();
-      this.prepareInitialState();
-      this.renderAll();
-      app.log('Tela de vendas carregada.');
-    },
+  if (!document.getElementById('sale-form')) return;
+  this.cacheRefs();
+  this.bindEvents();
+  this.loadPersistedFilters();
+  this.prepareInitialState();
+  this.renderAll();
+  app.log('Tela de vendas carregada.');
+},
+
+loadPersistedFilters() {
+  try {
+    const raw = localStorage.getItem(app.getStorageKey(this.filterStorageKey));
+    const saved = raw ? JSON.parse(raw) : null;
+
+    if (saved && typeof saved === 'object') {
+      this.filters = {
+        search: saved.search || '',
+        start: saved.start || '',
+        end: saved.end || '',
+        payment: saved.payment || '',
+        orderStatus: saved.orderStatus || '',
+        paymentStatus: saved.paymentStatus || ''
+      };
+    } else {
+      const today = this.todayISO();
+      const startOfMonth = `${today.slice(0, 7)}-01`;
+      this.filters.start = startOfMonth;
+      this.filters.end = today;
+    }
+
+    if (this.refs.salesSearch) this.refs.salesSearch.value = this.filters.search;
+    if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = this.filters.start;
+    if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = this.filters.end;
+    if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = this.filters.payment;
+    if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = this.filters.orderStatus;
+    if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = this.filters.paymentStatus;
+  } catch (error) {
+    console.error('[Husky Vendas] erro ao carregar filtros persistidos', error);
+  }
+},
+
+persistFilters() {
+  try {
+    localStorage.setItem(
+      app.getStorageKey(this.filterStorageKey),
+      JSON.stringify(this.filters)
+    );
+  } catch (error) {
+    console.error('[Husky Vendas] erro ao salvar filtros persistidos', error);
+  }
+},
 
     cacheRefs() {
       this.refs = {
@@ -121,7 +166,7 @@
 
     bindEvents() {
       this.refs.btnAddSaleItem?.addEventListener('click', () => this.addSaleItemRow());
-      this.refs.btnSaveSale?.addEventListener('click', () => this.handleSaveSale());
+      this.refs.btnSaveSale?.addEventListener('click', () => this.handleSaveSale(false));
       this.refs.btnUpdateSale?.addEventListener('click', () => this.handleSaveSale(true));
       this.refs.btnFinishSale?.addEventListener('click', () => this.handleFinishSale());
       this.refs.btnCancelSale?.addEventListener('click', () => this.handleCancelSale());
@@ -143,15 +188,59 @@
         this.refs.salePaymentStatus,
         this.refs.saleOrderStatus,
         this.refs.saleClientName,
-        this.refs.saleDate
+        this.refs.saleDate,
+        this.refs.salePixProofNote
       ].forEach((field) => {
         field?.addEventListener('input', () => this.updateLiveSummary());
         field?.addEventListener('change', () => this.updateLiveSummary());
       });
 
+      this.refs.salesSearch?.addEventListener('input', () => {
+  this.filters.search = this.refs.salesSearch.value.trim();
+  this.persistFilters();
+  this.renderSalesTable();
+});
+
+this.refs.salesFilterStart?.addEventListener('change', () => {
+  this.filters.start = this.refs.salesFilterStart.value || '';
+  this.persistFilters();
+  this.renderAll();
+});
+
+this.refs.salesFilterEnd?.addEventListener('change', () => {
+  this.filters.end = this.refs.salesFilterEnd.value || '';
+  this.persistFilters();
+  this.renderAll();
+});
+
+this.refs.salesFilterPayment?.addEventListener('change', () => {
+  this.filters.payment = this.refs.salesFilterPayment.value || '';
+  this.persistFilters();
+  this.renderSalesTable();
+});
+
+this.refs.salesFilterOrderStatus?.addEventListener('change', () => {
+  this.filters.orderStatus = this.refs.salesFilterOrderStatus.value || '';
+  this.persistFilters();
+  this.renderSalesTable();
+});
+
+this.refs.salesFilterPaymentStatus?.addEventListener('change', () => {
+  this.filters.paymentStatus = this.refs.salesFilterPaymentStatus.value || '';
+  this.persistFilters();
+  this.renderSalesTable();
+});
       this.refs.salesTableBody?.addEventListener('click', (event) => this.handleSalesTableActions(event));
       this.refs.pixPendingSalesTable?.addEventListener('click', (event) => this.handlePixPendingActions(event));
       this.refs.finishedSalesTable?.addEventListener('click', (event) => this.handleFinishedActions(event));
+
+      window.addEventListener('husky:state-changed', () => {
+        this.renderAll();
+      });
+
+      window.addEventListener('storage', () => {
+        this.renderAll();
+      });
     },
 
     prepareInitialState() {
@@ -160,14 +249,6 @@
       }
 
       this.resetForm(true);
-    },
-
-    renderAll() {
-      this.renderMetrics();
-      this.renderSalesTable();
-      this.renderPixPendingTable();
-      this.renderFinishedTable();
-      this.updateLiveSummary();
     },
 
     getState() {
@@ -180,51 +261,95 @@
     },
 
     getSales() {
-      return this.getState().sales || [];
+      const sales = this.getState().sales;
+      return Array.isArray(sales) ? sales : [];
     },
 
     getProducts() {
-      return this.getState().products || [];
+      const products = this.getState().products;
+      return Array.isArray(products) ? products : [];
     },
 
     getProofs() {
-      return this.getState().proofs || [];
+      const proofs = this.getState().proofs;
+      return Array.isArray(proofs) ? proofs : [];
     },
 
     getCurrentUser() {
       return this.getState().currentUser || { name: 'Administrador', email: 'admin@husky.com' };
     },
 
-    resetForm(keepAutoDefaults = false) {
+    normalizeDate(value) {
+      if (!value) return '';
+
+      const text = String(value).trim();
+
+      if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+        return text.slice(0, 10);
+      }
+
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(text)) {
+        const [day, month, year] = text.split('/');
+        return `${year}-${month}-${day}`;
+      }
+
+      const date = new Date(text);
+      if (Number.isNaN(date.getTime())) return '';
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    },
+
+    getSaleDateValue(sale) {
+      return this.normalizeDate(sale?.date || sale?.createdAt || '');
+    },
+
+    todayISO() {
+      return typeof app.todayISO === 'function'
+        ? app.todayISO()
+        : new Date().toISOString().slice(0, 10);
+    },
+
+    resetForm(skipScroll = false) {
       this.editingSaleId = null;
       this.pixProofDraft = null;
 
       if (this.refs.form) this.refs.form.reset();
 
-      this.refs.saleId.value = '';
-      this.refs.saleCode.value = app.createId('SALE');
-      this.refs.saleOrderNumber.value = app.createOrderNumber('PED');
-      this.refs.saleDate.value = keepAutoDefaults ? app.todayISO() : app.todayISO();
-      this.refs.saleTime.value = app.currentTimeHHMM();
-      this.refs.salePaymentMethod.value = 'Pix';
-      this.refs.salePaymentStatus.value = 'Aguardando pagamento';
-      this.refs.saleOrderStatus.value = 'Pendente';
-      this.refs.saleDiscount.value = '';
-      this.refs.saleExtraFee.value = '';
-      this.refs.saleShippingFee.value = '';
-      this.refs.salePixProofNote.value = '';
+      if (this.refs.saleId) this.refs.saleId.value = '';
+      if (this.refs.saleCode) this.refs.saleCode.value = app.createId('SALE');
+      if (this.refs.saleOrderNumber) this.refs.saleOrderNumber.value = app.createOrderNumber('PED');
+      if (this.refs.saleDate) this.refs.saleDate.value = this.todayISO();
+      if (this.refs.saleTime) this.refs.saleTime.value = app.currentTimeHHMM();
+      if (this.refs.salePaymentMethod) this.refs.salePaymentMethod.value = 'Pix';
+      if (this.refs.salePaymentStatus) this.refs.salePaymentStatus.value = 'Aguardando pagamento';
+      if (this.refs.saleOrderStatus) this.refs.saleOrderStatus.value = 'Pendente';
+      if (this.refs.saleDiscount) this.refs.saleDiscount.value = '';
+      if (this.refs.saleExtraFee) this.refs.saleExtraFee.value = '';
+      if (this.refs.saleShippingFee) this.refs.saleShippingFee.value = '';
+      if (this.refs.salePixProofNote) this.refs.salePixProofNote.value = '';
       if (this.refs.salePixProof) this.refs.salePixProof.value = '';
 
-      this.refs.saleItemsContainer.innerHTML = '';
-      this.renderSaleItemsHeader();
-      this.addSaleItemRow();
+      if (this.refs.saleItemsContainer) {
+        this.refs.saleItemsContainer.innerHTML = '';
+        this.renderSaleItemsHeader();
+        this.addSaleItemRow();
+      }
+
       this.updatePixProofPreview();
       this.updateModeTag('Novo pedido');
       this.updateLiveSummary();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (!skipScroll) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     },
 
     renderSaleItemsHeader() {
+      if (!this.refs.saleItemsContainer) return;
+
       const header = document.createElement('div');
       header.className = 'sale-item-row sale-item-row-header';
       header.innerHTML = `
@@ -238,12 +363,14 @@
     },
 
     addSaleItemRow(item = null) {
+      if (!this.refs.saleItemsContainer) return;
+
       const row = document.createElement('div');
       row.className = 'sale-item-row';
       row.dataset.rowId = crypto.randomUUID();
 
       const productsOptions = this.getProducts().map((product) => `
-        <option value="${product.id}" ${item?.productId === product.id ? 'selected' : ''}>${product.name}</option>
+        <option value="${product.id}" ${item?.productId === product.id ? 'selected' : ''}>${this.escapeHtml(product.name)}</option>
       `).join('');
 
       row.innerHTML = `
@@ -276,26 +403,26 @@
       const unitPriceInput = row.querySelector('.sale-item-unit-price');
       const removeButton = row.querySelector('.sale-item-remove');
 
-      productSelect.addEventListener('change', () => {
+      productSelect?.addEventListener('change', () => {
         const product = this.findProduct(productSelect.value);
-        if (product && !item?.unitPrice) {
-          unitPriceInput.value = product.price || 0;
+        if (product && !unitPriceInput.value) {
+          unitPriceInput.value = this.toNumber(product.price || 0);
         }
         this.updateRowTotal(row);
         this.updateLiveSummary();
       });
 
-      quantityInput.addEventListener('input', () => {
+      quantityInput?.addEventListener('input', () => {
         this.updateRowTotal(row);
         this.updateLiveSummary();
       });
 
-      unitPriceInput.addEventListener('input', () => {
+      unitPriceInput?.addEventListener('input', () => {
         this.updateRowTotal(row);
         this.updateLiveSummary();
       });
 
-      removeButton.addEventListener('click', () => {
+      removeButton?.addEventListener('click', () => {
         const rows = this.getSaleItemRows();
         if (rows.length <= 1) {
           app.showToast('A venda precisa ter pelo menos um item.', 'warning');
@@ -311,42 +438,46 @@
     },
 
     getSaleItemRows() {
-      return Array.from(this.refs.saleItemsContainer.querySelectorAll('.sale-item-row')).filter((row) => !row.classList.contains('sale-item-row-header'));
+      if (!this.refs.saleItemsContainer) return [];
+      return Array.from(this.refs.saleItemsContainer.querySelectorAll('.sale-item-row'))
+        .filter((row) => !row.classList.contains('sale-item-row-header'));
     },
 
     updateRowTotal(row) {
-      const quantity = app.toNumber(row.querySelector('.sale-item-quantity')?.value || 0);
-      const unitPrice = app.toNumber(row.querySelector('.sale-item-unit-price')?.value || 0);
+      const quantity = this.toNumber(row.querySelector('.sale-item-quantity')?.value || 0);
+      const unitPrice = this.toNumber(row.querySelector('.sale-item-unit-price')?.value || 0);
       const total = quantity * unitPrice;
       const totalCell = row.querySelector('.sale-item-total-cell strong');
       if (totalCell) totalCell.textContent = app.formatCurrency(total);
     },
 
     collectItemsFromForm() {
-      return this.getSaleItemRows().map((row) => {
-        const productId = row.querySelector('.sale-item-product')?.value || '';
-        const quantity = app.toNumber(row.querySelector('.sale-item-quantity')?.value || 0);
-        const unitPrice = app.toNumber(row.querySelector('.sale-item-unit-price')?.value || 0);
-        const product = this.findProduct(productId);
+      return this.getSaleItemRows()
+        .map((row) => {
+          const productId = row.querySelector('.sale-item-product')?.value || '';
+          const quantity = this.toNumber(row.querySelector('.sale-item-quantity')?.value || 0);
+          const unitPrice = this.toNumber(row.querySelector('.sale-item-unit-price')?.value || 0);
+          const product = this.findProduct(productId);
 
-        return {
-          rowId: row.dataset.rowId,
-          productId,
-          productName: product?.name || 'Produto avulso',
-          quantity,
-          unitPrice,
-          unitCost: app.toNumber(product?.cost || 0),
-          total: quantity * unitPrice
-        };
-      }).filter((item) => item.productId && item.quantity > 0);
+          return {
+            rowId: row.dataset.rowId,
+            productId,
+            productName: product?.name || 'Produto avulso',
+            quantity,
+            unitPrice,
+            unitCost: this.toNumber(product?.cost || 0),
+            total: quantity * unitPrice
+          };
+        })
+        .filter((item) => item.productId && item.quantity > 0);
     },
 
     calculateSaleTotals(items) {
       const subtotal = app.sum(items, (item) => item.total);
       const cost = app.sum(items, (item) => item.unitCost * item.quantity);
-      const discount = app.toNumber(this.refs.saleDiscount.value || 0);
-      const extraFee = app.toNumber(this.refs.saleExtraFee.value || 0);
-      const shippingFee = app.toNumber(this.refs.saleShippingFee.value || 0);
+      const discount = this.toNumber(this.refs.saleDiscount?.value || 0);
+      const extraFee = this.toNumber(this.refs.saleExtraFee?.value || 0);
+      const shippingFee = this.toNumber(this.refs.saleShippingFee?.value || 0);
       const total = Math.max(0, subtotal - discount + extraFee + shippingFee);
       const profit = total - cost;
 
@@ -364,20 +495,25 @@
     updateLiveSummary() {
       const items = this.collectItemsFromForm();
       const totals = this.calculateSaleTotals(items);
-      const pixProofText = this.pixProofDraft?.name ? 'Enviado' : 'Não enviado';
+      const existingSale = this.findSaleById(this.editingSaleId);
+      const currentProof = this.pixProofDraft || existingSale?.pixProof || null;
+      const pixProofText = currentProof?.name ? 'Enviado' : 'Não enviado';
 
-      this.refs.saleSubtotal.textContent = app.formatCurrency(totals.subtotal);
-      this.refs.saleCost.textContent = app.formatCurrency(totals.cost);
-      this.refs.saleDiscountTotal.textContent = app.formatCurrency(totals.discount);
-      this.refs.saleExtraTotal.textContent = app.formatCurrency(totals.extraFee);
-      this.refs.saleShippingTotal.textContent = app.formatCurrency(totals.shippingFee);
-      this.refs.saleTotal.textContent = app.formatCurrency(totals.total);
-      this.refs.saleProfit.textContent = app.formatCurrency(totals.profit);
+      if (this.refs.saleSubtotal) this.refs.saleSubtotal.textContent = app.formatCurrency(totals.subtotal);
+      if (this.refs.saleCost) this.refs.saleCost.textContent = app.formatCurrency(totals.cost);
+      if (this.refs.saleDiscountTotal) this.refs.saleDiscountTotal.textContent = app.formatCurrency(totals.discount);
+      if (this.refs.saleExtraTotal) this.refs.saleExtraTotal.textContent = app.formatCurrency(totals.extraFee);
+      if (this.refs.saleShippingTotal) this.refs.saleShippingTotal.textContent = app.formatCurrency(totals.shippingFee);
+      if (this.refs.saleTotal) this.refs.saleTotal.textContent = app.formatCurrency(totals.total);
+      if (this.refs.saleProfit) this.refs.saleProfit.textContent = app.formatCurrency(totals.profit);
 
-      this.refs.summaryPaymentMethod.textContent = this.refs.salePaymentMethod.value || '-';
-      this.refs.summaryPaymentStatus.textContent = this.refs.salePaymentStatus.value || '-';
-      this.refs.summaryOrderStatus.textContent = this.refs.saleOrderStatus.value || '-';
-      this.refs.summaryPixProofStatus.textContent = this.refs.salePaymentMethod.value === 'Pix' ? pixProofText : 'Não obrigatório';
+      if (this.refs.summaryPaymentMethod) this.refs.summaryPaymentMethod.textContent = this.refs.salePaymentMethod?.value || '-';
+      if (this.refs.summaryPaymentStatus) this.refs.summaryPaymentStatus.textContent = this.refs.salePaymentStatus?.value || '-';
+      if (this.refs.summaryOrderStatus) this.refs.summaryOrderStatus.textContent = this.refs.saleOrderStatus?.value || '-';
+      if (this.refs.summaryPixProofStatus) {
+        this.refs.summaryPixProofStatus.textContent =
+          this.refs.salePaymentMethod?.value === 'Pix' ? pixProofText : 'Não obrigatório';
+      }
 
       this.prepareReceiptPreview(false);
     },
@@ -393,25 +529,31 @@
         return false;
       }
 
-      if (!this.refs.saleClientName.value.trim()) {
+      if (!this.refs.saleClientName?.value.trim()) {
         app.showToast('Informe o nome do cliente.', 'warning');
-        this.refs.saleClientName.focus();
+        this.refs.saleClientName?.focus();
         return false;
       }
 
-      if (!this.refs.saleDate.value) {
+      if (!this.refs.saleDate?.value) {
         app.showToast('Informe a data da venda.', 'warning');
         return false;
       }
 
       const previousSale = this.findSaleById(this.editingSaleId);
       const stockCheck = this.checkStockAvailability(items, previousSale);
+
       if (!stockCheck.ok) {
         app.showToast(stockCheck.message, 'danger');
         return false;
       }
 
-      if (forFinalization && this.refs.salePaymentMethod.value === 'Pix' && !this.pixProofDraft && !previousSale?.pixProof?.name) {
+      if (
+        forFinalization &&
+        this.refs.salePaymentMethod?.value === 'Pix' &&
+        !this.pixProofDraft &&
+        !previousSale?.pixProof?.name
+      ) {
         app.showToast('Para finalizar uma venda em Pix, anexe o comprovante.', 'warning');
         return false;
       }
@@ -421,13 +563,17 @@
 
     checkStockAvailability(newItems, previousSale = null) {
       const availableMap = new Map();
+
       this.getProducts().forEach((product) => {
-        availableMap.set(product.id, app.toNumber(product.stock || 0));
+        availableMap.set(product.id, this.toNumber(product.stock || 0));
       });
 
       if (previousSale && previousSale.orderStatus !== 'Cancelado') {
         previousSale.items.forEach((item) => {
-          availableMap.set(item.productId, (availableMap.get(item.productId) || 0) + app.toNumber(item.quantity || 0));
+          availableMap.set(
+            item.productId,
+            (availableMap.get(item.productId) || 0) + this.toNumber(item.quantity || 0)
+          );
         });
       }
 
@@ -448,25 +594,25 @@
       const existingSale = this.findSaleById(this.editingSaleId);
       const items = this.collectItemsFromForm();
       const totals = this.calculateSaleTotals(items);
-      const paymentMethod = this.refs.salePaymentMethod.value;
-      const paymentStatus = overrides.paymentStatus || this.refs.salePaymentStatus.value;
-      const orderStatus = overrides.orderStatus || this.refs.saleOrderStatus.value;
+      const paymentMethod = this.refs.salePaymentMethod?.value || 'Pix';
+      const paymentStatus = overrides.paymentStatus || this.refs.salePaymentStatus?.value || 'Aguardando pagamento';
+      const orderStatus = overrides.orderStatus || this.refs.saleOrderStatus?.value || 'Pendente';
       const now = new Date().toISOString();
 
-      const sale = {
-        id: existingSale?.id || this.refs.saleId.value || app.createId('SALE'),
-        code: existingSale?.code || this.refs.saleCode.value || app.createId('SALE'),
-        orderNumber: this.refs.saleOrderNumber.value || existingSale?.orderNumber || app.createOrderNumber('PED'),
-        date: this.refs.saleDate.value,
-        time: this.refs.saleTime.value || app.currentTimeHHMM(),
+      return {
+        id: existingSale?.id || this.refs.saleId?.value || app.createId('SALE'),
+        code: existingSale?.code || this.refs.saleCode?.value || app.createId('SALE'),
+        orderNumber: this.refs.saleOrderNumber?.value || existingSale?.orderNumber || app.createOrderNumber('PED'),
+        date: this.normalizeDate(this.refs.saleDate?.value || this.todayISO()),
+        time: this.refs.saleTime?.value || app.currentTimeHHMM(),
         client: {
-          name: this.refs.saleClientName.value.trim(),
-          phone: this.refs.saleClientPhone.value.trim(),
-          email: this.refs.saleClientEmail.value.trim()
+          name: this.refs.saleClientName?.value.trim() || '',
+          phone: this.refs.saleClientPhone?.value.trim() || '',
+          email: this.refs.saleClientEmail?.value.trim() || ''
         },
         delivery: {
-          type: this.refs.saleDeliveryType.value,
-          address: this.refs.saleDeliveryAddress.value.trim()
+          type: this.refs.saleDeliveryType?.value || 'Retirada',
+          address: this.refs.saleDeliveryAddress?.value.trim() || ''
         },
         paymentMethod,
         paymentStatus,
@@ -474,7 +620,7 @@
         discount: totals.discount,
         extraFee: totals.extraFee,
         shippingFee: totals.shippingFee,
-        notes: this.refs.saleNotes.value.trim(),
+        notes: this.refs.saleNotes?.value.trim() || '',
         items,
         subtotal: totals.subtotal,
         cost: totals.cost,
@@ -483,13 +629,11 @@
         pixProof: paymentMethod === 'Pix'
           ? (this.pixProofDraft || existingSale?.pixProof || null)
           : null,
-        pixProofNote: this.refs.salePixProofNote.value.trim(),
+        pixProofNote: this.refs.salePixProofNote?.value.trim() || '',
         updatedAt: now,
         createdAt: existingSale?.createdAt || now,
         updatedBy: this.getCurrentUser().email || 'admin@husky.com'
       };
-
-      return sale;
     },
 
     handleSaveSale(isUpdate = false) {
@@ -499,11 +643,20 @@
       const previousSale = this.findSaleById(sale.id);
       const nextState = this.applySaleToState(sale, previousSale);
       this.setState(nextState);
-      this.syncProofForSale(sale);
       this.renderAll();
-      this.updateModeTag('Novo pedido');
-      app.showToast(isUpdate || previousSale ? 'Venda atualizada com sucesso.' : 'Venda salva com sucesso.', 'success');
-      app.log('Venda salva/atualizada.', { saleId: sale.id, orderNumber: sale.orderNumber });
+
+      app.showToast(
+        isUpdate || previousSale
+          ? 'Venda atualizada com sucesso.'
+          : 'Venda salva com sucesso.',
+        'success'
+      );
+
+      app.log('Venda salva/atualizada.', {
+        saleId: sale.id,
+        orderNumber: sale.orderNumber
+      });
+
       this.resetForm();
     },
 
@@ -511,22 +664,28 @@
       if (!this.validateForm({ forFinalization: true })) return;
 
       const sale = this.buildSalePayload({
-        paymentStatus: this.refs.salePaymentMethod.value === 'Pix' ? 'Pago' : this.refs.salePaymentStatus.value,
+        paymentStatus: this.refs.salePaymentMethod?.value === 'Pix'
+          ? 'Pago'
+          : this.refs.salePaymentStatus?.value || 'Pago',
         orderStatus: 'Finalizado'
       });
 
       const previousSale = this.findSaleById(sale.id);
       const nextState = this.applySaleToState(sale, previousSale);
       this.setState(nextState);
-      this.syncProofForSale(sale, true);
       this.renderAll();
+
       app.showToast('Pedido finalizado com sucesso.', 'success');
-      app.log('Pedido finalizado.', { saleId: sale.id, orderNumber: sale.orderNumber });
+      app.log('Pedido finalizado.', {
+        saleId: sale.id,
+        orderNumber: sale.orderNumber
+      });
+
       this.resetForm();
     },
 
     handleCancelSale() {
-      const saleId = this.editingSaleId || this.refs.saleId.value;
+      const saleId = this.editingSaleId || this.refs.saleId?.value;
       const existingSale = this.findSaleById(saleId);
 
       if (!existingSale) {
@@ -547,10 +706,14 @@
 
       const nextState = this.applySaleToState(cancelledSale, existingSale);
       this.setState(nextState);
-      this.syncProofForSale(cancelledSale);
       this.renderAll();
+
       app.showToast('Pedido cancelado.', 'warning');
-      app.log('Pedido cancelado.', { saleId: cancelledSale.id, orderNumber: cancelledSale.orderNumber });
+      app.log('Pedido cancelado.', {
+        saleId: cancelledSale.id,
+        orderNumber: cancelledSale.orderNumber
+      });
+
       this.resetForm();
     },
 
@@ -563,7 +726,7 @@
         previousSale.items.forEach((item) => {
           const product = products.find((entry) => entry.id === item.productId);
           if (product) {
-            product.stock = app.toNumber(product.stock || 0) + app.toNumber(item.quantity || 0);
+            product.stock = this.toNumber(product.stock || 0) + this.toNumber(item.quantity || 0);
           }
         });
       }
@@ -571,8 +734,12 @@
       if (sale.orderStatus !== 'Cancelado') {
         sale.items.forEach((item) => {
           const product = products.find((entry) => entry.id === item.productId);
+
           if (product) {
-            product.stock = Math.max(0, app.toNumber(product.stock || 0) - app.toNumber(item.quantity || 0));
+            product.stock = Math.max(
+              0,
+              this.toNumber(product.stock || 0) - this.toNumber(item.quantity || 0)
+            );
           }
 
           stockMovements.unshift({
@@ -598,50 +765,56 @@
       state.products = products;
       state.stockMovements = stockMovements;
       state.sales = app.upsertItem(state.sales || [], sale, 'id');
+      this.syncProofForSaleInState(state, sale);
       return state;
     },
 
-    syncProofForSale(sale, finalize = false) {
-      const state = app.getAppState();
+    syncProofForSaleInState(state, sale) {
       const proofs = [...(state.proofs || [])];
       const index = proofs.findIndex((entry) => entry.relatedSaleId === sale.id);
 
       if (sale.paymentMethod !== 'Pix' || !sale.pixProof) {
         if (index >= 0) proofs.splice(index, 1);
-      } else {
-        const payload = {
-          id: index >= 0 ? proofs[index].id : crypto.randomUUID(),
-          relatedSaleId: sale.id,
-          orderNumber: sale.orderNumber,
-          clientName: sale.client.name,
-          date: sale.date,
-          time: sale.time,
-          amount: sale.total,
-          status: finalize ? 'Vinculado' : (sale.paymentStatus === 'Pago' ? 'Conferido' : 'Pendente de conferência'),
-          origin: 'Cliente',
-          paymentMethod: sale.paymentMethod,
-          fileName: sale.pixProof.name,
-          fileType: sale.pixProof.type,
-          fileDataUrl: sale.pixProof.dataUrl,
-          transactionId: sale.pixProof.transactionId || '',
-          note: sale.pixProofNote || sale.pixProof.note || '',
-          createdAt: index >= 0 ? proofs[index].createdAt : new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
+        state.proofs = proofs;
+        return;
+      }
 
-        if (index >= 0) {
-          proofs[index] = payload;
-        } else {
-          proofs.unshift(payload);
-        }
+      const payload = {
+        id: index >= 0 ? proofs[index].id : crypto.randomUUID(),
+        relatedSaleId: sale.id,
+        orderNumber: sale.orderNumber,
+        clientName: sale.client?.name || 'Consumidor final',
+        date: sale.date,
+        time: sale.time,
+        amount: sale.total,
+        status:
+          sale.orderStatus === 'Finalizado'
+            ? 'Vinculado'
+            : (sale.paymentStatus === 'Pago' ? 'Conferido' : 'Pendente de conferência'),
+        origin: 'Cliente',
+        paymentMethod: sale.paymentMethod,
+        attachment: sale.pixProof,
+        fileName: sale.pixProof?.name || '',
+        fileType: sale.pixProof?.type || '',
+        fileDataUrl: sale.pixProof?.dataUrl || '',
+        transactionId: sale.pixProof?.transactionId || '',
+        note: sale.pixProofNote || sale.pixProof?.note || '',
+        createdAt: index >= 0 ? proofs[index].createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (index >= 0) {
+        proofs[index] = payload;
+      } else {
+        proofs.unshift(payload);
       }
 
       state.proofs = proofs;
-      app.setAppState(state);
     },
 
     handlePixProofUpload(event) {
       const file = event.target.files?.[0];
+
       if (!file) {
         this.pixProofDraft = null;
         this.updatePixProofPreview();
@@ -650,6 +823,7 @@
       }
 
       const reader = new FileReader();
+
       reader.onload = () => {
         this.pixProofDraft = {
           name: file.name,
@@ -657,21 +831,27 @@
           size: file.size,
           dataUrl: reader.result,
           uploadedAt: new Date().toISOString(),
-          note: this.refs.salePixProofNote.value.trim(),
+          note: this.refs.salePixProofNote?.value.trim() || '',
           transactionId: ''
         };
+
         this.updatePixProofPreview();
         this.updateLiveSummary();
         app.showToast('Comprovante anexado com sucesso.', 'success');
       };
+
       reader.onerror = () => {
         app.showToast('Não foi possível ler o comprovante.', 'danger');
       };
+
       reader.readAsDataURL(file);
     },
 
     updatePixProofPreview() {
+      if (!this.refs.salePixProofPreview) return;
+
       const currentProof = this.pixProofDraft || this.findSaleById(this.editingSaleId)?.pixProof || null;
+
       if (!currentProof) {
         this.refs.salePixProofPreview.innerHTML = '<p>Nenhum comprovante anexado.</p>';
         return;
@@ -679,127 +859,173 @@
 
       const isImage = String(currentProof.type || '').startsWith('image/');
       const sizeKb = currentProof.size ? `${Math.ceil(currentProof.size / 1024)} KB` : '-';
+      const noteText =
+        this.refs.salePixProofNote?.value.trim() ||
+        currentProof.note ||
+        'Sem observação';
 
       this.refs.salePixProofPreview.innerHTML = `
         <div class="pix-proof-card">
           <div>
-            <strong>${currentProof.name || 'Comprovante Pix'}</strong>
-            <p>Tipo: ${currentProof.type || '-'} • Tamanho: ${sizeKb}</p>
-            <p>Observação: ${this.escapeHtml(this.refs.salePixProofNote.value.trim() || currentProof.note || 'Sem observação')}</p>
+            <strong>${this.escapeHtml(currentProof.name || 'Comprovante Pix')}</strong>
+            <p>Tipo: ${this.escapeHtml(currentProof.type || '-')} • Tamanho: ${sizeKb}</p>
+            <p>Observação: ${this.escapeHtml(noteText)}</p>
           </div>
           <span class="tag">${isImage ? 'Imagem' : 'Arquivo'}</span>
         </div>
-        ${isImage && currentProof.dataUrl ? `<div style="margin-top: 12px;"><img src="${currentProof.dataUrl}" alt="Comprovante Pix" style="max-width: 100%; border-radius: 14px; border: 1px solid #ead9cd;" /></div>` : ''}
+        ${
+          isImage && currentProof.dataUrl
+            ? `<div style="margin-top: 12px;"><img src="${currentProof.dataUrl}" alt="Comprovante Pix" style="max-width: 100%; border-radius: 14px; border: 1px solid #ead9cd;" /></div>`
+            : ''
+        }
       `;
     },
 
-    applyFilters() {
-      this.filters.search = this.refs.salesSearch.value.trim();
-      this.filters.start = this.refs.salesFilterStart.value;
-      this.filters.end = this.refs.salesFilterEnd.value;
-      this.filters.payment = this.refs.salesFilterPayment.value;
-      this.filters.orderStatus = this.refs.salesFilterOrderStatus.value;
-      this.filters.paymentStatus = this.refs.salesFilterPaymentStatus.value;
-      this.renderSalesTable();
-    },
+   applyFilters() {
+  this.filters.search = this.refs.salesSearch?.value.trim() || '';
+  this.filters.start = this.normalizeDate(this.refs.salesFilterStart?.value || '');
+  this.filters.end = this.normalizeDate(this.refs.salesFilterEnd?.value || '');
+  this.filters.payment = this.refs.salesFilterPayment?.value || '';
+  this.filters.orderStatus = this.refs.salesFilterOrderStatus?.value || '';
+  this.filters.paymentStatus = this.refs.salesFilterPaymentStatus?.value || '';
+  this.persistFilters();
+  this.renderAll();
+},
 
-    clearFilters() {
-      this.filters = {
-        search: '',
-        start: '',
-        end: '',
-        payment: '',
-        orderStatus: '',
-        paymentStatus: ''
-      };
+   clearFilters() {
+  this.filters = {
+    search: '',
+    start: '',
+    end: '',
+    payment: '',
+    orderStatus: '',
+    paymentStatus: ''
+  };
 
-      this.refs.salesSearch.value = '';
-      this.refs.salesFilterStart.value = '';
-      this.refs.salesFilterEnd.value = '';
-      this.refs.salesFilterPayment.value = '';
-      this.refs.salesFilterOrderStatus.value = '';
-      this.refs.salesFilterPaymentStatus.value = '';
-      this.renderSalesTable();
-    },
+  if (this.refs.salesSearch) this.refs.salesSearch.value = '';
+  if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = '';
+  if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = '';
+  if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = '';
+  if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = '';
+  if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = '';
+
+  this.persistFilters();
+  this.renderAll();
+},
 
     getFilteredSales() {
-      return this.getSales().filter((sale) => {
-        const searchTarget = [
-          sale.orderNumber,
-          sale.client?.name,
-          sale.client?.phone,
-          sale.client?.email,
-          sale.code,
-          sale.notes
-        ].join(' ');
+      return this.getSales()
+        .filter((sale) => {
+          const searchTarget = [
+            sale.orderNumber,
+            sale.client?.name,
+            sale.client?.phone,
+            sale.client?.email,
+            sale.code,
+            sale.notes
+          ].join(' ');
 
-        const matchesSearch = !this.filters.search || app.includesText(searchTarget, this.filters.search);
-        const matchesStart = !this.filters.start || sale.date >= this.filters.start;
-        const matchesEnd = !this.filters.end || sale.date <= this.filters.end;
-        const matchesPayment = !this.filters.payment || sale.paymentMethod === this.filters.payment;
-        const matchesOrderStatus = !this.filters.orderStatus || sale.orderStatus === this.filters.orderStatus;
-        const matchesPaymentStatus = !this.filters.paymentStatus || sale.paymentStatus === this.filters.paymentStatus;
+          const saleDate = this.getSaleDateValue(sale);
+          const matchesSearch = !this.filters.search || app.includesText(searchTarget, this.filters.search);
+          const matchesStart = !this.filters.start || (saleDate && saleDate >= this.filters.start);
+          const matchesEnd = !this.filters.end || (saleDate && saleDate <= this.filters.end);
+          const matchesPayment = !this.filters.payment || sale.paymentMethod === this.filters.payment;
+          const matchesOrderStatus = !this.filters.orderStatus || sale.orderStatus === this.filters.orderStatus;
+          const matchesPaymentStatus = !this.filters.paymentStatus || sale.paymentStatus === this.filters.paymentStatus;
 
-        return matchesSearch && matchesStart && matchesEnd && matchesPayment && matchesOrderStatus && matchesPaymentStatus;
-      }).sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`).getTime() - new Date(`${a.date}T${a.time || '00:00'}`).getTime());
+          return matchesSearch && matchesStart && matchesEnd && matchesPayment && matchesOrderStatus && matchesPaymentStatus;
+        })
+        .sort((a, b) => {
+          const dateA = new Date(`${this.getSaleDateValue(a)}T${a.time || '00:00'}`).getTime();
+          const dateB = new Date(`${this.getSaleDateValue(b)}T${b.time || '00:00'}`).getTime();
+          return dateB - dateA;
+        });
+    },
+
+    renderAll() {
+      this.renderMetrics();
+      this.renderSalesTable();
+      this.renderPixPendingTable();
+      this.renderFinishedTable();
+      this.updateLiveSummary();
     },
 
     renderMetrics() {
-      const today = app.todayISO();
+      const today = this.todayISO();
       const sales = this.getSales();
-      const todaySales = sales.filter((sale) => sale.date === today && sale.orderStatus !== 'Cancelado');
-      const pending = sales.filter((sale) => sale.orderStatus !== 'Finalizado' && sale.orderStatus !== 'Cancelado');
+      const todaySales = sales.filter(
+        (sale) => this.getSaleDateValue(sale) === today && sale.orderStatus !== 'Cancelado'
+      );
+      const pending = sales.filter(
+        (sale) => sale.orderStatus !== 'Finalizado' && sale.orderStatus !== 'Cancelado'
+      );
       const finished = sales.filter((sale) => sale.orderStatus === 'Finalizado');
       const pixMissing = sales.filter((sale) => this.saleNeedsPixProof(sale));
 
-      this.refs.salesTodayTotal.textContent = app.formatCurrency(app.sum(todaySales, (sale) => sale.total));
-      this.refs.salesPendingCount.textContent = String(pending.length);
-      this.refs.salesFinishedCount.textContent = String(finished.length);
-      this.refs.salesPixMissingCount.textContent = String(pixMissing.length);
+      if (this.refs.salesTodayTotal) {
+        this.refs.salesTodayTotal.textContent = app.formatCurrency(app.sum(todaySales, (sale) => sale.total || 0));
+      }
+      if (this.refs.salesPendingCount) {
+        this.refs.salesPendingCount.textContent = String(pending.length);
+      }
+      if (this.refs.salesFinishedCount) {
+        this.refs.salesFinishedCount.textContent = String(finished.length);
+      }
+      if (this.refs.salesPixMissingCount) {
+        this.refs.salesPixMissingCount.textContent = String(pixMissing.length);
+      }
     },
 
     renderSalesTable() {
-      const sales = this.getFilteredSales();
+      if (!this.refs.salesTableBody) return;
+
+      const sales = this.getFilteredSales().slice(0, 20);
 
       if (!sales.length) {
         this.refs.salesTableBody.innerHTML = `
           <tr>
-            <td colspan="9">Nenhuma venda encontrada.</td>
+            <td colspan="4">Nenhuma venda encontrada.</td>
           </tr>
         `;
         return;
       }
 
-      this.refs.salesTableBody.innerHTML = sales.map((sale) => {
-        const hasProof = sale.pixProof?.name ? 'Enviado' : (sale.paymentMethod === 'Pix' ? 'Sem arquivo' : 'N/A');
-        return `
-          <tr>
-            <td>${sale.orderNumber}</td>
-            <td>${app.formatDate(sale.date)}</td>
-            <td>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</td>
-            <td>${sale.paymentMethod}</td>
-            <td>${sale.paymentStatus}</td>
-            <td>${sale.orderStatus}</td>
-            <td>${app.formatCurrency(sale.total)}</td>
-            <td>${hasProof}</td>
-            <td>
-              <div class="table-action-group">
-                <button type="button" class="btn btn-secondary btn-small" data-action="edit-sale" data-id="${sale.id}">Editar</button>
-                <button type="button" class="btn btn-secondary btn-small" data-action="print-sale" data-id="${sale.id}">Imprimir</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
+      this.refs.salesTableBody.innerHTML = sales.map((sale) => `
+        <tr>
+          <td>
+            <strong>${this.escapeHtml(sale.orderNumber || '-')}</strong><br>
+            <small>${this.escapeHtml(app.formatDate(this.getSaleDateValue(sale)))}</small>
+          </td>
+          <td>
+            <strong>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</strong><br>
+            <small>${this.escapeHtml(sale.paymentMethod || '-')} • ${this.escapeHtml(sale.orderStatus || '-')}</small>
+          </td>
+          <td>${app.formatCurrency(sale.total || 0)}</td>
+          <td>
+            <div class="table-action-group">
+              <button type="button" class="btn btn-secondary btn-small" data-action="edit-sale" data-id="${sale.id}">Editar</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
     },
 
     renderPixPendingTable() {
-      const pendingPixSales = this.getSales().filter((sale) => this.saleNeedsPixProof(sale)).slice(0, 10);
+      if (!this.refs.pixPendingSalesTable) return;
+
+      const pendingPixSales = this.getSales()
+        .filter((sale) => this.saleNeedsPixProof(sale))
+        .sort((a, b) => {
+          const dateA = new Date(`${this.getSaleDateValue(a)}T${a.time || '00:00'}`).getTime();
+          const dateB = new Date(`${this.getSaleDateValue(b)}T${b.time || '00:00'}`).getTime();
+          return dateB - dateA;
+        })
+        .slice(0, 10);
 
       if (!pendingPixSales.length) {
         this.refs.pixPendingSalesTable.innerHTML = `
           <tr>
-            <td colspan="5">Nenhum pedido aguardando comprovante Pix.</td>
+            <td colspan="4">Nenhum pedido aguardando comprovante Pix.</td>
           </tr>
         `;
         return;
@@ -807,22 +1033,34 @@
 
       this.refs.pixPendingSalesTable.innerHTML = pendingPixSales.map((sale) => `
         <tr>
-          <td>${sale.orderNumber}</td>
+          <td>${this.escapeHtml(sale.orderNumber || '-')}</td>
           <td>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</td>
-          <td>${app.formatCurrency(sale.total)}</td>
-          <td>${sale.paymentStatus}</td>
-          <td><button type="button" class="btn btn-secondary btn-small" data-action="edit-sale" data-id="${sale.id}">Anexar</button></td>
+          <td>${app.formatCurrency(sale.total || 0)}</td>
+          <td>
+            <button type="button" class="btn btn-secondary btn-small" data-action="edit-sale" data-id="${sale.id}">
+              Anexar
+            </button>
+          </td>
         </tr>
       `).join('');
     },
 
     renderFinishedTable() {
-      const finishedSales = this.getSales().filter((sale) => sale.orderStatus === 'Finalizado').slice(0, 10);
+      if (!this.refs.finishedSalesTable) return;
+
+      const finishedSales = this.getSales()
+        .filter((sale) => sale.orderStatus === 'Finalizado')
+        .sort((a, b) => {
+          const dateA = new Date(`${this.getSaleDateValue(a)}T${a.time || '00:00'}`).getTime();
+          const dateB = new Date(`${this.getSaleDateValue(b)}T${b.time || '00:00'}`).getTime();
+          return dateB - dateA;
+        })
+        .slice(0, 10);
 
       if (!finishedSales.length) {
         this.refs.finishedSalesTable.innerHTML = `
           <tr>
-            <td colspan="5">Nenhum pedido finalizado ainda.</td>
+            <td colspan="4">Nenhum pedido finalizado ainda.</td>
           </tr>
         `;
         return;
@@ -830,11 +1068,14 @@
 
       this.refs.finishedSalesTable.innerHTML = finishedSales.map((sale) => `
         <tr>
-          <td>${sale.orderNumber}</td>
+          <td>${this.escapeHtml(sale.orderNumber || '-')}</td>
           <td>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</td>
-          <td>${app.formatCurrency(sale.total)}</td>
-          <td>${sale.pixProof?.name ? 'Enviado' : (sale.paymentMethod === 'Pix' ? 'Pendente' : 'N/A')}</td>
-          <td><button type="button" class="btn btn-secondary btn-small" data-action="edit-sale" data-id="${sale.id}">Ver</button></td>
+          <td>${app.formatCurrency(sale.total || 0)}</td>
+          <td>
+            <button type="button" class="btn btn-secondary btn-small" data-action="edit-sale" data-id="${sale.id}">
+              Ver
+            </button>
+          </td>
         </tr>
       `).join('');
     },
@@ -849,16 +1090,12 @@
       if (action === 'edit-sale') {
         this.loadSaleIntoForm(saleId);
       }
-
-      if (action === 'print-sale') {
-        this.loadSaleIntoForm(saleId, false);
-        this.printReceipt();
-      }
     },
 
     handlePixPendingActions(event) {
       const button = event.target.closest('button[data-action]');
       if (!button) return;
+
       if (button.dataset.action === 'edit-sale') {
         this.loadSaleIntoForm(button.dataset.id);
       }
@@ -867,6 +1104,7 @@
     handleFinishedActions(event) {
       const button = event.target.closest('button[data-action]');
       if (!button) return;
+
       if (button.dataset.action === 'edit-sale') {
         this.loadSaleIntoForm(button.dataset.id);
       }
@@ -874,6 +1112,7 @@
 
     loadSaleIntoForm(saleId, scrollToTop = true) {
       const sale = this.findSaleById(saleId);
+
       if (!sale) {
         app.showToast('Venda não encontrada.', 'danger');
         return;
@@ -882,29 +1121,32 @@
       this.editingSaleId = sale.id;
       this.pixProofDraft = sale.pixProof || null;
 
-      this.refs.saleId.value = sale.id;
-      this.refs.saleCode.value = sale.code || '';
-      this.refs.saleOrderNumber.value = sale.orderNumber || '';
-      this.refs.saleDate.value = sale.date || app.todayISO();
-      this.refs.saleTime.value = sale.time || app.currentTimeHHMM();
-      this.refs.saleClientName.value = sale.client?.name || '';
-      this.refs.saleClientPhone.value = sale.client?.phone || '';
-      this.refs.saleClientEmail.value = sale.client?.email || '';
-      this.refs.saleDeliveryType.value = sale.delivery?.type || 'Retirada';
-      this.refs.saleDeliveryAddress.value = sale.delivery?.address || '';
-      this.refs.salePaymentMethod.value = sale.paymentMethod || 'Pix';
-      this.refs.salePaymentStatus.value = sale.paymentStatus || 'Aguardando pagamento';
-      this.refs.saleOrderStatus.value = sale.orderStatus || 'Pendente';
-      this.refs.saleDiscount.value = sale.discount || '';
-      this.refs.saleExtraFee.value = sale.extraFee || '';
-      this.refs.saleShippingFee.value = sale.shippingFee || '';
-      this.refs.saleNotes.value = sale.notes || '';
-      this.refs.salePixProofNote.value = sale.pixProofNote || sale.pixProof?.note || '';
+      if (this.refs.saleId) this.refs.saleId.value = sale.id;
+      if (this.refs.saleCode) this.refs.saleCode.value = sale.code || '';
+      if (this.refs.saleOrderNumber) this.refs.saleOrderNumber.value = sale.orderNumber || '';
+      if (this.refs.saleDate) this.refs.saleDate.value = this.getSaleDateValue(sale) || this.todayISO();
+      if (this.refs.saleTime) this.refs.saleTime.value = sale.time || app.currentTimeHHMM();
+      if (this.refs.saleClientName) this.refs.saleClientName.value = sale.client?.name || '';
+      if (this.refs.saleClientPhone) this.refs.saleClientPhone.value = sale.client?.phone || '';
+      if (this.refs.saleClientEmail) this.refs.saleClientEmail.value = sale.client?.email || '';
+      if (this.refs.saleDeliveryType) this.refs.saleDeliveryType.value = sale.delivery?.type || 'Retirada';
+      if (this.refs.saleDeliveryAddress) this.refs.saleDeliveryAddress.value = sale.delivery?.address || '';
+      if (this.refs.salePaymentMethod) this.refs.salePaymentMethod.value = sale.paymentMethod || 'Pix';
+      if (this.refs.salePaymentStatus) this.refs.salePaymentStatus.value = sale.paymentStatus || 'Aguardando pagamento';
+      if (this.refs.saleOrderStatus) this.refs.saleOrderStatus.value = sale.orderStatus || 'Pendente';
+      if (this.refs.saleDiscount) this.refs.saleDiscount.value = sale.discount || '';
+      if (this.refs.saleExtraFee) this.refs.saleExtraFee.value = sale.extraFee || '';
+      if (this.refs.saleShippingFee) this.refs.saleShippingFee.value = sale.shippingFee || '';
+      if (this.refs.saleNotes) this.refs.saleNotes.value = sale.notes || '';
+      if (this.refs.salePixProofNote) this.refs.salePixProofNote.value = sale.pixProofNote || sale.pixProof?.note || '';
       if (this.refs.salePixProof) this.refs.salePixProof.value = '';
 
-      this.refs.saleItemsContainer.innerHTML = '';
-      this.renderSaleItemsHeader();
-      (sale.items || []).forEach((item) => this.addSaleItemRow(item));
+      if (this.refs.saleItemsContainer) {
+        this.refs.saleItemsContainer.innerHTML = '';
+        this.renderSaleItemsHeader();
+        (sale.items || []).forEach((item) => this.addSaleItemRow(item));
+      }
+
       this.updateModeTag(`Editando ${sale.orderNumber}`);
       this.updatePixProofPreview();
       this.updateLiveSummary();
@@ -917,46 +1159,52 @@
     prepareReceiptPreview(showToast = false) {
       const items = this.collectItemsFromForm();
       const totals = this.calculateSaleTotals(items);
-      const orderNumber = this.refs.saleOrderNumber.value || 'PED-0000';
-      const clientName = this.refs.saleClientName.value.trim() || 'Consumidor final';
-      const saleDate = this.refs.saleDate.value ? app.formatDate(this.refs.saleDate.value) : app.formatDate(app.todayISO());
-      const paymentMethod = this.refs.salePaymentMethod.value || 'Pix';
-      const orderStatus = this.refs.saleOrderStatus.value || 'Pendente';
+      const orderNumber = this.refs.saleOrderNumber?.value || 'PED-0000';
+      const clientName = this.refs.saleClientName?.value.trim() || 'Consumidor final';
+      const saleDate = this.refs.saleDate?.value
+        ? app.formatDate(this.refs.saleDate.value)
+        : app.formatDate(this.todayISO());
+      const paymentMethod = this.refs.salePaymentMethod?.value || 'Pix';
+      const orderStatus = this.refs.saleOrderStatus?.value || 'Pendente';
 
-      this.refs.receiptNumber.textContent = orderNumber;
-      this.refs.receiptDate.textContent = saleDate;
-      this.refs.receiptClient.textContent = clientName;
-      this.refs.receiptItemsBody.innerHTML = items.length
-        ? items.map((item) => `
-            <tr>
-              <td>${this.escapeHtml(item.productName)}</td>
-              <td>${item.quantity}</td>
-              <td>${app.formatCurrency(item.total)}</td>
-            </tr>
-          `).join('')
-        : '<tr><td colspan="3">Nenhum item adicionado.</td></tr>';
-      this.refs.receiptTotal.textContent = app.formatCurrency(totals.total);
-      this.refs.receiptPayment.textContent = paymentMethod;
-      this.refs.receiptStatus.textContent = orderStatus;
+      if (this.refs.receiptNumber) this.refs.receiptNumber.textContent = orderNumber;
+      if (this.refs.receiptDate) this.refs.receiptDate.textContent = saleDate;
+      if (this.refs.receiptClient) this.refs.receiptClient.textContent = clientName;
+      if (this.refs.receiptItemsBody) {
+        this.refs.receiptItemsBody.innerHTML = items.length
+          ? items.map((item) => `
+              <tr>
+                <td>${this.escapeHtml(item.productName)}</td>
+                <td>${item.quantity}</td>
+                <td>${app.formatCurrency(item.total)}</td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="3">Nenhum item adicionado.</td></tr>';
+      }
+      if (this.refs.receiptTotal) this.refs.receiptTotal.textContent = app.formatCurrency(totals.total);
+      if (this.refs.receiptPayment) this.refs.receiptPayment.textContent = paymentMethod;
+      if (this.refs.receiptStatus) this.refs.receiptStatus.textContent = orderStatus;
 
-      this.refs.printNumber.textContent = orderNumber;
-      this.refs.printDate.textContent = saleDate;
-      this.refs.printClient.textContent = clientName;
-      this.refs.printItems.innerHTML = items.length
-        ? items.map((item) => `
-            <tr>
-              <td>${this.escapeHtml(item.productName)}</td>
-              <td>${item.quantity}</td>
-              <td>${app.formatCurrency(item.unitPrice)}</td>
-              <td>${app.formatCurrency(item.total)}</td>
-            </tr>
-          `).join('')
-        : '<tr><td colspan="4">Nenhum item adicionado.</td></tr>';
-      this.refs.printSubtotal.textContent = app.formatCurrency(totals.subtotal);
-      this.refs.printDiscountTotal.textContent = app.formatCurrency(totals.discount);
-      this.refs.printShippingTotal.textContent = app.formatCurrency(totals.shippingFee);
-      this.refs.printTotal.textContent = app.formatCurrency(totals.total);
-      this.refs.printPayment.textContent = paymentMethod;
+      if (this.refs.printNumber) this.refs.printNumber.textContent = orderNumber;
+      if (this.refs.printDate) this.refs.printDate.textContent = saleDate;
+      if (this.refs.printClient) this.refs.printClient.textContent = clientName;
+      if (this.refs.printItems) {
+        this.refs.printItems.innerHTML = items.length
+          ? items.map((item) => `
+              <tr>
+                <td>${this.escapeHtml(item.productName)}</td>
+                <td>${item.quantity}</td>
+                <td>${app.formatCurrency(item.unitPrice)}</td>
+                <td>${app.formatCurrency(item.total)}</td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="4">Nenhum item adicionado.</td></tr>';
+      }
+      if (this.refs.printSubtotal) this.refs.printSubtotal.textContent = app.formatCurrency(totals.subtotal);
+      if (this.refs.printDiscountTotal) this.refs.printDiscountTotal.textContent = app.formatCurrency(totals.discount);
+      if (this.refs.printShippingTotal) this.refs.printShippingTotal.textContent = app.formatCurrency(totals.shippingFee);
+      if (this.refs.printTotal) this.refs.printTotal.textContent = app.formatCurrency(totals.total);
+      if (this.refs.printPayment) this.refs.printPayment.textContent = paymentMethod;
 
       if (showToast) {
         app.showToast('Pré-visualização do comprovante atualizada.', 'success');
@@ -967,7 +1215,7 @@
       this.prepareReceiptPreview(false);
       window.print();
       app.log('Comprovante enviado para impressão.', {
-        orderNumber: this.refs.saleOrderNumber.value || null
+        orderNumber: this.refs.saleOrderNumber?.value || null
       });
     },
 
@@ -977,7 +1225,11 @@
     },
 
     saleNeedsPixProof(sale) {
-      return sale.paymentMethod === 'Pix' && sale.orderStatus !== 'Cancelado' && !sale.pixProof?.name;
+      return (
+        sale.paymentMethod === 'Pix' &&
+        sale.orderStatus !== 'Cancelado' &&
+        !sale.pixProof?.name
+      );
     },
 
     findSaleById(id) {
@@ -987,6 +1239,12 @@
 
     findProduct(id) {
       return this.getProducts().find((product) => product.id === id) || null;
+    },
+
+    toNumber(value) {
+      return typeof app.toNumber === 'function'
+        ? app.toNumber(value)
+        : Number(value || 0);
     },
 
     escapeHtml(value) {

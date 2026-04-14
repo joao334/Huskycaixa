@@ -8,6 +8,470 @@
 
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/responsive.css" />
+
+  <style>
+    .husky-home-page {
+      gap: 16px;
+    }
+
+    .husky-home-banner {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0 0 26px 26px;
+      padding: 18px 20px 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04)),
+        linear-gradient(180deg, #2c5b9b, #244b87);
+      box-shadow: 0 18px 38px rgba(12, 34, 69, 0.18);
+      text-align: center;
+    }
+
+    .husky-home-palette {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin: -18px auto 10px;
+    }
+
+    .husky-home-palette span {
+      width: 92px;
+      height: 56px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .husky-home-palette span:nth-child(1) { background: #4f7fb8; }
+    .husky-home-palette span:nth-child(2) { background: #5b87bd; }
+    .husky-home-palette span:nth-child(3) { background: #e8d7b1; }
+    .husky-home-palette span:nth-child(4) { background: #efede8; }
+    .husky-home-palette span:nth-child(5) { background: #6f5136; }
+
+    .husky-home-banner h1 {
+      margin: 8px 0 0;
+      color: #f5f1eb;
+      font-size: 40px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+    }
+
+    .husky-home-banner p {
+      margin: 8px 0 0;
+      color: rgba(245, 241, 235, 0.88);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .husky-home-toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .husky-home-filterbar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .husky-home-shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 30px;
+      padding: 22px;
+      background:
+        linear-gradient(180deg, rgba(181,205,237,0.84), rgba(166,195,232,0.8));
+      box-shadow: 0 18px 38px rgba(12, 34, 69, 0.18);
+    }
+
+    .husky-home-topgrid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .husky-home-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .husky-home-metric {
+      overflow: hidden;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(216,228,246,0.95), rgba(197,214,238,0.9));
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: 0 14px 28px rgba(23, 56, 109, 0.12);
+      padding: 16px 18px;
+      display: grid;
+      gap: 8px;
+      min-height: 120px;
+    }
+
+    .husky-home-metric span {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6f5136;
+    }
+
+    .husky-home-metric strong {
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 900;
+      color: #2f211b;
+      letter-spacing: -0.03em;
+    }
+
+    .husky-home-actions {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .husky-home-action {
+      overflow: hidden;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(216,228,246,0.95), rgba(197,214,238,0.9));
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: 0 14px 28px rgba(23, 56, 109, 0.12);
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+      color: #2f211b;
+      transition: 0.18s ease;
+    }
+
+    .husky-home-action:hover {
+      transform: translateY(-2px);
+    }
+
+    .husky-home-action h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .husky-home-action p {
+      margin: 0;
+      font-size: 13px;
+      color: #5f4a39;
+      line-height: 1.45;
+    }
+
+    .husky-home-content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 0.95fr);
+      gap: 18px;
+      margin-top: 18px;
+      align-items: start;
+    }
+
+    .husky-home-column {
+      display: grid;
+      gap: 18px;
+    }
+
+    .husky-home-card {
+      overflow: hidden;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(216,228,246,0.95), rgba(197,214,238,0.9));
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: 0 14px 28px rgba(23, 56, 109, 0.12);
+    }
+
+    .husky-home-card-header {
+      padding: 16px 20px;
+      background: linear-gradient(90deg, #3f73b7, #3466a9);
+      color: #f5f1eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .husky-home-card-header h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.05;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .husky-home-card-body {
+      padding: 18px 20px 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .husky-home-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .husky-home-mini-stat {
+      min-height: 78px;
+      border-radius: 16px;
+      background: rgba(245, 240, 230, 0.9);
+      border: 1px solid rgba(111, 81, 54, 0.12);
+      padding: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .husky-home-mini-stat span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6f5136;
+      font-weight: 800;
+    }
+
+    .husky-home-mini-stat strong {
+      font-size: 22px;
+      line-height: 1;
+      color: #2f211b;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .husky-home-status-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .husky-home-status-row {
+      min-height: 54px;
+      border-radius: 14px;
+      background: rgba(245, 240, 230, 0.88);
+      border: 1px solid rgba(111, 81, 54, 0.1);
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .husky-home-status-row span {
+      font-size: 13px;
+      font-weight: 700;
+      color: #4b3525;
+    }
+
+    .husky-home-status-row strong {
+      font-size: 15px;
+      font-weight: 900;
+      color: #2f211b;
+      text-align: right;
+    }
+
+    .husky-home-proof-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .husky-home-proof-item {
+      min-height: 62px;
+      border-radius: 16px;
+      background: rgba(245, 240, 230, 0.9);
+      border: 1px solid rgba(111, 81, 54, 0.12);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .husky-home-proof-item strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #2f211b;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .husky-home-proof-item p {
+      margin: 0;
+      color: #5f4a39;
+      font-size: 12px;
+    }
+
+    .husky-home-soft-tag {
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ead4ad, #e6cfaa);
+      color: #4b3525;
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .husky-home-hidden {
+      display: none !important;
+    }
+
+    .husky-home-mascot {
+      position: absolute;
+      left: -4px;
+      bottom: -8px;
+      width: 150px;
+      pointer-events: none;
+      opacity: 0.98;
+    }
+
+    @media (max-width: 1200px) {
+      .husky-home-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .husky-home-content {
+        grid-template-columns: 1fr;
+      }
+
+      .husky-home-mascot {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .husky-home-banner {
+        padding: 14px 12px;
+        border-radius: 0 0 18px 18px;
+      }
+
+      .husky-home-palette span {
+        width: 58px;
+        height: 40px;
+        border-radius: 0 0 16px 16px;
+      }
+
+      .husky-home-banner h1 {
+        font-size: 28px;
+      }
+
+      .husky-home-banner p {
+        font-size: 13px;
+      }
+
+      .husky-home-toolbar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .husky-home-filterbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .husky-home-shell {
+        padding: 12px;
+        border-radius: 20px;
+      }
+
+      .husky-home-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .husky-home-metric {
+        min-height: 98px;
+        border-radius: 16px;
+        padding: 12px;
+      }
+
+      .husky-home-metric strong {
+        font-size: 22px;
+      }
+
+      .husky-home-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .husky-home-action {
+        border-radius: 16px;
+        padding: 12px;
+      }
+
+      .husky-home-action h3 {
+        font-size: 16px;
+      }
+
+      .husky-home-action p {
+        font-size: 12px;
+      }
+
+      .husky-home-content,
+      .husky-home-column {
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .husky-home-card {
+        border-radius: 18px;
+      }
+
+      .husky-home-card-header {
+        padding: 14px 16px;
+      }
+
+      .husky-home-card-header h2 {
+        font-size: 16px;
+      }
+
+      .husky-home-card-body {
+        padding: 14px 16px 16px;
+      }
+
+      .husky-home-mini-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .husky-home-mini-stat {
+        min-height: 68px;
+        padding: 12px;
+        border-radius: 14px;
+      }
+
+      .husky-home-mini-stat strong {
+        font-size: 18px;
+      }
+
+      .husky-home-status-row,
+      .husky-home-proof-item {
+        border-radius: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .husky-home-filterbar,
+      .husky-home-metrics,
+      .husky-home-actions,
+      .husky-home-mini-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .husky-home-banner h1 {
+        font-size: 24px;
+      }
+
+      .husky-home-palette span {
+        width: 44px;
+        height: 32px;
+      }
+    }
+  </style>
 </head>
 <body class="app-page-body">
   <div class="app-pattern" aria-hidden="true">
@@ -15,7 +479,6 @@
   </div>
 
   <div class="app-shell">
-    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
         <a href="home.html" class="brand-box">
@@ -56,13 +519,12 @@
           </div>
         </div>
 
-        <a href="index.html" class="btn btn-danger btn-full">Sair</a>
+        <button type="button" class="btn btn-danger btn-full" id="btn-logout" data-action="logout">Sair</button>
       </div>
     </aside>
 
-    <!-- CONTEÚDO -->
     <div class="content-area">
-      <header class="topbar">
+      <header class="topbar husky-home-toolbar">
         <div class="topbar-left">
           <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">
             ☰
@@ -71,335 +533,252 @@
           <div class="page-heading">
             <span class="eyebrow">Painel principal</span>
             <h1>Home</h1>
-            <p>Visão geral da operação da Husky em tempo real.</p>
+            <p>Resumo rápido da operação.</p>
           </div>
         </div>
 
-        <div class="topbar-right">
-          <div class="sync-badge">
-            <span class="status-indicator"></span>
-            <span id="topbar-sync-status">Sincronização online preparada</span>
-          </div>
-
-          <div class="date-filter-bar">
-            <input type="date" id="global-date-start" />
-            <input type="date" id="global-date-end" />
-            <button type="button" class="btn btn-secondary" id="btn-apply-global-filter">
-              Filtrar período
-            </button>
-          </div>
+        <div class="topbar-right husky-home-filterbar">
+          <input type="date" id="global-date-start" />
+          <input type="date" id="global-date-end" />
+          <button type="button" class="btn btn-secondary" id="btn-apply-global-filter">Filtrar</button>
         </div>
       </header>
 
-      <main class="main-content">
-        <!-- HERO -->
-        <section class="hero-panel">
-          <div class="hero-content">
-            <span class="eyebrow">Gestão inteligente</span>
-            <h2>Controle total da Husky Confeitaria</h2>
-            <p>
-              Acompanhe vendas, estoque, despesas, comprovantes Pix, pedidos finalizados,
-              lucro diário, lucro mensal e a saúde operacional do negócio em um só lugar.
-            </p>
-
-            <div class="hero-actions">
-              <a href="vendas.html" class="btn btn-primary">Nova venda</a>
-              <a href="relatorios.html" class="btn btn-secondary">Relatório mensal</a>
-            </div>
+      <main class="main-content husky-home-page">
+        <section class="husky-home-banner">
+          <div class="husky-home-palette">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
           </div>
-
-          <div class="hero-mascot">
-            <img src="assets/img/mascote-3d.png" alt="Mascote 3D da Husky Confeitaria" />
-          </div>
+          <h1>Painel Husky</h1>
+          <p>O essencial para bater o olho e trabalhar rápido.</p>
         </section>
 
-        <!-- MÉTRICAS PRINCIPAIS -->
-        <section class="cards-grid metrics-grid">
-          <article class="metric-card">
-            <span class="metric-label">Vendas do dia</span>
-            <strong id="metric-sales-day">R$ 0,00</strong>
-            <small>Total vendido hoje</small>
-          </article>
+        <section class="husky-home-shell">
+          <section class="husky-home-topgrid">
+            <section class="husky-home-metrics">
+              <article class="husky-home-metric">
+                <span>Vendas do dia</span>
+                <strong id="metric-sales-day">R$ 0,00</strong>
+              </article>
 
-          <article class="metric-card">
-            <span class="metric-label">Lucro do dia</span>
-            <strong id="metric-profit-day">R$ 0,00</strong>
-            <small>Receita menos custos e despesas</small>
-          </article>
+              <article class="husky-home-metric">
+                <span>Lucro do dia</span>
+                <strong id="metric-profit-day">R$ 0,00</strong>
+              </article>
 
-          <article class="metric-card">
-            <span class="metric-label">Despesas do dia</span>
-            <strong id="metric-expenses-day">R$ 0,00</strong>
-            <small>Compras, perdas e custos</small>
-          </article>
+              <article class="husky-home-metric">
+                <span>Despesas do dia</span>
+                <strong id="metric-expenses-day">R$ 0,00</strong>
+              </article>
 
-          <article class="metric-card">
-            <span class="metric-label">Estoque crítico</span>
-            <strong id="metric-stock-alert">0</strong>
-            <small>Itens abaixo do mínimo</small>
-          </article>
-        </section>
+              <article class="husky-home-metric">
+                <span>Estoque crítico</span>
+                <strong id="metric-stock-alert">0</strong>
+              </article>
+            </section>
 
-        <!-- ATALHOS -->
-        <section class="panel">
-          <div class="panel-header">
-            <div>
-              <h3>Acesso rápido</h3>
-              <p>Abra as áreas principais do sistema.</p>
+            <section class="husky-home-actions">
+              <a href="vendas.html" class="husky-home-action">
+                <h3>Nova venda</h3>
+                <p>Registrar pedido rapidamente.</p>
+              </a>
+
+              <a href="produtos.html" class="husky-home-action">
+                <h3>Produtos</h3>
+                <p>Cadastrar e editar itens.</p>
+              </a>
+
+              <a href="comprovantes.html" class="husky-home-action">
+                <h3>Comprovantes</h3>
+                <p>Enviar e conferir Pix.</p>
+              </a>
+
+              <a href="relatorios.html" class="husky-home-action">
+                <h3>Relatórios</h3>
+                <p>Ver resultados do período.</p>
+              </a>
+            </section>
+          </section>
+
+          <section class="husky-home-content">
+            <div class="husky-home-column">
+              <article class="husky-home-card">
+                <header class="husky-home-card-header">
+                  <h2>Resumo do período</h2>
+                </header>
+
+                <div class="husky-home-card-body">
+                  <div class="husky-home-mini-grid" id="dashboard-summary-cards">
+                    <div class="husky-home-mini-stat">
+                      <span>Faturamento</span>
+                      <strong id="month-revenue">R$ 0,00</strong>
+                    </div>
+
+                    <div class="husky-home-mini-stat">
+                      <span>Lucro</span>
+                      <strong id="month-profit">R$ 0,00</strong>
+                    </div>
+
+                    <div class="husky-home-mini-stat">
+                      <span>Despesas</span>
+                      <strong id="month-expenses">R$ 0,00</strong>
+                    </div>
+
+                    <div class="husky-home-mini-stat">
+                      <span>Finalizados</span>
+                      <strong id="finished-orders">0</strong>
+                    </div>
+                  </div>
+
+                  <div class="husky-home-status-list">
+                    <div class="husky-home-status-row">
+                      <span>Pedidos aguardando pagamento</span>
+                      <strong id="status-pending-payment">0</strong>
+                    </div>
+
+                    <div class="husky-home-status-row">
+                      <span>Pedidos com comprovante Pix</span>
+                      <strong id="status-pix-proof">0</strong>
+                    </div>
+
+                    <div class="husky-home-status-row">
+                      <span>Pedidos finalizados</span>
+                      <strong id="status-finished-orders">0</strong>
+                    </div>
+
+                    <div class="husky-home-status-row">
+                      <span>Produtos com estoque baixo</span>
+                      <strong id="status-low-stock">0</strong>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="husky-home-card">
+                <header class="husky-home-card-header">
+                  <h2>Aguardando ação</h2>
+                  <a href="vendas.html" class="btn btn-secondary btn-small">Abrir vendas</a>
+                </header>
+
+                <div class="husky-home-card-body">
+                  <div class="table-wrapper">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Pedido</th>
+                          <th>Cliente</th>
+                          <th>Status</th>
+                          <th>Pagamento</th>
+                          <th>Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody id="pending-orders-table">
+                        <tr>
+                          <td>#0001</td>
+                          <td>Cliente exemplo</td>
+                          <td>Aguardando pagamento</td>
+                          <td>Pix</td>
+                          <td><a href="comprovantes.html">Anexar</a></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
             </div>
-          </div>
 
-          <div class="quick-links-grid">
-            <a href="vendas.html" class="quick-link-card">
-              <h4>Vendas</h4>
-              <p>Cadastrar pedido, editar venda e gerar comprovante.</p>
-            </a>
+            <div class="husky-home-column">
+              <article class="husky-home-card">
+                <header class="husky-home-card-header">
+                  <h2>Últimas vendas</h2>
+                  <a href="vendas.html" class="btn btn-secondary btn-small">Ver tudo</a>
+                </header>
 
-            <a href="produtos.html" class="quick-link-card">
-              <h4>Produtos</h4>
-              <p>Cadastrar doces, preços, custos e imagens.</p>
-            </a>
+                <div class="husky-home-card-body">
+                  <div class="table-wrapper">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Pedido</th>
+                          <th>Data</th>
+                          <th>Cliente</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody id="dashboard-last-sales-table">
+                        <tr>
+                          <td>#0001</td>
+                          <td>--/--/----</td>
+                          <td>Consumidor final</td>
+                          <td>R$ 0,00</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
 
-            <a href="estoque.html" class="quick-link-card">
-              <h4>Estoque</h4>
-              <p>Controlar entradas, saídas, perdas e alertas.</p>
-            </a>
+              <article class="husky-home-card">
+                <header class="husky-home-card-header">
+                  <h2>Últimos comprovantes Pix</h2>
+                  <a href="comprovantes.html" class="btn btn-secondary btn-small">Abrir</a>
+                </header>
 
-            <a href="despesas.html" class="quick-link-card">
-              <h4>Despesas</h4>
-              <p>Lançar compras, perdas de material e outros custos.</p>
-            </a>
+                <div class="husky-home-card-body">
+                  <div class="husky-home-proof-list" id="pix-proof-preview-list">
+                    <div class="husky-home-proof-item">
+                      <div>
+                        <strong>Pedido #0001</strong>
+                        <p>Cliente exemplo • Pix</p>
+                      </div>
+                      <span class="husky-home-soft-tag">Sem arquivo</span>
+                    </div>
 
-            <a href="relatorios.html" class="quick-link-card">
-              <h4>Relatórios</h4>
-              <p>Consultar lucro mensal e filtrar por período.</p>
-            </a>
-
-            <a href="comprovantes.html" class="quick-link-card">
-              <h4>Comprovantes</h4>
-              <p>Subir comprovantes Pix e vincular ao pedido finalizado.</p>
-            </a>
-          </div>
-        </section>
-
-        <!-- CONTEÚDO PRINCIPAL -->
-        <section class="content-grid two-columns">
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Últimas vendas</h3>
-                <p>Resumo das últimas movimentações.</p>
-              </div>
-              <a href="vendas.html" class="btn btn-secondary">Ver tudo</a>
+                    <div class="husky-home-proof-item">
+                      <div>
+                        <strong>Pedido #0002</strong>
+                        <p>Cliente exemplo • Pix</p>
+                      </div>
+                      <span class="husky-home-soft-tag">Pendente</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
             </div>
+          </section>
 
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Pedido</th>
-                    <th>Data</th>
-                    <th>Cliente</th>
-                    <th>Pagamento</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="dashboard-last-sales-table">
-                  <tr>
-                    <td>#0001</td>
-                    <td>--/--/----</td>
-                    <td>Consumidor final</td>
-                    <td>Pix</td>
-                    <td>R$ 0,00</td>
-                    <td>Pendente</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
+          <img src="assets/img/mascote-3d.png" alt="Mascote Husky" class="husky-home-mascot" />
 
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Alertas do sistema</h3>
-                <p>Avisos operacionais importantes.</p>
-              </div>
-            </div>
-
+          <section class="husky-home-hidden">
             <ul class="alert-list" id="dashboard-alerts-list">
               <li>Sem alertas críticos no momento.</li>
               <li>Sincronização em nuvem aguardando configuração.</li>
               <li>Área de comprovantes Pix preparada para integração.</li>
             </ul>
-          </article>
-        </section>
 
-        <!-- RESUMO FINANCEIRO -->
-        <section class="content-grid two-columns">
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Resumo financeiro</h3>
-                <p>Indicadores rápidos do período.</p>
-              </div>
-            </div>
-
-            <div class="summary-cards" id="dashboard-summary-cards">
-              <div class="summary-card">
-                <span>Faturamento do mês</span>
-                <strong id="month-revenue">R$ 0,00</strong>
-              </div>
-
-              <div class="summary-card">
-                <span>Lucro do mês</span>
-                <strong id="month-profit">R$ 0,00</strong>
-              </div>
-
-              <div class="summary-card">
-                <span>Despesas do mês</span>
-                <strong id="month-expenses">R$ 0,00</strong>
-              </div>
-
-              <div class="summary-card">
-                <span>Pedidos finalizados</span>
-                <strong id="finished-orders">0</strong>
-              </div>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Status operacional</h3>
-                <p>Monitoramento geral da rotina.</p>
-              </div>
-            </div>
-
-            <div class="status-list">
-              <div class="status-row">
-                <span>Pedidos aguardando pagamento</span>
-                <strong id="status-pending-payment">0</strong>
-              </div>
-
-              <div class="status-row">
-                <span>Pedidos com comprovante Pix</span>
-                <strong id="status-pix-proof">0</strong>
-              </div>
-
-              <div class="status-row">
-                <span>Pedidos finalizados</span>
-                <strong id="status-finished-orders">0</strong>
-              </div>
-
-              <div class="status-row">
-                <span>Produtos com estoque baixo</span>
-                <strong id="status-low-stock">0</strong>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <!-- GRÁFICOS -->
-        <section class="content-grid two-columns">
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Fluxo de caixa</h3>
-                <p>Entradas e saídas do período.</p>
-              </div>
-            </div>
             <div class="chart-area" id="cashflow-chart-area">
               <p>O gráfico será inserido pelo JavaScript.</p>
             </div>
-          </article>
 
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Desempenho mensal</h3>
-                <p>Comparativo de resultados do mês.</p>
-              </div>
-            </div>
             <div class="chart-area" id="monthly-performance-chart">
               <p>O gráfico mensal será inserido pelo JavaScript.</p>
             </div>
-          </article>
-        </section>
-
-        <!-- PEDIDOS / PIX -->
-        <section class="content-grid two-columns">
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Pedidos aguardando ação</h3>
-                <p>Pedidos pendentes, aguardando pagamento ou finalização.</p>
-              </div>
-              <a href="vendas.html" class="btn btn-secondary">Gerenciar</a>
-            </div>
-
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Pedido</th>
-                    <th>Cliente</th>
-                    <th>Status</th>
-                    <th>Pagamento</th>
-                    <th>Ação</th>
-                  </tr>
-                </thead>
-                <tbody id="pending-orders-table">
-                  <tr>
-                    <td>#0001</td>
-                    <td>Cliente exemplo</td>
-                    <td>Aguardando pagamento</td>
-                    <td>Pix</td>
-                    <td><a href="comprovantes.html">Anexar comprovante</a></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Últimos comprovantes Pix</h3>
-                <p>Prévia dos comprovantes vinculados aos pedidos.</p>
-              </div>
-              <a href="comprovantes.html" class="btn btn-secondary">Abrir tela</a>
-            </div>
-
-            <div class="pix-proof-preview-list" id="pix-proof-preview-list">
-              <div class="pix-proof-card">
-                <div>
-                  <strong>Pedido #0001</strong>
-                  <p>Cliente exemplo • Pix</p>
-                </div>
-                <span class="tag">Sem arquivo</span>
-              </div>
-
-              <div class="pix-proof-card">
-                <div>
-                  <strong>Pedido #0002</strong>
-                  <p>Cliente exemplo • Pix</p>
-                </div>
-                <span class="tag">Pendente</span>
-              </div>
-            </div>
-          </article>
+          </section>
         </section>
       </main>
     </div>
   </div>
 
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/app.js"></script>
-<script src="js/env.js"></script>
-<script src="js/supabase-init.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/cloud-sync.js"></script>
-<script src="js/home.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/app.js"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabase-init.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cloud-sync.js"></script>
+  <script src="js/home.js"></script>
 </body>
 </html>

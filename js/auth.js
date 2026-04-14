@@ -118,16 +118,61 @@
       }
     },
 
-    async ensureUserProfile(user) {
-      const fallbackProfile = {
-        id: user.id,
-        name: user.user_metadata?.name || this.getNameFromEmail(user.email),
-        email: user.email || '',
-        role: 'Administrador',
-        status: 'Ativo',
-        avatar: 'assets/img/avatar-user.png',
-        lastAccess: new Date().toISOString()
-      };
+   async ensureUserProfile(user) {
+  const localUsers = this.app?.getAppState?.().users || [];
+  const cachedLocalUser =
+    localUsers.find(
+      (entry) =>
+        entry.id === user.id ||
+        String(entry.email || '').toLowerCase() === String(user.email || '').toLowerCase()
+    ) || null;
+
+  const fallbackProfile = {
+    id: user.id,
+    name: user.user_metadata?.name || cachedLocalUser?.name || this.getNameFromEmail(user.email),
+    email: user.email || '',
+    role: cachedLocalUser?.role || 'Administrador',
+    status: cachedLocalUser?.status || 'Ativo',
+    avatar: cachedLocalUser?.avatar || 'assets/img/avatar-user.png',
+    lastAccess: new Date().toISOString()
+  };
+
+  try {
+    const payload = {
+      id: user.id,
+      name: fallbackProfile.name,
+      email: fallbackProfile.email,
+      role: fallbackProfile.role,
+      status: fallbackProfile.status,
+      avatar_url: cachedLocalUser?.avatar || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Auth] erro ao criar/atualizar perfil', error);
+      return fallbackProfile;
+    }
+
+    return {
+      id: data.id,
+      name: data.name || fallbackProfile.name,
+      email: data.email || fallbackProfile.email,
+      role: data.role || 'Administrador',
+      status: data.status || 'Ativo',
+      avatar: data.avatar_url || fallbackProfile.avatar || 'assets/img/avatar-user.png',
+      lastAccess: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('[Auth] erro ao garantir perfil', error);
+    return fallbackProfile;
+  }
+},
 
       try {
         const payload = {
@@ -244,74 +289,74 @@
       });
     },
 
-    bindRegisterForm() {
-      const registerForm = document.getElementById('register-form');
-      const registerButton = document.getElementById('btn-register');
+   bindRegisterForm() {
+  const registerForm = document.getElementById('register-form');
+  const registerButton = document.getElementById('btn-create-account');
 
-      const submitRegister = async (event) => {
-        if (event) event.preventDefault();
+  const submitRegister = async (event) => {
+    if (event) event.preventDefault();
 
-        const nameInput = document.getElementById('register-name');
-        const emailInput = document.getElementById('register-email');
-        const passwordInput = document.getElementById('register-password');
-        const confirmPasswordInput = document.getElementById('register-confirm-password');
+    const nameInput = document.getElementById('register-name');
+    const emailInput = document.getElementById('register-email');
+    const passwordInput = document.getElementById('register-password');
+    const confirmPasswordInput = document.getElementById('register-confirm-password');
 
-        if (!nameInput || !emailInput || !passwordInput || !confirmPasswordInput) return;
+    if (!nameInput || !emailInput || !passwordInput || !confirmPasswordInput) return;
 
-        const name = String(nameInput.value || '').trim();
-        const email = String(emailInput.value || '').trim().toLowerCase();
-        const password = String(passwordInput.value || '');
-        const confirmPassword = String(confirmPasswordInput.value || '');
+    const name = String(nameInput.value || '').trim();
+    const email = String(emailInput.value || '').trim().toLowerCase();
+    const password = String(passwordInput.value || '');
+    const confirmPassword = String(confirmPasswordInput.value || '');
 
-        if (!name || !email || !password || !confirmPassword) {
-          this.notify('Preencha todos os campos para criar o login.', 'warning');
-          return;
-        }
+    if (!name || !email || !password || !confirmPassword) {
+      this.notify('Preencha todos os campos para criar o login.', 'warning');
+      return;
+    }
 
-        if (password.length < 6) {
-          this.notify('A senha precisa ter pelo menos 6 caracteres.', 'warning');
-          return;
-        }
+    if (password.length < 6) {
+      this.notify('A senha precisa ter pelo menos 6 caracteres.', 'warning');
+      return;
+    }
 
-        if (password !== confirmPassword) {
-          this.notify('A confirmação da senha não confere.', 'warning');
-          return;
-        }
+    if (password !== confirmPassword) {
+      this.notify('A confirmação da senha não confere.', 'warning');
+      return;
+    }
 
-        try {
-          const { data, error } = await this.supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                name
-              }
-            }
-          });
-
-          if (error) {
-            this.notify(this.getSupabaseErrorMessage(error), 'danger');
-            return;
+    try {
+      const { data, error } = await this.supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name
           }
-
-          if (data.user) {
-            await this.ensureUserProfile(data.user);
-            this.setRememberedUser({ email });
-            this.notify('Login criado com sucesso.', 'success');
-
-            setTimeout(() => {
-              window.location.href = this.getHomePage();
-            }, 180);
-          }
-        } catch (error) {
-          console.error('[Auth] erro ao criar login', error);
-          this.notify('Não foi possível criar o login.', 'danger');
         }
-      };
+      });
 
-      registerForm?.addEventListener('submit', submitRegister);
-      registerButton?.addEventListener('click', submitRegister);
-    },
+      if (error) {
+        this.notify(this.getSupabaseErrorMessage(error), 'danger');
+        return;
+      }
+
+      if (data.user) {
+        await this.ensureUserProfile(data.user);
+        this.setRememberedUser({ email });
+        this.notify('Login criado com sucesso.', 'success');
+
+        setTimeout(() => {
+          window.location.href = this.getHomePage();
+        }, 180);
+      }
+    } catch (error) {
+      console.error('[Auth] erro ao criar login', error);
+      this.notify('Não foi possível criar o login.', 'danger');
+    }
+  };
+
+  registerForm?.addEventListener('submit', submitRegister);
+  registerButton?.addEventListener('click', submitRegister);
+},
 
     bindForgotPassword() {
       const button = document.getElementById('btn-forgot-password');
@@ -344,32 +389,39 @@
       });
     },
 
-    bindLogoutButtons() {
-      const buttons = [
-        ...document.querySelectorAll('#btn-logout'),
-        ...document.querySelectorAll('[data-action="logout"]')
-      ];
+ bindLogoutButtons() {
+  const buttons = [
+    ...document.querySelectorAll('#btn-logout'),
+    ...document.querySelectorAll('[data-action="logout"]')
+  ];
 
-      buttons.forEach((button) => {
-        button.addEventListener('click', async (event) => {
-          event.preventDefault();
+  buttons.forEach((button) => {
+    button.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-          try {
-            const { error } = await this.supabase.auth.signOut();
-            if (error) {
-              this.notify(this.getSupabaseErrorMessage(error), 'danger');
-              return;
-            }
+      if (this.app && typeof this.app.logout === 'function') {
+        await this.app.logout();
+        return;
+      }
 
-            this.persistCurrentUser(null);
-            window.location.href = this.getLoginPage();
-          } catch (error) {
-            console.error('[Auth] erro ao sair', error);
-            this.notify('Não foi possível encerrar a sessão.', 'danger');
-          }
-        });
-      });
-    },
+      try {
+        const { error } = await this.supabase.auth.signOut();
+
+        if (error) {
+          this.notify(this.getSupabaseErrorMessage(error), 'danger');
+          return;
+        }
+
+        this.persistCurrentUser(null);
+        window.location.replace(this.getLoginPage());
+      } catch (error) {
+        console.error('[Auth] erro ao sair', error);
+        this.notify('Não foi possível encerrar a sessão.', 'danger');
+      }
+    });
+  });
+},
 
     restoreRememberedEmail() {
       const emailInput = document.getElementById('login-email');
