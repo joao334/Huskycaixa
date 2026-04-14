@@ -26,10 +26,72 @@
       if (!document.getElementById('sale-form')) return;
       this.cacheRefs();
       this.bindEvents();
+      this.compactPersistedProofsIfNeeded();
       this.loadSavedPeriod();
       this.prepareInitialState();
       this.renderAll();
       app.log('Tela de vendas carregada.');
+    },
+
+    compactPersistedProofsIfNeeded() {
+      const state = this.getState();
+      let changed = false;
+
+      state.sales = (state.sales || []).map((sale) => {
+        if (!sale?.pixProof) return sale;
+
+        const hasHeavyData =
+          Boolean(sale.pixProof?.dataUrl) ||
+          Boolean(sale.pixProof?.fileDataUrl) ||
+          Boolean(sale.pixProof?.attachment?.dataUrl);
+
+        if (!hasHeavyData) return sale;
+
+        changed = true;
+        return {
+          ...sale,
+          pixProof: {
+            name: sale.pixProof?.name || '',
+            type: sale.pixProof?.type || '',
+            size: sale.pixProof?.size || 0,
+            uploadedAt: sale.pixProof?.uploadedAt || sale.updatedAt || new Date().toISOString(),
+            transactionId: sale.pixProof?.transactionId || '',
+            note: sale.pixProof?.note || ''
+          }
+        };
+      });
+
+      state.proofs = (state.proofs || []).map((proof) => {
+        const hasHeavyData =
+          Boolean(proof?.fileDataUrl) ||
+          Boolean(proof?.attachment?.dataUrl);
+
+        if (!hasHeavyData) return proof;
+
+        changed = true;
+
+        const attachment = proof.attachment
+          ? {
+              name: proof.attachment?.name || proof.fileName || '',
+              type: proof.attachment?.type || proof.fileType || '',
+              size: proof.attachment?.size || 0,
+              uploadedAt: proof.attachment?.uploadedAt || proof.updatedAt || new Date().toISOString()
+            }
+          : null;
+
+        return {
+          ...proof,
+          attachment,
+          fileName: proof.fileName || attachment?.name || '',
+          fileType: proof.fileType || attachment?.type || '',
+          fileDataUrl: ''
+        };
+      });
+
+      if (changed) {
+        this.setState(state);
+        app.showToast('Arquivos pesados dos comprovantes foram compactados para liberar espaço.', 'warning');
+      }
     },
 
     getDefaultPeriod() {
@@ -300,11 +362,6 @@
       return Array.isArray(products) ? products : [];
     },
 
-    getProofs() {
-      const proofs = this.getState().proofs;
-      return Array.isArray(proofs) ? proofs : [];
-    },
-
     getCurrentUser() {
       return this.getState().currentUser || { name: 'Administrador', email: 'admin@husky.com' };
     },
@@ -522,6 +579,20 @@
       };
     },
 
+    getPersistableProofMeta(existingSale = null) {
+      const sourceProof = this.pixProofDraft || existingSale?.pixProof || null;
+      if (!sourceProof) return null;
+
+      return {
+        name: sourceProof.name || '',
+        type: sourceProof.type || '',
+        size: sourceProof.size || 0,
+        uploadedAt: sourceProof.uploadedAt || new Date().toISOString(),
+        transactionId: sourceProof.transactionId || '',
+        note: this.refs.salePixProofNote?.value.trim() || sourceProof.note || ''
+      };
+    },
+
     updateLiveSummary() {
       const items = this.collectItemsFromForm();
       const totals = this.calculateSaleTotals(items);
@@ -657,13 +728,17 @@
         total: totals.total,
         profit: totals.profit,
         pixProof: paymentMethod === 'Pix'
-          ? (this.pixProofDraft || existingSale?.pixProof || null)
+          ? this.getPersistableProofMeta(existingSale)
           : null,
         pixProofNote: this.refs.salePixProofNote?.value.trim() || '',
         updatedAt: now,
         createdAt: existingSale?.createdAt || now,
         updatedBy: this.getCurrentUser().email || 'admin@husky.com'
       };
+    },
+
+    ensureSaleWasPersisted(saleId) {
+      return this.getSales().some((sale) => sale.id === saleId);
     },
 
     handleSaveSale(isUpdate = false) {
@@ -673,6 +748,11 @@
       const previousSale = this.findSaleById(sale.id);
       const nextState = this.applySaleToState(sale, previousSale);
       this.setState(nextState);
+
+      if (!this.ensureSaleWasPersisted(sale.id)) {
+        app.showToast('Não foi possível gravar a venda. O armazenamento do navegador pode estar cheio.', 'danger');
+        return;
+      }
 
       this.resetListFiltersToDefault(true);
       this.renderAll();
@@ -705,6 +785,11 @@
       const previousSale = this.findSaleById(sale.id);
       const nextState = this.applySaleToState(sale, previousSale);
       this.setState(nextState);
+
+      if (!this.ensureSaleWasPersisted(sale.id)) {
+        app.showToast('Não foi possível finalizar a venda. O armazenamento do navegador pode estar cheio.', 'danger');
+        return;
+      }
 
       this.resetListFiltersToDefault(true);
       this.renderAll();
@@ -829,10 +914,15 @@
             : (sale.paymentStatus === 'Pago' ? 'Conferido' : 'Pendente de conferência'),
         origin: 'Cliente',
         paymentMethod: sale.paymentMethod,
-        attachment: sale.pixProof,
+        attachment: {
+          name: sale.pixProof?.name || '',
+          type: sale.pixProof?.type || '',
+          size: sale.pixProof?.size || 0,
+          uploadedAt: sale.pixProof?.uploadedAt || new Date().toISOString()
+        },
         fileName: sale.pixProof?.name || '',
         fileType: sale.pixProof?.type || '',
-        fileDataUrl: sale.pixProof?.dataUrl || '',
+        fileDataUrl: '',
         transactionId: sale.pixProof?.transactionId || '',
         note: sale.pixProofNote || sale.pixProof?.note || '',
         createdAt: index >= 0 ? proofs[index].createdAt : new Date().toISOString(),
@@ -873,7 +963,7 @@
 
         this.updatePixProofPreview();
         this.updateLiveSummary();
-        app.showToast('Comprovante anexado com sucesso.', 'success');
+        app.showToast('Comprovante anexado com sucesso. A imagem ficará só na prévia local.', 'success');
       };
 
       reader.onerror = () => {
@@ -912,7 +1002,7 @@
         ${
           isImage && currentProof.dataUrl
             ? `<div style="margin-top: 12px;"><img src="${currentProof.dataUrl}" alt="Comprovante Pix" style="max-width: 100%; border-radius: 14px; border: 1px solid #ead9cd;" /></div>`
-            : ''
+            : '<div style="margin-top:12px;"><p>Arquivo salvo apenas como metadado para evitar travamento do sistema.</p></div>'
         }
       `;
     },
