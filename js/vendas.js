@@ -112,6 +112,7 @@
         saleId: document.getElementById('sale-id'),
         saleCode: document.getElementById('sale-code'),
         saleOrderNumber: document.getElementById('sale-order-number'),
+        salesHistoryTableBody: document.getElementById('sales-history-table-body'),
         saleDate: document.getElementById('sale-date'),
         saleTime: document.getElementById('sale-time'),
         saleClientName: document.getElementById('sale-client-name'),
@@ -228,7 +229,7 @@
 
       this.refs.salesSearch?.addEventListener('input', () => {
         this.filters.search = this.refs.salesSearch.value.trim();
-        this.renderSalesTable();
+        this.renderAll();
       });
 
       this.refs.salesFilterStart?.addEventListener('change', () => {
@@ -245,20 +246,21 @@
 
       this.refs.salesFilterPayment?.addEventListener('change', () => {
         this.filters.payment = this.refs.salesFilterPayment.value || '';
-        this.renderSalesTable();
+        this.renderAll();
       });
 
       this.refs.salesFilterOrderStatus?.addEventListener('change', () => {
         this.filters.orderStatus = this.refs.salesFilterOrderStatus.value || '';
-        this.renderSalesTable();
+        this.renderAll();
       });
 
       this.refs.salesFilterPaymentStatus?.addEventListener('change', () => {
         this.filters.paymentStatus = this.refs.salesFilterPaymentStatus.value || '';
-        this.renderSalesTable();
+        this.renderAll();
       });
 
       this.refs.salesTableBody?.addEventListener('click', (event) => this.handleSalesTableActions(event));
+      this.refs.salesHistoryTableBody?.addEventListener('click', (event) => this.handleSalesHistoryActions(event));
       this.refs.pixPendingSalesTable?.addEventListener('click', (event) => this.handlePixPendingActions(event));
       this.refs.finishedSalesTable?.addEventListener('click', (event) => this.handleFinishedActions(event));
 
@@ -964,6 +966,7 @@
     renderAll() {
       this.renderMetrics();
       this.renderSalesTable();
+      this.renderSalesHistoryTable();
       this.renderPixPendingTable();
       this.renderFinishedTable();
       this.updateLiveSummary();
@@ -998,7 +1001,7 @@
     renderSalesTable() {
       if (!this.refs.salesTableBody) return;
 
-      const sales = this.getFilteredSales();
+      const sales = this.getFilteredSales().slice(0, 8);
 
       if (!sales.length) {
         this.refs.salesTableBody.innerHTML = `
@@ -1022,8 +1025,51 @@
           <td>${app.formatCurrency(sale.total || 0)}</td>
           <td>
             <div class="table-action-group">
-              <button type="button" class="btn btn-secondary btn-small" data-action="edit-sale" data-id="${sale.id}">Editar</button>
+              <button type="button" class="btn btn-secondary btn-small" data-action="edit-sale" data-id="${sale.id}">
+                Editar
+              </button>
             </div>
+          </td>
+        </tr>
+      `).join('');
+    },
+
+    renderSalesHistoryTable() {
+      const tbody = this.refs.salesHistoryTableBody;
+      if (!tbody) return;
+
+      const sales = [...this.getSales()].sort((a, b) => {
+        const dateA = new Date(`${this.getSaleDateValue(a)}T${a.time || '00:00'}`).getTime();
+        const dateB = new Date(`${this.getSaleDateValue(b)}T${b.time || '00:00'}`).getTime();
+        return dateB - dateA;
+      });
+
+      if (!sales.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">Nenhuma venda encontrada.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = sales.map((sale) => `
+        <tr>
+          <td><strong>${this.escapeHtml(sale.orderNumber || '-')}</strong></td>
+          <td>${this.escapeHtml(app.formatDate(this.getSaleDateValue(sale)))}</td>
+          <td>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</td>
+          <td>${this.escapeHtml(sale.paymentMethod || '-')}</td>
+          <td>${this.escapeHtml(sale.orderStatus || '-')}</td>
+          <td>${app.formatCurrency(sale.total || 0)}</td>
+          <td>
+            <button
+              type="button"
+              class="btn btn-secondary btn-small"
+              data-action="edit-sale"
+              data-id="${sale.id}"
+            >
+              Abrir
+            </button>
           </td>
         </tr>
       `).join('');
@@ -1098,6 +1144,18 @@
     },
 
     handleSalesTableActions(event) {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+
+      const saleId = button.dataset.id;
+      const action = button.dataset.action;
+
+      if (action === 'edit-sale') {
+        this.loadSaleIntoForm(saleId);
+      }
+    },
+
+    handleSalesHistoryActions(event) {
       const button = event.target.closest('button[data-action]');
       if (!button) return;
 

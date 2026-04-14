@@ -502,7 +502,7 @@ if (themeTrigger) {
       });
     },
 
-    setCurrentDateDefaults() {
+   setCurrentDateDefaults() {
   const today = this.todayISO();
   const nowTime = this.currentTimeHHMM();
 
@@ -511,7 +511,7 @@ if (themeTrigger) {
 
     const id = String(input.id || '').toLowerCase();
 
-    /* NÃO preencher filtros automaticamente */
+    /* nunca preencher filtros automaticamente */
     const isFilterField =
       id.includes('filter') ||
       id.includes('start') ||
@@ -519,7 +519,7 @@ if (themeTrigger) {
       id.includes('periodo') ||
       id.includes('period');
 
-    /* preencher só campos operacionais reais */
+    /* só preencher campos operacionais reais */
     const canAutoFill =
       id === 'sale-date' ||
       id === 'expense-date' ||
