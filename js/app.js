@@ -503,23 +503,41 @@ if (themeTrigger) {
     },
 
     setCurrentDateDefaults() {
-      const today = this.todayISO();
-      const nowTime = this.currentTimeHHMM();
+  const today = this.todayISO();
+  const nowTime = this.currentTimeHHMM();
 
-      document.querySelectorAll('input[type="date"]').forEach((input) => {
-        if (!input.value && input.dataset.autofill !== 'false') {
-          const id = input.id || '';
-          const canAutoFill = /date|start|end|birthday|due/i.test(id);
-          if (canAutoFill) input.value = today;
-        }
-      });
+  document.querySelectorAll('input[type="date"]').forEach((input) => {
+    if (input.value || input.dataset.autofill === 'false') return;
 
-      document.querySelectorAll('input[type="time"]').forEach((input) => {
-        if (!input.value && input.dataset.autofill !== 'false') {
-          input.value = nowTime;
-        }
-      });
-    },
+    const id = String(input.id || '').toLowerCase();
+
+    /* NÃO preencher filtros automaticamente */
+    const isFilterField =
+      id.includes('filter') ||
+      id.includes('start') ||
+      id.includes('end') ||
+      id.includes('periodo') ||
+      id.includes('period');
+
+    /* preencher só campos operacionais reais */
+    const canAutoFill =
+      id === 'sale-date' ||
+      id === 'expense-date' ||
+      id === 'proof-date' ||
+      id.includes('birthday') ||
+      id.includes('due');
+
+    if (canAutoFill && !isFilterField) {
+      input.value = today;
+    }
+  });
+
+  document.querySelectorAll('input[type="time"]').forEach((input) => {
+    if (!input.value && input.dataset.autofill !== 'false') {
+      input.value = nowTime;
+    }
+  });
+},
 
     getCollection(name) {
       const state = this.getAppState();
