@@ -9,7 +9,7 @@
   }
 
   const SALES_PAGE = {
-    filterStorageKey: 'husky_sales_filters',
+    filterStorageKey: 'husky_sales_period',
     refs: {},
     filters: {
       search: '',
@@ -23,57 +23,54 @@
     pixProofDraft: null,
 
     init() {
-  if (!document.getElementById('sale-form')) return;
-  this.cacheRefs();
-  this.bindEvents();
-  this.loadPersistedFilters();
-  this.prepareInitialState();
-  this.renderAll();
-  app.log('Tela de vendas carregada.');
-},
+      if (!document.getElementById('sale-form')) return;
+      this.cacheRefs();
+      this.bindEvents();
+      this.loadSavedPeriod();
+      this.prepareInitialState();
+      this.renderAll();
+      app.log('Tela de vendas carregada.');
+    },
 
-loadPersistedFilters() {
-  try {
-    const raw = localStorage.getItem(app.getStorageKey(this.filterStorageKey));
-    const saved = raw ? JSON.parse(raw) : null;
+    loadSavedPeriod() {
+      try {
+        const raw = localStorage.getItem(app.getStorageKey(this.filterStorageKey));
+        const saved = raw ? JSON.parse(raw) : null;
 
-    if (saved && typeof saved === 'object') {
-      this.filters = {
-        search: saved.search || '',
-        start: saved.start || '',
-        end: saved.end || '',
-        payment: saved.payment || '',
-        orderStatus: saved.orderStatus || '',
-        paymentStatus: saved.paymentStatus || ''
-      };
-    } else {
-      const today = this.todayISO();
-      const startOfMonth = `${today.slice(0, 7)}-01`;
-      this.filters.start = startOfMonth;
-      this.filters.end = today;
-    }
+        const today = this.todayISO();
+        const monthStart = `${today.slice(0, 7)}-01`;
 
-    if (this.refs.salesSearch) this.refs.salesSearch.value = this.filters.search;
-    if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = this.filters.start;
-    if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = this.filters.end;
-    if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = this.filters.payment;
-    if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = this.filters.orderStatus;
-    if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = this.filters.paymentStatus;
-  } catch (error) {
-    console.error('[Husky Vendas] erro ao carregar filtros persistidos', error);
-  }
-},
+        this.filters.start = saved?.start || monthStart;
+        this.filters.end = saved?.end || today;
+        this.filters.search = '';
+        this.filters.payment = '';
+        this.filters.orderStatus = '';
+        this.filters.paymentStatus = '';
 
-persistFilters() {
-  try {
-    localStorage.setItem(
-      app.getStorageKey(this.filterStorageKey),
-      JSON.stringify(this.filters)
-    );
-  } catch (error) {
-    console.error('[Husky Vendas] erro ao salvar filtros persistidos', error);
-  }
-},
+        if (this.refs.salesSearch) this.refs.salesSearch.value = '';
+        if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = this.filters.start;
+        if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = this.filters.end;
+        if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = '';
+        if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = '';
+        if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = '';
+      } catch (error) {
+        console.error('[Husky Vendas] erro ao carregar período salvo', error);
+      }
+    },
+
+    savePeriodOnly() {
+      try {
+        localStorage.setItem(
+          app.getStorageKey(this.filterStorageKey),
+          JSON.stringify({
+            start: this.filters.start || '',
+            end: this.filters.end || ''
+          })
+        );
+      } catch (error) {
+        console.error('[Husky Vendas] erro ao salvar período', error);
+      }
+    },
 
     cacheRefs() {
       this.refs = {
@@ -196,40 +193,37 @@ persistFilters() {
       });
 
       this.refs.salesSearch?.addEventListener('input', () => {
-  this.filters.search = this.refs.salesSearch.value.trim();
-  this.persistFilters();
-  this.renderSalesTable();
-});
+        this.filters.search = this.refs.salesSearch.value.trim();
+        this.renderSalesTable();
+      });
 
-this.refs.salesFilterStart?.addEventListener('change', () => {
-  this.filters.start = this.refs.salesFilterStart.value || '';
-  this.persistFilters();
-  this.renderAll();
-});
+      this.refs.salesFilterStart?.addEventListener('change', () => {
+        this.filters.start = this.normalizeDate(this.refs.salesFilterStart.value || '');
+        this.savePeriodOnly();
+        this.renderAll();
+      });
 
-this.refs.salesFilterEnd?.addEventListener('change', () => {
-  this.filters.end = this.refs.salesFilterEnd.value || '';
-  this.persistFilters();
-  this.renderAll();
-});
+      this.refs.salesFilterEnd?.addEventListener('change', () => {
+        this.filters.end = this.normalizeDate(this.refs.salesFilterEnd.value || '');
+        this.savePeriodOnly();
+        this.renderAll();
+      });
 
-this.refs.salesFilterPayment?.addEventListener('change', () => {
-  this.filters.payment = this.refs.salesFilterPayment.value || '';
-  this.persistFilters();
-  this.renderSalesTable();
-});
+      this.refs.salesFilterPayment?.addEventListener('change', () => {
+        this.filters.payment = this.refs.salesFilterPayment.value || '';
+        this.renderSalesTable();
+      });
 
-this.refs.salesFilterOrderStatus?.addEventListener('change', () => {
-  this.filters.orderStatus = this.refs.salesFilterOrderStatus.value || '';
-  this.persistFilters();
-  this.renderSalesTable();
-});
+      this.refs.salesFilterOrderStatus?.addEventListener('change', () => {
+        this.filters.orderStatus = this.refs.salesFilterOrderStatus.value || '';
+        this.renderSalesTable();
+      });
 
-this.refs.salesFilterPaymentStatus?.addEventListener('change', () => {
-  this.filters.paymentStatus = this.refs.salesFilterPaymentStatus.value || '';
-  this.persistFilters();
-  this.renderSalesTable();
-});
+      this.refs.salesFilterPaymentStatus?.addEventListener('change', () => {
+        this.filters.paymentStatus = this.refs.salesFilterPaymentStatus.value || '';
+        this.renderSalesTable();
+      });
+
       this.refs.salesTableBody?.addEventListener('click', (event) => this.handleSalesTableActions(event));
       this.refs.pixPendingSalesTable?.addEventListener('click', (event) => this.handlePixPendingActions(event));
       this.refs.finishedSalesTable?.addEventListener('click', (event) => this.handleFinishedActions(event));
@@ -881,37 +875,41 @@ this.refs.salesFilterPaymentStatus?.addEventListener('change', () => {
       `;
     },
 
-   applyFilters() {
-  this.filters.search = this.refs.salesSearch?.value.trim() || '';
-  this.filters.start = this.normalizeDate(this.refs.salesFilterStart?.value || '');
-  this.filters.end = this.normalizeDate(this.refs.salesFilterEnd?.value || '');
-  this.filters.payment = this.refs.salesFilterPayment?.value || '';
-  this.filters.orderStatus = this.refs.salesFilterOrderStatus?.value || '';
-  this.filters.paymentStatus = this.refs.salesFilterPaymentStatus?.value || '';
-  this.persistFilters();
-  this.renderAll();
-},
+    applyFilters() {
+      this.filters.search = this.refs.salesSearch?.value.trim() || '';
+      this.filters.start = this.normalizeDate(this.refs.salesFilterStart?.value || '');
+      this.filters.end = this.normalizeDate(this.refs.salesFilterEnd?.value || '');
+      this.filters.payment = this.refs.salesFilterPayment?.value || '';
+      this.filters.orderStatus = this.refs.salesFilterOrderStatus?.value || '';
+      this.filters.paymentStatus = this.refs.salesFilterPaymentStatus?.value || '';
 
-   clearFilters() {
-  this.filters = {
-    search: '',
-    start: '',
-    end: '',
-    payment: '',
-    orderStatus: '',
-    paymentStatus: ''
-  };
+      this.savePeriodOnly();
+      this.renderAll();
+    },
 
-  if (this.refs.salesSearch) this.refs.salesSearch.value = '';
-  if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = '';
-  if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = '';
-  if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = '';
-  if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = '';
-  if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = '';
+    clearFilters() {
+      const today = this.todayISO();
+      const monthStart = `${today.slice(0, 7)}-01`;
 
-  this.persistFilters();
-  this.renderAll();
-},
+      this.filters = {
+        search: '',
+        start: monthStart,
+        end: today,
+        payment: '',
+        orderStatus: '',
+        paymentStatus: ''
+      };
+
+      if (this.refs.salesSearch) this.refs.salesSearch.value = '';
+      if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = monthStart;
+      if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = today;
+      if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = '';
+      if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = '';
+      if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = '';
+
+      this.savePeriodOnly();
+      this.renderAll();
+    },
 
     getFilteredSales() {
       return this.getSales()
@@ -1213,10 +1211,24 @@ this.refs.salesFilterPaymentStatus?.addEventListener('change', () => {
 
     printReceipt() {
       this.prepareReceiptPreview(false);
-      window.print();
-      app.log('Comprovante enviado para impressão.', {
-        orderNumber: this.refs.saleOrderNumber?.value || null
-      });
+
+      const printArea = document.getElementById('print-area');
+      if (!printArea) {
+        app.showToast('Área de impressão não encontrada.', 'danger');
+        return;
+      }
+
+      printArea.classList.remove('hidden');
+      printArea.setAttribute('aria-hidden', 'false');
+
+      setTimeout(() => {
+        window.print();
+
+        setTimeout(() => {
+          printArea.classList.add('hidden');
+          printArea.setAttribute('aria-hidden', 'true');
+        }, 300);
+      }, 120);
     },
 
     generateSimpleInvoice() {

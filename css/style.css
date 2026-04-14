@@ -1983,3 +1983,70 @@ body[data-theme-mode="dark"] .theme-toggle-btn {
     font-size: 13px;
   }
 }
+
+.sales-filter-panel {
+  padding: 18px 18px 16px;
+}
+
+.sales-filter-grid-pretty {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.sales-filter-grid-pretty .form-group {
+  margin: 0;
+}
+
+.sales-filter-grid-pretty .form-group label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-soft);
+}
+
+.sales-filter-grid-pretty .form-group input,
+.sales-filter-grid-pretty .form-group select {
+  min-height: 44px;
+  border-radius: 14px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--input-text);
+}
+
+.sales-filter-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-self: end;
+}
+
+.sales-filter-actions .btn {
+  width: 100%;
+}
+
+@media (max-width: 1280px) {
+  .sales-filter-grid-pretty {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .sales-filter-grid-pretty {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .sales-filter-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .sales-filter-grid-pretty {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-filter-actions {
+    grid-template-columns: 1fr;
+  }
+}

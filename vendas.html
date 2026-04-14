@@ -112,6 +112,72 @@
           </article>
         </section>
 
+        <section class="panel sales-filter-panel">
+  <div class="panel-header">
+    <div>
+      <h3>Filtros de vendas</h3>
+      <p>Pesquise por período, status e pagamento.</p>
+    </div>
+  </div>
+
+  <div class="sales-filter-grid sales-filter-grid-pretty">
+    <div class="form-group">
+      <label for="sales-search">Buscar</label>
+      <input type="text" id="sales-search" placeholder="Pedido, cliente ou telefone" />
+    </div>
+
+    <div class="form-group">
+      <label for="sales-filter-start">Data inicial</label>
+      <input type="date" id="sales-filter-start" />
+    </div>
+
+    <div class="form-group">
+      <label for="sales-filter-end">Data final</label>
+      <input type="date" id="sales-filter-end" />
+    </div>
+
+    <div class="form-group">
+      <label for="sales-filter-payment">Pagamento</label>
+      <select id="sales-filter-payment">
+        <option value="">Todos</option>
+        <option value="Pix">Pix</option>
+        <option value="Dinheiro">Dinheiro</option>
+        <option value="Débito">Débito</option>
+        <option value="Crédito">Crédito</option>
+        <option value="Misto">Misto</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="sales-filter-order-status">Status do pedido</label>
+      <select id="sales-filter-order-status">
+        <option value="">Todos</option>
+        <option value="Pendente">Pendente</option>
+        <option value="Em produção">Em produção</option>
+        <option value="Pronto">Pronto</option>
+        <option value="Finalizado">Finalizado</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="sales-filter-payment-status">Status do pagamento</label>
+      <select id="sales-filter-payment-status">
+        <option value="">Todos</option>
+        <option value="Aguardando pagamento">Aguardando pagamento</option>
+        <option value="Pago">Pago</option>
+        <option value="Parcial">Parcial</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
+    </div>
+
+    <div class="sales-filter-actions">
+      <button type="button" id="btn-filter-sales" class="btn btn-primary">Aplicar filtro</button>
+      <button type="button" id="btn-clear-sales-filter" class="btn btn-secondary">Limpar</button>
+    </div>
+  </div>
+</section>
+
         <section class="sales-compact-grid">
           <article class="panel sales-fast-form">
             <div class="panel-header">
