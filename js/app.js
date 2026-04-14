@@ -110,6 +110,24 @@
       this.log('Aplicação inicializada.');
     },
 
+    toggleThemeMode() {
+  const current = this.getSettings?.().visual?.themeMode || 'husky-default';
+  const next = current === 'dark' ? 'husky-default' : 'dark';
+
+  this.updateSettings({
+    visual: {
+      ...this.getSettings().visual,
+      themeMode: next
+    }
+  });
+
+  this.applySettingsToUI();
+  this.showToast(
+    next === 'dark' ? 'Tema escuro ativado.' : 'Tema claro ativado.',
+    'success'
+  );
+},
+
     cacheDom() {
       this.dom = {
         body: document.body,
@@ -159,6 +177,13 @@
           this.copyText(copyTrigger.getAttribute('data-copy-text'));
           return;
         }
+
+        const themeTrigger = target.closest('[data-action="toggle-theme"], #btn-toggle-theme');
+if (themeTrigger) {
+  event.preventDefault();
+  this.toggleThemeMode();
+  return;
+}
 
         if (target.closest('.sidebar .nav-item') && window.innerWidth <= 992) {
           this.closeSidebar();

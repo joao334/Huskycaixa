@@ -1,36 +1,71 @@
 :root {
-  --bg: #f6efe7;
+  --bg: #f5f1eb;
   --bg-soft: #fcfaf7;
   --surface: rgba(255, 255, 255, 0.92);
   --surface-strong: #ffffff;
   --surface-dark: #18374d;
-  --primary: #2d6f9b;
-  --primary-dark: #1f577c;
+
+  --primary: #3f73b7;
+  --primary-dark: #2f61a5;
+  --primary-deep: #244b87;
   --primary-soft: #e7f1f8;
-  --beige: #ead8c4;
-  --beige-soft: #f7efe7;
-  --beige-strong: #d7b999;
-  --text: #183247;
-  --text-soft: #6d7d88;
-  --text-muted: #7d8d99;
-  --success: #2f8b57;
+
+  --beige: #e8d7b1;
+  --beige-soft: #f4ead8;
+  --beige-strong: #d8bf98;
+
+  --brown: #6f5136;
+  --brown-soft: #8a6747;
+
+  --text: #2f211b;
+  --text-soft: #5f4a39;
+  --text-muted: #8b7b6f;
+
+  --success: #6f8f57;
   --warning: #c08a2b;
   --danger: #bf4b4b;
-  --border: rgba(45, 111, 155, 0.12);
-  --border-strong: rgba(45, 111, 155, 0.22);
-  --shadow-sm: 0 8px 18px rgba(18, 39, 56, 0.08);
-  --shadow-md: 0 16px 36px rgba(18, 39, 56, 0.1);
-  --shadow-lg: 0 22px 46px rgba(18, 39, 56, 0.14);
+
+  --border: rgba(111, 81, 54, 0.12);
+  --border-strong: rgba(111, 81, 54, 0.2);
+
+  --shadow-sm: 0 8px 18px rgba(23, 48, 66, 0.08);
+  --shadow-md: 0 16px 36px rgba(23, 48, 66, 0.1);
+  --shadow-lg: 0 22px 46px rgba(23, 48, 66, 0.14);
   --shadow-soft: 0 12px 32px rgba(23, 48, 66, 0.08);
   --shadow-strong: 0 20px 46px rgba(23, 48, 66, 0.12);
+
   --radius-sm: 12px;
   --radius-md: 18px;
   --radius-lg: 24px;
   --radius-xl: 30px;
+
   --sidebar-width: 290px;
   --topbar-height: 88px;
   --transition: 0.22s ease;
   --container-max: 1680px;
+
+  --bg-main: linear-gradient(180deg, #4d7dc0 0%, #2f61a5 18%, #3569af 55%, #3c6db3 100%);
+  --bg-surface: linear-gradient(180deg, rgba(216,228,246,0.95), rgba(197,214,238,0.90));
+  --bg-surface-2: rgba(245, 240, 230, 0.92);
+  --bg-header: linear-gradient(90deg, #3f73b7, #3466a9);
+
+  --text-main: #2f211b;
+  --text-on-dark: #f5f1eb;
+
+  --border-soft: rgba(111, 81, 54, 0.12);
+
+  --btn-primary-bg: linear-gradient(180deg, #719458, #5f8248);
+  --btn-primary-text: #f5f1eb;
+
+  --btn-secondary-bg: linear-gradient(180deg, #ead4ad, #e6cfaa);
+  --btn-secondary-text: #4b3525;
+
+  --input-bg: rgba(245, 240, 230, 0.96);
+  --input-text: #2f211b;
+  --input-border: rgba(111, 81, 54, 0.18);
+
+  --table-head-bg: rgba(63, 115, 183, 0.08);
+  --table-row-hover: rgba(63, 115, 183, 0.05);
 }
 
 * {
@@ -1553,134 +1588,398 @@ tbody tr:hover {
 
 /* ===== HUSKY DARK MODE ===== */
 
+/* =========================================================
+   HUSKY THEME SYSTEM LIMPO
+   Claro + Escuro
+   Sem mascote/imagem decorativa
+   ========================================================= */
+
+body {
+  background: var(--bg-main) !important;
+  color: var(--text-main) !important;
+}
+
 body[data-theme-mode="dark"] {
-  background:
-    linear-gradient(180deg, #0f1723 0%, #101b29 35%, #132131 100%);
-  color: #e9eef5;
+  --bg-main: linear-gradient(180deg, #0f1824 0%, #132233 45%, #16283c 100%);
+  --bg-surface: linear-gradient(180deg, rgba(22,31,45,0.96), rgba(17,25,37,0.94));
+  --bg-surface-2: rgba(17, 24, 35, 0.94);
+  --bg-header: linear-gradient(90deg, #2a4f87, #22436f);
+
+  --text-main: #eef3f8;
+  --text-soft: #a9b6c5;
+  --text-muted: #8d9cad;
+  --text-on-dark: #f5f1eb;
+
+  --border-soft: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.1);
+
+  --shadow-soft: 0 14px 28px rgba(0, 0, 0, 0.22);
+  --shadow-strong: 0 20px 46px rgba(0, 0, 0, 0.30);
+
+  --btn-primary-bg: linear-gradient(180deg, #6f8f57, #587340);
+  --btn-primary-text: #f5f1eb;
+
+  --btn-secondary-bg: linear-gradient(180deg, #2b3441, #232c36);
+  --btn-secondary-text: #eef3f8;
+
+  --input-bg: rgba(10, 17, 27, 0.92);
+  --input-text: #eef3f8;
+  --input-border: rgba(255,255,255,0.08);
+
+  --table-head-bg: rgba(255,255,255,0.04);
+  --table-row-hover: rgba(255,255,255,0.03);
 }
 
 body[data-theme-mode="dark"] .app-pattern {
-  opacity: 0.025;
+  opacity: 0.02;
 }
 
-body[data-theme-mode="dark"] .panel,
-body[data-theme-mode="dark"] .metric-card,
-body[data-theme-mode="dark"] .quick-link-card,
-body[data-theme-mode="dark"] .summary-card,
-body[data-theme-mode="dark"] .status-box,
-body[data-theme-mode="dark"] .catalog-mini-card,
-body[data-theme-mode="dark"] .product-preview-card,
-body[data-theme-mode="dark"] .husky-home-card,
-body[data-theme-mode="dark"] .husky-home-action,
-body[data-theme-mode="dark"] .husky-home-metric,
-body[data-theme-mode="dark"] .husky-lite-card,
-body[data-theme-mode="dark"] .login-form-card,
-body[data-theme-mode="dark"] .husky-login-card {
-  background: linear-gradient(180deg, rgba(22, 31, 45, 0.96), rgba(17, 25, 37, 0.94));
-  border-color: rgba(255,255,255,0.07);
-  color: #e9eef5;
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+/* superfícies */
+.panel,
+.metric-card,
+.quick-link-card,
+.summary-card,
+.status-box,
+.catalog-mini-card,
+.product-preview-card,
+.husky-home-card,
+.husky-home-action,
+.husky-home-metric,
+.husky-lite-card,
+.login-form-card,
+.husky-login-card,
+.husky-login-brand-card,
+.pix-proof-card,
+.summary-line,
+.status-row,
+.checkbox-card,
+.upload-preview-box,
+.receipt-preview,
+.print-receipt-template,
+.husky-home-mini-stat,
+.husky-home-status-row,
+.husky-home-proof-item,
+.husky-login-mini-item {
+  background: var(--bg-surface) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-soft) !important;
+  box-shadow: var(--shadow-soft) !important;
 }
 
-body[data-theme-mode="dark"] .page-heading h1,
-body[data-theme-mode="dark"] .page-heading h2,
-body[data-theme-mode="dark"] .hero-content h2,
-body[data-theme-mode="dark"] .panel-header h3,
-body[data-theme-mode="dark"] .panel-subsection-header h4,
-body[data-theme-mode="dark"] .metric-card strong,
-body[data-theme-mode="dark"] .summary-line strong,
-body[data-theme-mode="dark"] .status-row strong,
-body[data-theme-mode="dark"] .husky-home-metric strong,
-body[data-theme-mode="dark"] .husky-home-mini-stat strong,
-body[data-theme-mode="dark"] .husky-home-status-row strong,
-body[data-theme-mode="dark"] .husky-lite-value strong,
-body[data-theme-mode="dark"] .husky-lite-value span {
-  color: #f4f7fb;
+/* superfícies internas */
+.panel-subsection,
+.summary-line,
+.status-row,
+.pix-proof-card,
+.checkbox-card,
+.husky-home-mini-stat,
+.husky-home-status-row,
+.husky-home-proof-item,
+.husky-login-mini-item {
+  background: var(--bg-surface-2) !important;
 }
 
-body[data-theme-mode="dark"] .page-heading p,
-body[data-theme-mode="dark"] .panel-header p,
-body[data-theme-mode="dark"] .panel-subsection-header p,
-body[data-theme-mode="dark"] .metric-card small,
-body[data-theme-mode="dark"] .summary-line span,
-body[data-theme-mode="dark"] .status-row span,
-body[data-theme-mode="dark"] .quick-link-card p,
-body[data-theme-mode="dark"] .summary-card p,
-body[data-theme-mode="dark"] .husky-home-action p,
-body[data-theme-mode="dark"] .husky-home-status-row span,
-body[data-theme-mode="dark"] .husky-home-proof-item p {
-  color: #9fb0c3;
+/* textos principais */
+body,
+.page-heading h1,
+.page-heading h2,
+.panel-header h3,
+.panel-subsection-header h4,
+.section-header h3,
+.metric-card strong,
+.summary-line strong,
+.status-row strong,
+.husky-home-metric strong,
+.husky-home-mini-stat strong,
+.husky-home-status-row strong,
+.husky-home-action h3,
+.quick-link-card h4,
+.summary-card h4,
+.product-preview-card h4,
+.catalog-mini-content h4,
+.husky-login-status strong,
+.husky-login-titlebox h1,
+.brand-text strong {
+  color: var(--text-main) !important;
 }
 
-body[data-theme-mode="dark"] .form-group input,
-body[data-theme-mode="dark"] .form-group select,
-body[data-theme-mode="dark"] .form-group textarea,
-body[data-theme-mode="dark"] .toolbar-grid input,
-body[data-theme-mode="dark"] .toolbar-grid select,
-body[data-theme-mode="dark"] .date-filter-bar input,
-body[data-theme-mode="dark"] .husky-lite-row input,
-body[data-theme-mode="dark"] .husky-lite-row select,
-body[data-theme-mode="dark"] .husky-lite-row textarea,
-body[data-theme-mode="dark"] .husky-login-form input {
-  background: rgba(10, 17, 27, 0.9);
-  color: #edf3fb;
+/* textos secundários */
+.page-heading p,
+.panel-header p,
+.panel-subsection-header p,
+.section-header p,
+.metric-card small,
+.summary-line span,
+.status-row span,
+.quick-link-card p,
+.summary-card p,
+.catalog-mini-content p,
+.product-preview-content p,
+.pix-proof-card p,
+.husky-home-action p,
+.husky-home-proof-item p,
+.husky-home-status-row span,
+.brand-text span,
+.operator-info span,
+.cloud-box small,
+.form-group label {
+  color: var(--text-soft) !important;
+}
+
+/* cabeçalhos fortes */
+.husky-home-card-header,
+.husky-login-card-header,
+.husky-login-brand-header,
+.husky-lite-card-header {
+  background: var(--bg-header) !important;
+  color: var(--text-on-dark) !important;
+}
+
+.husky-home-card-header h2,
+.husky-login-card-header h2,
+.husky-login-brand-header h2,
+.husky-lite-card-header h3 {
+  color: var(--text-on-dark) !important;
+}
+
+/* topbar comum */
+.topbar {
+  background: transparent !important;
+  color: var(--text-main) !important;
+}
+
+/* inputs */
+input,
+select,
+textarea,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.toolbar-grid input,
+.toolbar-grid select,
+.date-filter-bar input,
+.husky-login-form input,
+.husky-lite-row input,
+.husky-lite-row select,
+.husky-lite-row textarea {
+  background: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border-color: var(--input-border) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-soft) !important;
+}
+
+/* botões */
+.btn-primary,
+.husky-login-btn-primary,
+.husky-btn-strong {
+  background: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
+  border: none !important;
+}
+
+.btn-secondary,
+.husky-login-btn-secondary,
+.husky-btn-soft {
+  background: var(--btn-secondary-bg) !important;
+  color: var(--btn-secondary-text) !important;
+  border: 1px solid var(--border-soft) !important;
+}
+
+.btn-link {
+  color: var(--primary-dark) !important;
+}
+
+body[data-theme-mode="dark"] .btn-link {
+  color: #c5d8f4 !important;
+}
+
+/* tabelas */
+.table-wrapper {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-soft) !important;
+}
+
+thead th {
+  background: var(--table-head-bg) !important;
+  color: var(--text-soft) !important;
+}
+
+tbody td {
+  color: var(--text-main) !important;
+  border-bottom-color: var(--border-soft) !important;
+}
+
+tbody tr:hover {
+  background: var(--table-row-hover) !important;
+}
+
+/* badges */
+.tag,
+.husky-home-soft-tag,
+.eyebrow {
+  background: linear-gradient(180deg, var(--beige), var(--beige-soft)) !important;
+  color: var(--brown) !important;
+  border: none !important;
+}
+
+/* sidebar */
+.sidebar {
+  background: linear-gradient(180deg, #21487e 0%, #18385e 100%) !important;
+}
+
+body[data-theme-mode="dark"] .sidebar {
+  background: linear-gradient(180deg, #101b2a 0%, #0d1622 100%) !important;
+}
+
+.sidebar .brand-text strong,
+.sidebar .operator-info strong,
+.sidebar .cloud-box strong,
+.sidebar .nav-item {
+  color: #f5f1eb !important;
+}
+
+.sidebar .brand-text span,
+.sidebar .operator-info span,
+.sidebar .cloud-box small {
+  color: rgba(245, 241, 235, 0.76) !important;
+}
+
+/* login no tema escuro */
+body[data-theme-mode="dark"] .husky-login-page {
+  background: linear-gradient(180deg, #0f1824 0%, #132233 45%, #16283c 100%) !important;
+}
+
+body[data-theme-mode="dark"] .husky-login-form label,
+body[data-theme-mode="dark"] .husky-login-status strong,
+body[data-theme-mode="dark"] .husky-login-mini-item,
+body[data-theme-mode="dark"] .husky-login-titlebox h1 {
+  color: var(--text-main) !important;
+}
+
+/* =========================================================
+   AJUSTE VISUAL HUSKY
+   - remove as barrinhas do topo
+   - mantém o mascote
+   - cria o botão de tema
+   ========================================================= */
+
+/* tira as barrinhas/cores decorativas do topo */
+.husky-login-palette,
+.husky-home-palette,
+.husky-palette-strip {
+  display: none !important;
+}
+
+/* mantém o mascote visível */
+.husky-login-mascot,
+.husky-home-mascot,
+.login-brand-mascot,
+.hero-mascot,
+.mascot-illustration {
+  display: block !important;
+}
+
+/* ajuste do mascote no login */
+.husky-login-mascot {
+  position: absolute;
+  left: 12px;
+  bottom: 0;
+  width: 170px;
+  max-width: 34%;
+  pointer-events: none;
+  opacity: 0.98;
+}
+
+/* ajuste do mascote na home */
+.husky-home-mascot {
+  position: absolute;
+  left: -4px;
+  bottom: -8px;
+  width: 150px;
+  pointer-events: none;
+  opacity: 0.98;
+}
+
+/* em telas menores, deixa menor sem sumir */
+@media (max-width: 900px) {
+  .husky-login-mascot {
+    width: 130px;
+    max-width: 28%;
+  }
+
+  .husky-home-mascot {
+    width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .husky-login-mascot {
+    width: 104px;
+    left: 8px;
+    bottom: 0;
+    max-width: 24%;
+  }
+
+  .husky-home-mascot {
+    width: 96px;
+    left: -2px;
+    bottom: -4px;
+  }
+}
+
+/* =========================================================
+   BOTÃO TEMA
+   ========================================================= */
+
+#btn-toggle-theme,
+.theme-toggle-btn {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  background: linear-gradient(180deg, #ead4ad, #e6cfaa);
+  color: #4b3525;
+  border: 1px solid rgba(111, 81, 54, 0.14);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+#btn-toggle-theme:hover,
+.theme-toggle-btn:hover {
+  transform: translateY(-1px);
+}
+
+body[data-theme-mode="dark"] #btn-toggle-theme,
+body[data-theme-mode="dark"] .theme-toggle-btn {
+  background: linear-gradient(180deg, #2b3441, #232c36);
+  color: #eef3f8;
   border-color: rgba(255,255,255,0.08);
 }
 
-body[data-theme-mode="dark"] .form-group input::placeholder,
-body[data-theme-mode="dark"] .form-group textarea::placeholder,
-body[data-theme-mode="dark"] .husky-login-form input::placeholder {
-  color: #7f93a8;
+/* versão compacta do botão na topbar */
+.topbar-actions #btn-toggle-theme,
+.topbar-right #btn-toggle-theme {
+  min-width: 108px;
 }
 
-body[data-theme-mode="dark"] .summary-line,
-body[data-theme-mode="dark"] .status-row,
-body[data-theme-mode="dark"] .pix-proof-card,
-body[data-theme-mode="dark"] .husky-home-proof-item,
-body[data-theme-mode="dark"] .husky-home-mini-stat,
-body[data-theme-mode="dark"] .husky-home-status-row {
-  background: rgba(14, 22, 34, 0.88);
-  border-color: rgba(255,255,255,0.06);
-}
-
-body[data-theme-mode="dark"] .table-wrapper {
-  background: rgba(15, 23, 35, 0.92);
-  border-color: rgba(255,255,255,0.06);
-}
-
-body[data-theme-mode="dark"] thead th {
-  background: rgba(255,255,255,0.04);
-  color: #9fb0c3;
-  border-bottom-color: rgba(255,255,255,0.06);
-}
-
-body[data-theme-mode="dark"] tbody td {
-  color: #e9eef5;
-  border-bottom-color: rgba(255,255,255,0.05);
-}
-
-body[data-theme-mode="dark"] tbody tr:hover {
-  background: rgba(255,255,255,0.03);
-}
-
-body[data-theme-mode="dark"] .btn-secondary {
-  background: rgba(18, 27, 40, 0.96);
-  color: #eaf1f8;
-  border-color: rgba(255,255,255,0.08);
-}
-
-body[data-theme-mode="dark"] .sync-badge,
-body[data-theme-mode="dark"] .mobile-menu-btn {
-  background: rgba(18, 27, 40, 0.96);
-  color: #eaf1f8;
-  border-color: rgba(255,255,255,0.08);
-}
-
-body[data-theme-mode="dark"] .checkbox-card,
-body[data-theme-mode="dark"] .upload-preview-box,
-body[data-theme-mode="dark"] .receipt-preview,
-body[data-theme-mode="dark"] .print-receipt-template {
-  background: rgba(14, 22, 34, 0.92);
-  border-color: rgba(255,255,255,0.08);
-  color: #eaf1f8;
+/* em mobile, botão ocupa bem o espaço */
+@media (max-width: 768px) {
+  #btn-toggle-theme,
+  .theme-toggle-btn {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
 }
