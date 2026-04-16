@@ -13,7 +13,7 @@
       name: 'Husky Confeitaria',
       tradeName: 'Husky Confeitaria',
       cnpj: '',
-      phone: '',
+      phone: '11988456865',
       email: '',
       instagram: '@huskyconfeiteiro',
       address: ''

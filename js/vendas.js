@@ -1893,26 +1893,96 @@
       if (!digits.startsWith('55') && (digits.length === 10 || digits.length === 11)) {
         digits = `55${digits}`;
       }
+      if (digits.startsWith('55') && digits.length === 12 && /^55\d{10}$/.test(digits)) {
+        const ddd = digits.slice(2, 4);
+        const local = digits.slice(4);
+        digits = `55${ddd}9${local}`;
+      }
       return digits;
     },
 
-    sendReceiptToWhatsApp() {
+    getWhatsAppTargets(phone, encodedMessage) {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+      const isStandalone = Boolean(
+        window.matchMedia?.('(display-mode: standalone)').matches ||
+        window.navigator.standalone
+      );
+
+      const mobileTargets = [
+        `whatsapp://send?phone=${phone}&text=${encodedMessage}`,
+        `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`,
+        `https://wa.me/${phone}?text=${encodedMessage}`
+      ];
+
+      const desktopTargets = [
+        `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`,
+        `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`,
+        `https://wa.me/${phone}?text=${encodedMessage}`
+      ];
+
+      return isMobile || isStandalone ? mobileTargets : desktopTargets;
+    },
+
+    openExternalLink(url, options = {}) {
+      if (!url) return false;
+
+      const { sameTab = false } = options;
+      const link = document.createElement('a');
+      link.href = url;
+      link.rel = 'noopener noreferrer';
+      if (!sameTab) link.target = '_blank';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      return true;
+    },
+
+    async sendReceiptToWhatsApp() {
       this.prepareReceiptPreview(false);
 
-      const rawPhone = this.refs.saleClientPhone?.value || '';
+      const settingsPhone = app.getSettings?.().company?.phone || '';
+      const rawPhone = this.refs.saleClientPhone?.value || settingsPhone || '';
       const phone = this.normalizeWhatsAppPhone(rawPhone);
 
-      if (!phone) {
-        app.showToast('Informe o telefone do cliente para enviar pelo WhatsApp.', 'warning');
+      if (!phone || phone.length < 12) {
+        app.showToast('Informe um telefone válido do cliente para enviar pelo WhatsApp.', 'warning');
         this.refs.saleClientPhone?.focus();
         return;
       }
 
       const message = this.buildWhatsAppReceiptMessage();
-      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      const encodedMessage = encodeURIComponent(message);
+      const targets = this.getWhatsAppTargets(phone, encodedMessage);
+      const isStandalone = Boolean(
+        window.matchMedia?.('(display-mode: standalone)').matches ||
+        window.navigator.standalone
+      );
 
-      window.open(url, '_blank', 'noopener,noreferrer');
-      app.showToast('WhatsApp aberto com o comprovante pronto para envio.', 'success');
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(message).catch((error) => {
+          console.warn('[HuskySales] Não foi possível copiar a mensagem do WhatsApp.', error);
+        });
+      }
+
+      let opened = false;
+
+      if (isStandalone) {
+        window.location.href = targets[0];
+        opened = true;
+      } else {
+        opened = this.openExternalLink(targets[0]);
+        if (!opened) {
+          const popup = window.open(targets[0], '_blank', 'noopener,noreferrer');
+          opened = Boolean(popup);
+        }
+      }
+
+      if (!opened) {
+        window.location.href = targets[targets.length - 1];
+      }
+
+      app.showToast(`Abrindo WhatsApp para ${phone}. A mensagem também foi copiada.`, 'success');
     },
 
     generateSimpleInvoice() {

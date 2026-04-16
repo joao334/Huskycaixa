@@ -15,7 +15,7 @@
     company: {
       name: 'Husky Confeitaria',
       tradeName: 'Husky Confeitaria',
-      phone: '',
+      phone: '11988456865',
       email: '',
       instagram: '@huskyconfeiteiro',
       address: ''
@@ -1700,7 +1700,7 @@ if (themeTrigger) {
     this.__pwaReady = true;
 
     if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
-      navigator.serviceWorker.register('sw.js').catch((error) => {
+      navigator.serviceWorker.register('sw.js?v=9').catch((error) => {
         console.error('[HuskyApp] erro ao registrar service worker', error);
       });
     }
