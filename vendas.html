@@ -16,9 +16,9 @@
 
   <title>Husky Confeitaria | Vendas</title>
 
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/responsive.css" />
-  <link rel="stylesheet" href="css/husky-premium.css" />
+  <link rel="stylesheet" href="css/style.css?v=122" />
+  <link rel="stylesheet" href="css/responsive.css?v=122" />
+  <link rel="stylesheet" href="css/husky-premium.css?v=122" />
 </head>
 <body class="app-page-body">
   <div class="app-pattern" aria-hidden="true">
@@ -580,49 +580,56 @@
 </section>
 
   <section id="print-area" class="print-area hidden" aria-hidden="true">
-    <article id="print-receipt-template" class="print-receipt-template">
-      <header>
-        <img src="assets/img/logo-husky.png" alt="Logo Husky" />
-        <h2>Husky Confeitaria</h2>
-        <p>Comprovante / Recibo de venda</p>
+    <article id="print-receipt-template" class="print-receipt-template mini-sale-receipt">
+      <header class="sale-receipt-header">
+        <div class="sale-receipt-brand">
+          <img src="assets/img/logo-husky.png" alt="Logo Husky" class="sale-receipt-logo" />
+          <div>
+            <span class="sale-receipt-badge">Comprovante de compra</span>
+            <h2>Husky Confeitaria</h2>
+            <p>Resumo pronto para enviar ao cliente.</p>
+          </div>
+        </div>
+        <img src="assets/img/mascote-3d.png" alt="Mascote Husky" class="sale-receipt-mascot" />
       </header>
 
-      <div class="print-meta">
-        <p><strong>Pedido:</strong> <span id="print-number">000001</span></p>
-        <p><strong>Data:</strong> <span id="print-date">--/--/----</span></p>
-        <p><strong>Cliente:</strong> <span id="print-client">Consumidor final</span></p>
+      <div class="sale-receipt-orderline">
+        <strong>Pedido <span id="print-number">000001</span></strong>
+        <span id="print-date">--/--/----</span>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Produto</th>
-            <th>Qtd</th>
-            <th>Unitário</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody id="print-items">
-          <tr>
-            <td>Produto exemplo</td>
-            <td>1</td>
-            <td>R$ 0,00</td>
-            <td>R$ 0,00</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="print-totals">
-        <p><strong>Subtotal:</strong> <span id="print-subtotal">R$ 0,00</span></p>
-        <p><strong>Desconto:</strong> <span id="print-discount-total">R$ 0,00</span></p>
-        <p><strong>Entrega:</strong> <span id="print-shipping-total">R$ 0,00</span></p>
-        <p><strong>Total:</strong> <span id="print-total">R$ 0,00</span></p>
-        <p><strong>Pagamento:</strong> <span id="print-payment">Pix</span></p>
+      <div class="sale-receipt-client-box">
+        <span>Cliente</span>
+        <strong id="print-client">Consumidor final</strong>
       </div>
 
-      <footer>
-        <p>Obrigada pela preferência.</p>
-        <p>Husky Confeitaria</p>
+      <div class="sale-receipt-list-box">
+        <span class="sale-receipt-section-title">Itens do pedido</span>
+        <ul id="print-items" class="sale-receipt-items">
+          <li class="sale-receipt-item">
+            <div>
+              <strong>Produto exemplo</strong>
+              <span>1x item</span>
+            </div>
+            <strong>R$ 0,00</strong>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sale-receipt-summary-grid">
+        <div class="sale-receipt-chip">
+          <span>Pagamento</span>
+          <strong id="print-payment">Pix</strong>
+        </div>
+        <div class="sale-receipt-total-card">
+          <span>Total</span>
+          <strong id="print-total">R$ 0,00</strong>
+        </div>
+      </div>
+
+      <footer class="sale-receipt-footer">
+        <p id="print-footer-message">Obrigada pela preferência.</p>
+        <small id="print-company-line"></small>
       </footer>
     </article>
   </section>
@@ -675,11 +682,11 @@
   </section>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/app.js?v=121"></script>
-<script src="js/env.js?v=121"></script>
-<script src="js/supabase-init.js?v=121"></script>
-<script src="js/auth.js?v=121"></script>
-<script src="js/cloud-sync.js?v=121"></script>
-<script src="js/vendas.js?v=121"></script>
+<script src="js/app.js?v=122"></script>
+<script src="js/env.js?v=122"></script>
+<script src="js/supabase-init.js?v=122"></script>
+<script src="js/auth.js?v=122"></script>
+<script src="js/cloud-sync.js?v=122"></script>
+<script src="js/vendas.js?v=122"></script>
 </body>
 </html>

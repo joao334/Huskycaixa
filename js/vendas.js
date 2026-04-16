@@ -239,6 +239,8 @@
         printShippingTotal: document.getElementById('print-shipping-total'),
         printTotal: document.getElementById('print-total'),
         printPayment: document.getElementById('print-payment'),
+        printFooterMessage: document.getElementById('print-footer-message'),
+        printCompanyLine: document.getElementById('print-company-line'),
 
         salePixProof: document.getElementById('sale-pix-proof'),
         salePixProofNote: document.getElementById('sale-pix-proof-note'),
@@ -1393,7 +1395,7 @@
       }
     },
 
-    prepareReceiptPreview(showToast = false) {
+    getReceiptPayload() {
       const items = this.collectItemsFromForm();
       const totals = this.calculateSaleTotals(items);
       const orderNumber = this.refs.saleOrderNumber?.value || 'PED-0000';
@@ -1403,71 +1405,451 @@
         : app.formatDate(this.todayISO());
       const paymentMethod = this.refs.salePaymentMethod?.value || 'Pix';
       const orderStatus = this.refs.saleOrderStatus?.value || 'Pendente';
+      const company = app.getSettings?.().company || {};
+      const printSettings = app.getSettings?.().print || {};
+      const visualSettings = app.getSettings?.().visual || {};
+      const contactLine = [company.phone, company.instagram, company.address]
+        .filter(Boolean)
+        .join(' • ');
 
-      if (this.refs.receiptNumber) this.refs.receiptNumber.textContent = orderNumber;
-      if (this.refs.receiptDate) this.refs.receiptDate.textContent = saleDate;
-      if (this.refs.receiptClient) this.refs.receiptClient.textContent = clientName;
+      return {
+        items,
+        totals,
+        orderNumber,
+        clientName,
+        saleDate,
+        paymentMethod,
+        orderStatus,
+        companyName: company.tradeName || company.name || 'Husky Confeitaria',
+        footerMessage: printSettings.receiptFooterMessage || 'Obrigada pela preferência.',
+        contactLine,
+        showLogo: printSettings.printLogo !== false,
+        showCompanyData: printSettings.printCompanyData !== false,
+        mascotEnabled: visualSettings.showMascotDashboard !== false
+      };
+    },
+
+    buildReceiptItemsMarkup(items, emptyColspan = 3, compact = false) {
+      if (!items.length) {
+        return compact
+          ? '<li class="sale-receipt-item sale-receipt-empty">Nenhum item adicionado.</li>'
+          : `<tr><td colspan="${emptyColspan}">Nenhum item adicionado.</td></tr>`;
+      }
+
+      if (compact) {
+        return items.map((item) => `
+          <li class="sale-receipt-item">
+            <div>
+              <strong>${this.escapeHtml(item.productName)}</strong>
+              <span>${item.quantity}x item</span>
+            </div>
+            <strong>${app.formatCurrency(item.total)}</strong>
+          </li>
+        `).join('');
+      }
+
+      return items.map((item) => `
+        <tr>
+          <td>${this.escapeHtml(item.productName)}</td>
+          <td>${item.quantity}</td>
+          <td>${app.formatCurrency(item.total)}</td>
+        </tr>
+      `).join('');
+    },
+
+    prepareReceiptPreview(showToast = false) {
+      const receipt = this.getReceiptPayload();
+
+      if (this.refs.receiptNumber) this.refs.receiptNumber.textContent = receipt.orderNumber;
+      if (this.refs.receiptDate) this.refs.receiptDate.textContent = receipt.saleDate;
+      if (this.refs.receiptClient) this.refs.receiptClient.textContent = receipt.clientName;
       if (this.refs.receiptItemsBody) {
-        this.refs.receiptItemsBody.innerHTML = items.length
-          ? items.map((item) => `
-              <tr>
-                <td>${this.escapeHtml(item.productName)}</td>
-                <td>${item.quantity}</td>
-                <td>${app.formatCurrency(item.total)}</td>
-              </tr>
-            `).join('')
-          : '<tr><td colspan="3">Nenhum item adicionado.</td></tr>';
+        this.refs.receiptItemsBody.innerHTML = this.buildReceiptItemsMarkup(receipt.items, 3, false);
       }
-      if (this.refs.receiptTotal) this.refs.receiptTotal.textContent = app.formatCurrency(totals.total);
-      if (this.refs.receiptPayment) this.refs.receiptPayment.textContent = paymentMethod;
-      if (this.refs.receiptStatus) this.refs.receiptStatus.textContent = orderStatus;
+      if (this.refs.receiptTotal) this.refs.receiptTotal.textContent = app.formatCurrency(receipt.totals.total);
+      if (this.refs.receiptPayment) this.refs.receiptPayment.textContent = receipt.paymentMethod;
+      if (this.refs.receiptStatus) this.refs.receiptStatus.textContent = receipt.orderStatus;
 
-      if (this.refs.printNumber) this.refs.printNumber.textContent = orderNumber;
-      if (this.refs.printDate) this.refs.printDate.textContent = saleDate;
-      if (this.refs.printClient) this.refs.printClient.textContent = clientName;
+      if (this.refs.printNumber) this.refs.printNumber.textContent = receipt.orderNumber;
+      if (this.refs.printDate) this.refs.printDate.textContent = receipt.saleDate;
+      if (this.refs.printClient) this.refs.printClient.textContent = receipt.clientName;
       if (this.refs.printItems) {
-        this.refs.printItems.innerHTML = items.length
-          ? items.map((item) => `
-              <tr>
-                <td>${this.escapeHtml(item.productName)}</td>
-                <td>${item.quantity}</td>
-                <td>${app.formatCurrency(item.unitPrice)}</td>
-                <td>${app.formatCurrency(item.total)}</td>
-              </tr>
-            `).join('')
-          : '<tr><td colspan="4">Nenhum item adicionado.</td></tr>';
+        this.refs.printItems.innerHTML = this.buildReceiptItemsMarkup(receipt.items, 4, true);
       }
-      if (this.refs.printSubtotal) this.refs.printSubtotal.textContent = app.formatCurrency(totals.subtotal);
-      if (this.refs.printDiscountTotal) this.refs.printDiscountTotal.textContent = app.formatCurrency(totals.discount);
-      if (this.refs.printShippingTotal) this.refs.printShippingTotal.textContent = app.formatCurrency(totals.shippingFee);
-      if (this.refs.printTotal) this.refs.printTotal.textContent = app.formatCurrency(totals.total);
-      if (this.refs.printPayment) this.refs.printPayment.textContent = paymentMethod;
+      if (this.refs.printSubtotal) this.refs.printSubtotal.textContent = app.formatCurrency(receipt.totals.subtotal);
+      if (this.refs.printDiscountTotal) this.refs.printDiscountTotal.textContent = app.formatCurrency(receipt.totals.discount);
+      if (this.refs.printShippingTotal) this.refs.printShippingTotal.textContent = app.formatCurrency(receipt.totals.shippingFee);
+      if (this.refs.printTotal) this.refs.printTotal.textContent = app.formatCurrency(receipt.totals.total);
+      if (this.refs.printPayment) this.refs.printPayment.textContent = receipt.paymentMethod;
+      if (this.refs.printFooterMessage) this.refs.printFooterMessage.textContent = receipt.footerMessage;
+      if (this.refs.printCompanyLine) this.refs.printCompanyLine.textContent = receipt.showCompanyData ? receipt.contactLine : '';
 
       if (showToast) {
-        app.showToast('Pré-visualização do comprovante atualizada.', 'success');
+        app.showToast('Comprovante do cliente atualizado.', 'success');
       }
+    },
+
+    buildPrintReceiptHtml() {
+      const receipt = this.getReceiptPayload();
+      const logoUrl = new URL('assets/img/logo-husky.png', window.location.href).href;
+      const mascotUrl = new URL('assets/img/mascote-3d.png', window.location.href).href;
+      const itemLines = this.buildReceiptItemsMarkup(receipt.items, 4, true);
+      const contactHtml = receipt.showCompanyData && receipt.contactLine
+        ? `<p class="receipt-contact">${this.escapeHtml(receipt.contactLine)}</p>`
+        : '';
+      const mascotHtml = receipt.mascotEnabled
+        ? `<img src="${mascotUrl}" alt="Mascote Husky" class="receipt-mascot" />`
+        : '';
+      const logoHtml = receipt.showLogo
+        ? `<img src="${logoUrl}" alt="Logo Husky" class="receipt-logo" />`
+        : '';
+
+      return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comprovante ${this.escapeHtml(receipt.orderNumber)}</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #183247;
+      --soft: #5b6d7a;
+      --line: rgba(24, 50, 71, 0.12);
+      --accent: #2d6f9b;
+      --accent-soft: #e7f1f8;
+      --cream: #f7efe7;
+      --total: #103b57;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #f4efe8;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--ink);
+    }
+    body {
+      padding: 18px;
+      display: flex;
+      justify-content: center;
+    }
+    .receipt-sheet {
+      width: 100%;
+      max-width: 380px;
+      background: #fff;
+      border-radius: 26px;
+      border: 1px solid rgba(45, 111, 155, 0.12);
+      box-shadow: 0 18px 42px rgba(24, 50, 71, 0.14);
+      overflow: hidden;
+    }
+    .receipt-top {
+      padding: 18px 18px 12px;
+      background: linear-gradient(135deg, rgba(231, 241, 248, 0.95), rgba(247, 239, 231, 0.95));
+      border-bottom: 1px solid rgba(45, 111, 155, 0.12);
+    }
+    .receipt-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .receipt-brand-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .receipt-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid rgba(45, 111, 155, 0.12);
+      padding: 4px;
+      flex: 0 0 auto;
+    }
+    .receipt-mascot {
+      width: 58px;
+      height: 58px;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 18px rgba(24, 50, 71, 0.16));
+      flex: 0 0 auto;
+    }
+    .receipt-eyebrow {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 800;
+      background: rgba(45, 111, 155, 0.12);
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .receipt-title {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: -.03em;
+    }
+    .receipt-subtitle {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--soft);
+    }
+    .receipt-body {
+      padding: 16px 18px 18px;
+    }
+    .receipt-orderline {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: var(--cream);
+      font-size: 12px;
+      color: var(--soft);
+      margin-bottom: 12px;
+    }
+    .receipt-client {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      margin-bottom: 12px;
+      background: #fff;
+    }
+    .receipt-client span,
+    .receipt-items-label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--soft);
+      margin-bottom: 4px;
+    }
+    .receipt-client strong {
+      font-size: 15px;
+    }
+    .receipt-items {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .receipt-item,
+    .receipt-item-empty {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px dashed rgba(24, 50, 71, 0.12);
+      font-size: 13px;
+    }
+    .receipt-item:last-child,
+    .receipt-item-empty:last-child {
+      border-bottom: 0;
+    }
+    .receipt-item div { min-width: 0; }
+    .receipt-item strong {
+      font-size: 14px;
+    }
+    .receipt-item span {
+      display: block;
+      margin-top: 3px;
+      font-size: 11px;
+      color: var(--soft);
+    }
+    .receipt-summary {
+      display: grid;
+      gap: 10px;
+    }
+    .receipt-pill-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .receipt-pill,
+    .receipt-total {
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 12px 14px;
+    }
+    .receipt-pill span,
+    .receipt-total span {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--soft);
+      margin-bottom: 4px;
+    }
+    .receipt-pill strong {
+      font-size: 14px;
+    }
+    .receipt-total {
+      background: linear-gradient(135deg, rgba(16, 59, 87, 0.96), rgba(45, 111, 155, 0.96));
+      color: #fff;
+      border: 0;
+    }
+    .receipt-total span { color: rgba(255,255,255,.74); }
+    .receipt-total strong { font-size: 22px; }
+    .receipt-footer {
+      text-align: center;
+      padding-top: 14px;
+      margin-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+    .receipt-footer p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--soft);
+    }
+    .receipt-footer .receipt-thanks {
+      color: var(--ink);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .receipt-contact {
+      margin-top: 6px !important;
+      font-size: 11px !important;
+    }
+    @media print {
+      @page {
+        size: auto;
+        margin: 8mm;
+      }
+      html, body {
+        background: #fff;
+      }
+      body {
+        padding: 0;
+      }
+      .receipt-sheet {
+        max-width: 80mm;
+        width: 80mm;
+        border-radius: 0;
+        border: 0;
+        box-shadow: none;
+      }
+      .receipt-top {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .receipt-total {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="receipt-sheet">
+    <section class="receipt-top">
+      <div class="receipt-brand">
+        <div class="receipt-brand-main">
+          ${logoHtml}
+          <div>
+            <span class="receipt-eyebrow">Comprovante de compra</span>
+            <h1 class="receipt-title">${this.escapeHtml(receipt.companyName)}</h1>
+            <p class="receipt-subtitle">Resumo da compra do cliente</p>
+          </div>
+        </div>
+        ${mascotHtml}
+      </div>
+    </section>
+
+    <section class="receipt-body">
+      <div class="receipt-orderline">
+        <strong>Pedido ${this.escapeHtml(receipt.orderNumber)}</strong>
+        <span>${this.escapeHtml(receipt.saleDate)}</span>
+      </div>
+
+      <div class="receipt-client">
+        <span>Cliente</span>
+        <strong>${this.escapeHtml(receipt.clientName)}</strong>
+      </div>
+
+      <span class="receipt-items-label">Itens</span>
+      <ul class="receipt-items">
+        ${itemLines.replace(/sale-receipt-item/g, 'receipt-item').replace(/sale-receipt-empty/g, 'receipt-item-empty')}
+      </ul>
+
+      <div class="receipt-summary">
+        <div class="receipt-pill-row">
+          <div class="receipt-pill">
+            <span>Pagamento</span>
+            <strong>${this.escapeHtml(receipt.paymentMethod)}</strong>
+          </div>
+          <div class="receipt-pill">
+            <span>Status</span>
+            <strong>${this.escapeHtml(receipt.orderStatus)}</strong>
+          </div>
+        </div>
+        <div class="receipt-total">
+          <span>Total</span>
+          <strong>${app.formatCurrency(receipt.totals.total)}</strong>
+        </div>
+      </div>
+
+      <footer class="receipt-footer">
+        <p class="receipt-thanks">${this.escapeHtml(receipt.footerMessage)}</p>
+        ${contactHtml}
+      </footer>
+    </section>
+  </main>
+</body>
+</html>`;
     },
 
     printReceipt() {
       this.prepareReceiptPreview(false);
 
-      const printArea = document.getElementById('print-area');
-      if (!printArea) {
-        app.showToast('Área de impressão não encontrada.', 'danger');
+      const receiptHtml = this.buildPrintReceiptHtml();
+      const printWindow = window.open('', '_blank', 'width=460,height=820');
+
+      if (!printWindow) {
+        const printArea = document.getElementById('print-area');
+        if (!printArea) {
+          app.showToast('Não foi possível abrir o comprovante para impressão.', 'danger');
+          return;
+        }
+
+        printArea.classList.remove('hidden');
+        printArea.setAttribute('aria-hidden', 'false');
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => {
+            printArea.classList.add('hidden');
+            printArea.setAttribute('aria-hidden', 'true');
+          }, 300);
+        }, 120);
         return;
       }
 
-      printArea.classList.remove('hidden');
-      printArea.setAttribute('aria-hidden', 'false');
+      printWindow.document.open();
+      printWindow.document.write(receiptHtml);
+      printWindow.document.close();
+      printWindow.focus();
 
-      setTimeout(() => {
-        window.print();
+      let hasPrinted = false;
+      const triggerPrint = () => {
+        if (hasPrinted) return;
+        hasPrinted = true;
+        printWindow.focus();
+        printWindow.print();
+      };
 
-        setTimeout(() => {
-          printArea.classList.add('hidden');
-          printArea.setAttribute('aria-hidden', 'true');
-        }, 300);
-      }, 120);
+      printWindow.onload = triggerPrint;
+      setTimeout(triggerPrint, 350);
+      printWindow.onafterprint = () => printWindow.close();
     },
 
     generateSimpleInvoice() {
