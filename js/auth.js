@@ -7,6 +7,7 @@
   const LOCAL_USERS_KEY = 'husky_local_auth_users';
   const LOCAL_SESSION_KEY = 'husky_local_auth_session';
   const AUTH_MODE = String(window.HUSKY_AUTH_MODE || 'local').toLowerCase();
+  const CLOUD_STRICT = Boolean(window.HUSKY_CLOUD_STRICT);
   const REDIRECT_GUARD_KEY = 'husky_redirect_guard';
   const REDIRECT_GUARD_WINDOW_MS = 1500;
 
@@ -35,7 +36,8 @@
     bootstrapped: false,
     authListenerBound: false,
     localMode: false,
-    preferLocalAuth: AUTH_MODE !== 'supabase' || window.location.protocol === 'file:',
+    preferLocalAuth: AUTH_MODE !== 'supabase',
+    cloudUnavailable: false,
     isSubmittingLogin: false,
     isSubmittingRegister: false,
 
@@ -63,12 +65,16 @@
       this.supabase = await this.waitForSupabase();
 
       if (!this.supabase) {
-        this.localMode = true;
-        this.ensureLocalAdminAccount();
+        this.cloudUnavailable = true;
+        this.localMode = false;
+        this.bootstrapped = true;
 
         if (this.isLoginPage()) {
-          this.notify('Modo local ativado. Use admin@husky.com e senha 123456 para o primeiro acesso.', 'warning');
+          this.notify('Não foi possível conectar ao login em nuvem. Verifique a internet e o carregamento do Supabase.', 'danger');
+        } else {
+          this.handleNoSession();
         }
+        return;
       }
 
       await this.bootstrapSession();
@@ -150,6 +156,12 @@
         return;
       }
 
+      if (!this.supabase) {
+        this.handleNoSession();
+        this.bootstrapped = true;
+        return;
+      }
+
       try {
         const { data, error } = await this.supabase.auth.getSession();
 
@@ -201,6 +213,12 @@
         ? this.createPublicProfileFromLocal(user)
         : await this.ensureUserProfile(user);
 
+      const status = String(profile?.status || 'Ativo').trim().toLowerCase();
+      if (profile && ['bloqueado', 'excluído', 'inativo'].includes(status)) {
+        await this.revokeAccess(profile);
+        return;
+      }
+
       this.clearRedirectGuard();
       this.persistCurrentUser(profile);
 
@@ -246,7 +264,57 @@
         lastAccess: new Date().toISOString()
       };
 
+      const toPublicProfile = (row) => ({
+        id: row.id || fallbackProfile.id,
+        name: row.name || fallbackProfile.name,
+        email: row.email || fallbackProfile.email,
+        role: row.role || fallbackProfile.role || 'Administrador',
+        status: row.status || fallbackProfile.status || 'Ativo',
+        avatar: row.avatar_url || fallbackProfile.avatar || 'assets/img/avatar-user.png',
+        lastAccess: new Date().toISOString()
+      });
+
       try {
+        const { data: existing, error: existingError } = await this.supabase
+          .from('profiles')
+          .select('id, name, email, role, status, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (existingError) {
+          console.error('[Auth] erro ao buscar perfil existente', existingError);
+          return fallbackProfile;
+        }
+
+        if (existing) {
+          const payload = {
+            id: existing.id,
+            name: user.user_metadata?.name || existing.name || fallbackProfile.name,
+            email: user.email || existing.email || fallbackProfile.email,
+            role: existing.role || fallbackProfile.role || 'Administrador',
+            status: existing.status || fallbackProfile.status || 'Ativo',
+            avatar_url:
+              cachedLocalUser?.avatar ||
+              existing.avatar_url ||
+              user.user_metadata?.avatar_url ||
+              null,
+            updated_at: new Date().toISOString()
+          };
+
+          const { data, error } = await this.supabase
+            .from('profiles')
+            .upsert(payload, { onConflict: 'id' })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('[Auth] erro ao atualizar perfil existente', error);
+            return toPublicProfile(existing);
+          }
+
+          return toPublicProfile(data);
+        }
+
         const payload = {
           id: user.id,
           name: fallbackProfile.name,
@@ -264,22 +332,39 @@
           .single();
 
         if (error) {
-          console.error('[Auth] erro ao criar/atualizar perfil', error);
+          console.error('[Auth] erro ao criar perfil', error);
           return fallbackProfile;
         }
 
-        return {
-          id: data.id,
-          name: data.name || fallbackProfile.name,
-          email: data.email || fallbackProfile.email,
-          role: data.role || fallbackProfile.role || 'Administrador',
-          status: data.status || fallbackProfile.status || 'Ativo',
-          avatar: data.avatar_url || fallbackProfile.avatar || 'assets/img/avatar-user.png',
-          lastAccess: new Date().toISOString()
-        };
+        return toPublicProfile(data);
       } catch (error) {
         console.error('[Auth] erro ao garantir perfil', error);
         return fallbackProfile;
+      }
+    },
+
+    async revokeAccess(profile) {
+      const status = String(profile?.status || 'Bloqueado').trim();
+      const message =
+        status.toLowerCase() === 'excluído'
+          ? 'Este acesso foi removido do sistema.'
+          : `Este acesso está ${status.toLowerCase()} no sistema.`;
+
+      try {
+        if (this.localMode) {
+          localStorage.removeItem(LOCAL_SESSION_KEY);
+        } else if (this.supabase?.auth) {
+          await this.supabase.auth.signOut();
+        }
+      } catch (error) {
+        console.error('[Auth] erro ao encerrar acesso bloqueado', error);
+      }
+
+      this.persistCurrentUser(null);
+      this.notify(message, 'danger');
+
+      if (!this.isLoginPage()) {
+        this.safeRedirect(this.getLoginPage());
       }
     },
 
@@ -404,9 +489,8 @@
           }
 
           if (!this.supabase) {
-            this.notify('Conexão de login não iniciada. O sistema entrou em modo local.', 'warning');
-            this.localMode = true;
-            this.ensureLocalAdminAccount();
+            this.cloudUnavailable = true;
+            this.notify('A conexão com o login em nuvem não foi iniciada. Verifique a internet e tente novamente.', 'danger');
             return;
           }
 
@@ -500,6 +584,16 @@
             return;
           }
 
+          if (!this.supabase) {
+            this.supabase = await this.waitForSupabase();
+          }
+
+          if (!this.supabase) {
+            this.cloudUnavailable = true;
+            this.notify('A conexão com o cadastro em nuvem não foi iniciada. Verifique a internet e tente novamente.', 'danger');
+            return;
+          }
+
           const { data, error } = await this.supabase.auth.signUp({
             email,
             password,
@@ -564,6 +658,15 @@
         }
 
         try {
+          if (!this.supabase) {
+            this.supabase = await this.waitForSupabase();
+          }
+
+          if (!this.supabase) {
+            this.notify('A conexão com a recuperação de senha não foi iniciada.', 'danger');
+            return;
+          }
+
           const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/${this.getLoginPage()}`
           });

@@ -56,7 +56,10 @@
             size: sale.pixProof?.size || 0,
             uploadedAt: sale.pixProof?.uploadedAt || sale.updatedAt || new Date().toISOString(),
             transactionId: sale.pixProof?.transactionId || '',
-            note: sale.pixProof?.note || ''
+            note: sale.pixProof?.note || '',
+            url: sale.pixProof?.url || '',
+            storageBucket: sale.pixProof?.storageBucket || '',
+            storagePath: sale.pixProof?.storagePath || ''
           }
         };
       });
@@ -75,7 +78,10 @@
               name: proof.attachment?.name || proof.fileName || '',
               type: proof.attachment?.type || proof.fileType || '',
               size: proof.attachment?.size || 0,
-              uploadedAt: proof.attachment?.uploadedAt || proof.updatedAt || new Date().toISOString()
+              uploadedAt: proof.attachment?.uploadedAt || proof.updatedAt || new Date().toISOString(),
+              url: proof.attachment?.url || '',
+              storageBucket: proof.attachment?.storageBucket || '',
+              storagePath: proof.attachment?.storagePath || ''
             }
           : null;
 
@@ -401,6 +407,7 @@
 
     resetForm(skipScroll = false) {
       this.editingSaleId = null;
+      app.revokeAttachmentPreview(this.pixProofDraft);
       this.pixProofDraft = null;
 
       if (this.refs.form) this.refs.form.reset();
@@ -579,18 +586,28 @@
       };
     },
 
-    getPersistableProofMeta(existingSale = null) {
+    async getPersistableProofMeta(existingSale = null) {
       const sourceProof = this.pixProofDraft || existingSale?.pixProof || null;
       if (!sourceProof) return null;
 
-      return {
-        name: sourceProof.name || '',
-        type: sourceProof.type || '',
-        size: sourceProof.size || 0,
-        uploadedAt: sourceProof.uploadedAt || new Date().toISOString(),
-        transactionId: sourceProof.transactionId || '',
-        note: this.refs.salePixProofNote?.value.trim() || sourceProof.note || ''
-      };
+      let attachment = sourceProof;
+
+      if (attachment?.rawFile) {
+        if (app.isCloudStorageReady()) {
+          attachment = await app.uploadFileToCloud(attachment.rawFile, { folder: 'proofs' });
+        } else {
+          attachment = await this.readLocalAttachmentAsDataUrl(attachment.rawFile);
+        }
+
+        if (existingSale?.pixProof?.storagePath && existingSale.pixProof.storagePath !== attachment.storagePath) {
+          app.deleteCloudFile(existingSale.pixProof);
+        }
+      }
+
+      return this.normalizeProofMeta({
+        ...attachment,
+        note: this.refs.salePixProofNote?.value.trim() || attachment.note || ''
+      });
     },
 
     updateLiveSummary() {
@@ -691,7 +708,7 @@
       return { ok: true };
     },
 
-    buildSalePayload(overrides = {}) {
+    async buildSalePayload(overrides = {}) {
       const existingSale = this.findSaleById(this.editingSaleId);
       const items = this.collectItemsFromForm();
       const totals = this.calculateSaleTotals(items);
@@ -728,7 +745,7 @@
         total: totals.total,
         profit: totals.profit,
         pixProof: paymentMethod === 'Pix'
-          ? this.getPersistableProofMeta(existingSale)
+          ? await this.getPersistableProofMeta(existingSale)
           : null,
         pixProofNote: this.refs.salePixProofNote?.value.trim() || '',
         updatedAt: now,
@@ -741,66 +758,84 @@
       return this.getSales().some((sale) => sale.id === saleId);
     },
 
-    handleSaveSale(isUpdate = false) {
+    async handleSaveSale(isUpdate = false) {
       if (!this.validateForm()) return;
 
-      const sale = this.buildSalePayload();
-      const previousSale = this.findSaleById(sale.id);
-      const nextState = this.applySaleToState(sale, previousSale);
-      this.setState(nextState);
+      this.setPersistingState(true);
 
-      if (!this.ensureSaleWasPersisted(sale.id)) {
-        app.showToast('Não foi possível gravar a venda. O armazenamento do navegador pode estar cheio.', 'danger');
-        return;
+      try {
+        const sale = await this.buildSalePayload();
+        const previousSale = this.findSaleById(sale.id);
+        const nextState = this.applySaleToState(sale, previousSale);
+        this.setState(nextState);
+
+        if (!this.ensureSaleWasPersisted(sale.id)) {
+          app.showToast('Não foi possível gravar a venda. O armazenamento do navegador pode estar cheio.', 'danger');
+          return;
+        }
+
+        this.resetListFiltersToDefault(true);
+        this.renderAll();
+
+        app.showToast(
+          isUpdate || previousSale
+            ? 'Venda atualizada com sucesso.'
+            : 'Venda salva com sucesso.',
+          'success'
+        );
+
+        app.log('Venda salva/atualizada.', {
+          saleId: sale.id,
+          orderNumber: sale.orderNumber
+        });
+
+        this.resetForm();
+      } catch (error) {
+        console.error('[Husky Vendas] erro ao salvar venda', error);
+        app.showToast(`Não foi possível salvar a venda. ${error?.message || ''}`.trim(), 'danger');
+      } finally {
+        this.setPersistingState(false);
       }
-
-      this.resetListFiltersToDefault(true);
-      this.renderAll();
-
-      app.showToast(
-        isUpdate || previousSale
-          ? 'Venda atualizada com sucesso.'
-          : 'Venda salva com sucesso.',
-        'success'
-      );
-
-      app.log('Venda salva/atualizada.', {
-        saleId: sale.id,
-        orderNumber: sale.orderNumber
-      });
-
-      this.resetForm();
     },
 
-    handleFinishSale() {
+    async handleFinishSale() {
       if (!this.validateForm({ forFinalization: true })) return;
 
-      const sale = this.buildSalePayload({
-        paymentStatus: this.refs.salePaymentMethod?.value === 'Pix'
-          ? 'Pago'
-          : this.refs.salePaymentStatus?.value || 'Pago',
-        orderStatus: 'Finalizado'
-      });
+      this.setPersistingState(true);
 
-      const previousSale = this.findSaleById(sale.id);
-      const nextState = this.applySaleToState(sale, previousSale);
-      this.setState(nextState);
+      try {
+        const sale = await this.buildSalePayload({
+          paymentStatus: this.refs.salePaymentMethod?.value === 'Pix'
+            ? 'Pago'
+            : this.refs.salePaymentStatus?.value || 'Pago',
+          orderStatus: 'Finalizado'
+        });
 
-      if (!this.ensureSaleWasPersisted(sale.id)) {
-        app.showToast('Não foi possível finalizar a venda. O armazenamento do navegador pode estar cheio.', 'danger');
-        return;
+        const previousSale = this.findSaleById(sale.id);
+        const nextState = this.applySaleToState(sale, previousSale);
+        this.setState(nextState);
+
+        if (!this.ensureSaleWasPersisted(sale.id)) {
+          app.showToast('Não foi possível finalizar a venda. O armazenamento do navegador pode estar cheio.', 'danger');
+          return;
+        }
+
+        this.resetListFiltersToDefault(true);
+        this.renderAll();
+
+        app.showToast('Pedido finalizado com sucesso.', 'success');
+        app.log('Pedido finalizado.', {
+          saleId: sale.id,
+          orderNumber: sale.orderNumber
+        });
+
+        this.resetForm();
+      } catch (error) {
+        console.error('[Husky Vendas] erro ao finalizar venda', error);
+        app.showToast(`Não foi possível finalizar a venda. ${error?.message || ''}`.trim(), 'danger');
+      } finally {
+        this.setPersistingState(false);
       }
-
-      this.resetListFiltersToDefault(true);
-      this.renderAll();
-
-      app.showToast('Pedido finalizado com sucesso.', 'success');
-      app.log('Pedido finalizado.', {
-        saleId: sale.id,
-        orderNumber: sale.orderNumber
-      });
-
-      this.resetForm();
     },
 
     handleCancelSale() {
@@ -918,7 +953,10 @@
           name: sale.pixProof?.name || '',
           type: sale.pixProof?.type || '',
           size: sale.pixProof?.size || 0,
-          uploadedAt: sale.pixProof?.uploadedAt || new Date().toISOString()
+          uploadedAt: sale.pixProof?.uploadedAt || new Date().toISOString(),
+          url: sale.pixProof?.url || '',
+          storageBucket: sale.pixProof?.storageBucket || '',
+          storagePath: sale.pixProof?.storagePath || ''
         },
         fileName: sale.pixProof?.name || '',
         fileType: sale.pixProof?.type || '',
@@ -938,39 +976,73 @@
       state.proofs = proofs;
     },
 
-    handlePixProofUpload(event) {
+    async handlePixProofUpload(event) {
       const file = event.target.files?.[0];
 
       if (!file) {
+        app.revokeAttachmentPreview(this.pixProofDraft);
         this.pixProofDraft = null;
         this.updatePixProofPreview();
         this.updateLiveSummary();
         return;
       }
 
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        this.pixProofDraft = {
-          name: file.name,
-          type: file.type || 'application/octet-stream',
-          size: file.size,
-          dataUrl: reader.result,
-          uploadedAt: new Date().toISOString(),
-          note: this.refs.salePixProofNote?.value.trim() || '',
-          transactionId: ''
-        };
-
+      try {
+        app.revokeAttachmentPreview(this.pixProofDraft);
+        this.pixProofDraft = await app.prepareLocalFileDraft(file);
+        this.pixProofDraft.note = this.refs.salePixProofNote?.value.trim() || '';
+        this.pixProofDraft.transactionId = '';
         this.updatePixProofPreview();
         this.updateLiveSummary();
-        app.showToast('Comprovante anexado com sucesso. A imagem ficará só na prévia local.', 'success');
-      };
-
-      reader.onerror = () => {
+        app.showToast('Comprovante preparado para envio em nuvem.', 'success');
+      } catch (error) {
+        console.error('[Husky Vendas] erro ao preparar comprovante', error);
         app.showToast('Não foi possível ler o comprovante.', 'danger');
-      };
+      }
+    },
 
-      reader.readAsDataURL(file);
+    async readLocalAttachmentAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          resolve({
+            name: file.name,
+            type: file.type || 'application/octet-stream',
+            size: file.size || 0,
+            dataUrl: reader.result,
+            uploadedAt: new Date().toISOString(),
+            source: 'local'
+          });
+        };
+
+        reader.onerror = () => reject(new Error('Não foi possível ler o comprovante local.'));
+        reader.readAsDataURL(file);
+      });
+    },
+
+    normalizeProofMeta(proof) {
+      if (!proof) return null;
+
+      return {
+        name: proof.name || '',
+        type: proof.type || 'application/octet-stream',
+        size: proof.size || 0,
+        uploadedAt: proof.uploadedAt || new Date().toISOString(),
+        transactionId: proof.transactionId || '',
+        note: proof.note || '',
+        dataUrl: proof.dataUrl || '',
+        url: proof.url || '',
+        storageBucket: proof.storageBucket || '',
+        storagePath: proof.storagePath || ''
+      };
+    },
+
+    setPersistingState(isSaving) {
+      [this.refs.btnSaveSale, this.refs.btnUpdateSale, this.refs.btnFinishSale].forEach((button) => {
+        if (!button) return;
+        button.disabled = Boolean(isSaving);
+      });
     },
 
     updatePixProofPreview() {
@@ -1000,9 +1072,9 @@
           <span class="tag">${isImage ? 'Imagem' : 'Arquivo'}</span>
         </div>
         ${
-          isImage && currentProof.dataUrl
-            ? `<div style="margin-top: 12px;"><img src="${currentProof.dataUrl}" alt="Comprovante Pix" style="max-width: 100%; border-radius: 14px; border: 1px solid #ead9cd;" /></div>`
-            : '<div style="margin-top:12px;"><p>Arquivo salvo apenas como metadado para evitar travamento do sistema.</p></div>'
+          isImage && app.getAttachmentPreviewUrl(currentProof)
+            ? `<div style="margin-top: 12px;"><img src="${app.getAttachmentPreviewUrl(currentProof)}" alt="Comprovante Pix" style="max-width: 100%; border-radius: 14px; border: 1px solid #ead9cd;" /></div>`
+            : '<div style="margin-top:12px;"><p>Arquivo salvo com armazenamento em nuvem.</p></div>'
         }
       `;
     },

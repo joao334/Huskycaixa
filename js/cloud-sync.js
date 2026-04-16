@@ -10,6 +10,9 @@
     applyingRemote: false,
     suppressSaveOnce: false,
     saveTimer: null,
+    pollTimer: null,
+    pollIntervalMs: Number(window.HUSKY_CLOUD_POLL_MS || 2500),
+    lastRemoteUpdatedAt: null,
     workspaceId: window.HUSKY_WORKSPACE_ID || 'husky-principal',
 
     async init() {
@@ -42,6 +45,7 @@
       await this.loadOrCreateRemoteState();
       this.bindStateChanges();
       this.bindRealtime();
+      this.startPolling();
       this.bindAuthListener();
 
       this.started = true;
@@ -89,6 +93,7 @@
         }
 
         if (data?.state) {
+          this.lastRemoteUpdatedAt = data.updated_at || null;
           this.applyRemoteState(data.state);
           this.setCloudStatus(true, data.updated_at || new Date().toISOString());
           return;
@@ -121,6 +126,7 @@
           this.user = null;
           this.setCloudStatus(false, null);
           this.removeRealtime();
+          this.stopPolling();
           return;
         }
 
@@ -128,6 +134,7 @@
           this.user = session.user;
           await this.loadOrCreateRemoteState();
           this.bindRealtime();
+          this.startPolling();
           this.setCloudStatus(true, new Date().toISOString());
         }
       });
@@ -152,8 +159,10 @@
 
             if (!remoteState) return;
 
+            this.lastRemoteUpdatedAt = updatedAt;
             this.applyRemoteState(remoteState);
-            this.setCloudStatus(true, updatedAt);
+            this.lastRemoteUpdatedAt = updatedAt;
+        this.setCloudStatus(true, updatedAt);
           }
         )
         .subscribe((status) => {
@@ -167,6 +176,49 @@
       if (this.channel && this.supabase) {
         this.supabase.removeChannel(this.channel);
         this.channel = null;
+      }
+    },
+
+    startPolling() {
+      this.stopPolling();
+      this.pollTimer = setInterval(() => {
+        this.pollRemoteState();
+      }, this.pollIntervalMs);
+    },
+
+    stopPolling() {
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer);
+        this.pollTimer = null;
+      }
+    },
+
+    async pollRemoteState() {
+      if (!this.supabase || !this.user) return;
+
+      try {
+        const { data, error } = await this.supabase
+          .from('app_state_shared')
+          .select('state, updated_at')
+          .eq('workspace_id', this.workspaceId)
+          .maybeSingle();
+
+        if (error || !data?.state) {
+          if (error) {
+            console.error('[Cloud Sync] erro ao consultar atualizações da nuvem', error);
+          }
+          return;
+        }
+
+        if (data.updated_at && data.updated_at === this.lastRemoteUpdatedAt) {
+          return;
+        }
+
+        this.lastRemoteUpdatedAt = data.updated_at || null;
+        this.applyRemoteState(data.state);
+        this.setCloudStatus(true, data.updated_at || new Date().toISOString());
+      } catch (error) {
+        console.error('[Cloud Sync] erro no polling da nuvem', error);
       }
     },
 

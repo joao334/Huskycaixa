@@ -178,6 +178,7 @@
     },
 
     resetForm(skipScroll = false) {
+      app.revokeAttachmentPreview(this.fileDraft);
       this.editingProofId = null;
       this.fileDraft = null;
 
@@ -282,11 +283,26 @@
       return true;
     },
 
-    buildProofPayload() {
+    async buildProofPayload() {
       const existing = this.findProofById(this.editingProofId);
       const sale = this.findSaleById(this.refs.proofOrderNumber?.value);
       const now = new Date().toISOString();
-      const attachment = this.fileDraft || existing?.attachment || null;
+      const previousAttachment = existing?.attachment || null;
+      let attachment = this.fileDraft || previousAttachment || null;
+
+      if (attachment?.rawFile) {
+        if (app.isCloudStorageReady()) {
+          attachment = await app.uploadFileToCloud(attachment.rawFile, { folder: 'proofs' });
+        } else {
+          attachment = await this.readLocalAttachmentAsDataUrl(attachment.rawFile);
+        }
+
+        if (previousAttachment?.storagePath && previousAttachment.storagePath !== attachment.storagePath) {
+          app.deleteCloudFile(previousAttachment);
+        }
+      }
+
+      attachment = this.normalizeAttachmentForSave(attachment);
 
       return {
         id: existing?.id || this.refs.proofId?.value || crypto.randomUUID(),
@@ -314,37 +330,46 @@
       };
     },
 
-    handleSaveProof(isUpdate = false) {
+    async handleSaveProof(isUpdate = false) {
       if (!this.validateForm()) return;
 
-      const proof = this.buildProofPayload();
-      const state = this.getState();
+      this.setSavingState(true);
 
-      state.proofs = app.upsertItem(state.proofs || [], proof, 'id');
-      this.applyProofToSale(state, proof);
-      this.writeProofLog(state, proof, isUpdate ? 'Comprovante atualizado' : 'Comprovante salvo');
+      try {
+        const proof = await this.buildProofPayload();
+        const state = this.getState();
 
-      this.setState(state);
-      this.populateOrderSelect();
-      this.renderAll();
+        state.proofs = app.upsertItem(state.proofs || [], proof, 'id');
+        this.applyProofToSale(state, proof);
+        this.writeProofLog(state, proof, isUpdate ? 'Comprovante atualizado' : 'Comprovante salvo');
 
-      app.showToast(
-        isUpdate || this.editingProofId
-          ? 'Comprovante atualizado com sucesso.'
-          : 'Comprovante salvo com sucesso.',
-        'success'
-      );
+        this.setState(state);
+        this.populateOrderSelect();
+        this.renderAll();
 
-      app.log('Comprovante salvo/atualizado.', {
-        proofId: proof.id,
-        orderNumber: proof.orderNumber,
-        saleId: proof.relatedSaleId
-      });
+        app.showToast(
+          isUpdate || this.editingProofId
+            ? 'Comprovante atualizado com sucesso.'
+            : 'Comprovante salvo com sucesso.',
+          'success'
+        );
 
-      this.resetForm();
+        app.log('Comprovante salvo/atualizado.', {
+          proofId: proof.id,
+          orderNumber: proof.orderNumber,
+          saleId: proof.relatedSaleId
+        });
+
+        this.resetForm();
+      } catch (error) {
+        console.error('[Husky Comprovantes] erro ao salvar comprovante', error);
+        app.showToast(`Não foi possível salvar o comprovante. ${error?.message || ''}`.trim(), 'danger');
+      } finally {
+        this.setSavingState(false);
+      }
     },
 
-    handleDeleteProof() {
+    async handleDeleteProof() {
       const proof = this.findProofById(this.editingProofId || this.refs.proofId?.value);
 
       if (!proof) {
@@ -355,29 +380,40 @@
       const confirmed = app.confirmAction(`Deseja excluir o comprovante do pedido ${proof.orderNumber}?`);
       if (!confirmed) return;
 
-      const state = this.getState();
-      state.proofs = app.removeById(state.proofs || [], proof.id);
-      this.removeProofFromSale(state, proof.relatedSaleId);
-      this.writeProofLog(state, proof, 'Comprovante excluído');
+      this.setSavingState(true);
 
-      this.setState(state);
-      this.populateOrderSelect();
-      this.renderAll();
+      try {
+        const state = this.getState();
+        state.proofs = app.removeById(state.proofs || [], proof.id);
+        this.removeProofFromSale(state, proof.relatedSaleId);
+        this.writeProofLog(state, proof, 'Comprovante excluído');
 
-      app.showToast('Comprovante excluído com sucesso.', 'success');
-      app.log('Comprovante excluído.', {
-        proofId: proof.id,
-        orderNumber: proof.orderNumber,
-        saleId: proof.relatedSaleId
-      });
+        this.setState(state);
+        this.populateOrderSelect();
+        this.renderAll();
 
-      this.resetForm();
+        if (proof.attachment?.storagePath) {
+          await app.deleteCloudFile(proof.attachment);
+        }
+
+        app.showToast('Comprovante excluído com sucesso.', 'success');
+        app.log('Comprovante excluído.', {
+          proofId: proof.id,
+          orderNumber: proof.orderNumber,
+          saleId: proof.relatedSaleId
+        });
+
+        this.resetForm();
+      } finally {
+        this.setSavingState(false);
+      }
     },
 
-    handleFileUpload(event) {
+    async handleFileUpload(event) {
       const file = event.target.files?.[0];
 
       if (!file) {
+        app.revokeAttachmentPreview(this.fileDraft);
         this.fileDraft = null;
         this.updateFilePreview();
         this.updateDocumentViewer();
@@ -385,28 +421,60 @@
         return;
       }
 
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        this.fileDraft = {
-          name: file.name,
-          type: file.type || 'application/octet-stream',
-          size: file.size,
-          dataUrl: reader.result,
-          uploadedAt: new Date().toISOString()
-        };
-
+      try {
+        app.revokeAttachmentPreview(this.fileDraft);
+        this.fileDraft = await app.prepareLocalFileDraft(file);
         this.updateFilePreview();
         this.updateDocumentViewer();
         this.updateLiveSummary();
-        app.showToast('Arquivo do comprovante carregado com sucesso.', 'success');
-      };
+        app.showToast('Arquivo do comprovante pronto para envio.', 'success');
+      } catch (error) {
+        console.error('[Husky Comprovantes] erro ao preparar arquivo', error);
+        app.showToast('Não foi possível preparar o arquivo do comprovante.', 'danger');
+      }
+    },
 
-      reader.onerror = () => {
-        app.showToast('Não foi possível ler o arquivo do comprovante.', 'danger');
-      };
+    async readLocalAttachmentAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
 
-      reader.readAsDataURL(file);
+        reader.onload = () => {
+          resolve({
+            name: file.name,
+            type: file.type || 'application/octet-stream',
+            size: file.size || 0,
+            dataUrl: reader.result,
+            uploadedAt: new Date().toISOString(),
+            source: 'local'
+          });
+        };
+
+        reader.onerror = () => reject(new Error('Não foi possível ler o comprovante local.'));
+        reader.readAsDataURL(file);
+      });
+    },
+
+    normalizeAttachmentForSave(attachment) {
+      if (!attachment) return null;
+
+      return {
+        name: attachment.name || '',
+        type: attachment.type || 'application/octet-stream',
+        size: attachment.size || 0,
+        uploadedAt: attachment.uploadedAt || new Date().toISOString(),
+        dataUrl: attachment.dataUrl || '',
+        url: attachment.url || '',
+        source: attachment.source || (attachment.url ? 'cloud' : 'local'),
+        storageBucket: attachment.storageBucket || '',
+        storagePath: attachment.storagePath || ''
+      };
+    },
+
+    setSavingState(isSaving) {
+      [this.refs.btnSaveProof, this.refs.btnUpdateProof, this.refs.btnDeleteProof].forEach((button) => {
+        if (!button) return;
+        button.disabled = Boolean(isSaving);
+      });
     },
 
     updateFilePreview() {
@@ -452,11 +520,12 @@
       const isPdf =
         String(attachment.type || '').includes('pdf') ||
         String(attachment.name || '').toLowerCase().endsWith('.pdf');
+      const previewUrl = app.getAttachmentPreviewUrl(attachment);
 
-      if (isImage && attachment.dataUrl) {
+      if (isImage && previewUrl) {
         this.refs.proofDocumentViewer.innerHTML = `
           <img
-            src="${attachment.dataUrl}"
+            src="${previewUrl}"
             alt="Comprovante"
             style="max-width:100%; max-height:320px; border-radius:14px; border:1px solid rgba(45,111,155,0.12);"
           />
@@ -464,12 +533,12 @@
         return;
       }
 
-      if (isPdf && attachment.dataUrl) {
+      if (isPdf && previewUrl) {
         this.refs.proofDocumentViewer.innerHTML = `
           <div style="display:grid; gap:12px; width:100%; text-align:center;">
             <strong style="color:#183247;">${this.escapeHtml(attachment.name)}</strong>
             <iframe
-              src="${attachment.dataUrl}"
+              src="${previewUrl}"
               title="Prévia do comprovante PDF"
               style="width:100%; min-height:320px; border:none; border-radius:14px; background:#fff;"
             ></iframe>
@@ -533,6 +602,9 @@
         type: proof.fileType || proof.attachment?.type || '',
         size: proof.attachment?.size || 0,
         dataUrl: proof.fileDataUrl || proof.attachment?.dataUrl || '',
+        url: proof.attachment?.url || '',
+        storageBucket: proof.attachment?.storageBucket || '',
+        storagePath: proof.attachment?.storagePath || '',
         uploadedAt: proof.updatedAt,
         transactionId: proof.transactionId || '',
         note: proof.note || ''

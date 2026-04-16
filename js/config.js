@@ -309,6 +309,69 @@
       return merged.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
     },
 
+    isSupabaseCloudMode() {
+      return String(window.HUSKY_AUTH_MODE || 'local').toLowerCase() === 'supabase';
+    },
+
+    async getSupabaseClient() {
+      if (!this.isSupabaseCloudMode()) return null;
+      if (window.HuskySupabase) return window.HuskySupabase;
+
+      for (let index = 0; index < 30; index += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        if (window.HuskySupabase) return window.HuskySupabase;
+      }
+
+      return null;
+    },
+
+    async syncExistingCloudProfile(user, overrides = {}) {
+      if (!this.isSupabaseCloudMode() || !user?.email) return true;
+
+      const supabase = await this.getSupabaseClient();
+      if (!supabase) return false;
+
+      try {
+        const normalized = this.normalizeUser({ ...user, ...overrides });
+        const { data: existing, error: readError } = await supabase
+          .from('profiles')
+          .select('id, role, status, avatar_url')
+          .eq('email', normalized.email)
+          .maybeSingle();
+
+        if (readError) {
+          console.error('[Husky Config] erro ao ler perfil da nuvem', readError);
+          return false;
+        }
+
+        if (!existing?.id) {
+          return true;
+        }
+
+        const payload = {
+          id: existing.id,
+          name: normalized.name,
+          email: normalized.email,
+          role: overrides.role || normalized.role || existing.role || 'Operacional',
+          status: overrides.status || normalized.status || existing.status || 'Ativo',
+          avatar_url: normalized.avatar || existing.avatar_url || DEFAULT_AVATAR,
+          updated_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
+
+        if (error) {
+          console.error('[Husky Config] erro ao atualizar perfil da nuvem', error);
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        console.error('[Husky Config] erro inesperado ao sincronizar perfil da nuvem', error);
+        return false;
+      }
+    },
+
     saveUsers(users) {
       const normalizedUsers = users.map((user) => this.normalizeUser(user));
       localStorage.setItem(app.getStorageKey('auth_users'), JSON.stringify(normalizedUsers));
@@ -850,11 +913,11 @@
       this.renderCards();
       this.renderStatusBlocks();
       this.loadUserIntoForm(user.id);
-      app.showToast('Usuário salvo com sucesso.', 'success');
+      app.showToast(this.isSupabaseCloudMode() ? 'Usuário salvo. O acesso em nuvem é criado pela tela de login.' : 'Usuário salvo com sucesso.', 'success');
       app.log('Usuário salvo.', { email: user.email, role: user.role });
     },
 
-    updateUserAccount() {
+    async updateUserAccount() {
       const currentId = this.refs.userId?.value || this.editingUserId;
       if (!currentId) {
         app.showToast('Selecione um usuário para editar.', 'warning');
@@ -885,6 +948,7 @@
       });
 
       this.saveUsers(users);
+      await this.syncExistingCloudProfile(users[index], { role: users[index].role, status: users[index].status });
       this.renderUsersTable();
       this.renderCards();
       this.renderStatusBlocks();
@@ -893,7 +957,7 @@
       app.log('Usuário atualizado.', { email: users[index].email, role: users[index].role });
     },
 
-    blockSelectedUser() {
+    async blockSelectedUser() {
       const currentId = this.refs.userId?.value || this.editingUserId;
       if (!currentId) {
         app.showToast('Selecione um usuário para bloquear.', 'warning');
@@ -921,6 +985,7 @@
       };
 
       this.saveUsers(users);
+      await this.syncExistingCloudProfile(users[index], { role: users[index].role, status: users[index].status });
       this.renderUsersTable();
       this.renderCards();
       this.renderStatusBlocks();
@@ -934,7 +999,7 @@
       app.log('Status do usuário alterado.', { email: user.email, status: nextStatus });
     },
 
-    deleteSelectedUser() {
+    async deleteSelectedUser() {
       const currentId = this.refs.userId?.value || this.editingUserId;
       if (!currentId) {
         app.showToast('Selecione um usuário para excluir.', 'warning');
@@ -960,6 +1025,7 @@
 
       const filtered = users.filter((entry) => entry.id !== currentId);
       this.saveUsers(filtered);
+      await this.syncExistingCloudProfile(user, { status: 'Excluído' });
       this.renderUsersTable();
       this.renderCards();
       this.renderStatusBlocks();
@@ -968,7 +1034,7 @@
       app.log('Usuário excluído.', { email: user.email, role: user.role });
     },
 
-    clearExtraUsers() {
+    async clearExtraUsers() {
       const users = this.getUsers();
       const admin =
         users.find((entry) => String(entry.email || '').toLowerCase() === 'admin@husky.com') ||
@@ -987,7 +1053,11 @@
         return;
       }
 
+      const removedUsers = users.filter((entry) => entry.email !== admin.email);
       this.saveUsers([admin]);
+      for (const removedUser of removedUsers) {
+        await this.syncExistingCloudProfile(removedUser, { status: 'Excluído' });
+      }
       this.renderUsersTable();
       this.renderCards();
       this.renderStatusBlocks();

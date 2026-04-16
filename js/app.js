@@ -1469,6 +1469,278 @@ if (themeTrigger) {
     window.addEventListener('orientationchange', () => this.syncAdaptiveLayout());
   };
 
+
+  HuskyApp.getCloudStorageBucket = function () {
+    return 'husky-files';
+  };
+
+  HuskyApp.isCloudStorageReady = function () {
+    return String(window.HUSKY_AUTH_MODE || 'local').toLowerCase() === 'supabase' && Boolean(window.HuskySupabase?.storage);
+  };
+
+  HuskyApp.sanitizeFileName = function (name = 'arquivo') {
+    const safe = String(name || 'arquivo')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return safe || `arquivo-${Date.now()}`;
+  };
+
+  HuskyApp.formatFileSize = function (bytes = 0) {
+    const value = Number(bytes || 0);
+    if (!Number.isFinite(value) || value <= 0) return '0 KB';
+    if (value < 1024) return `${value} B`;
+    if (value < 1024 * 1024) return `${Math.ceil(value / 1024)} KB`;
+    return `${(value / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  HuskyApp.getAttachmentPreviewUrl = function (attachment = null) {
+    if (!attachment) return '';
+    return attachment.localUrl || attachment.url || attachment.publicUrl || attachment.signedUrl || attachment.dataUrl || attachment.fileDataUrl || '';
+  };
+
+  HuskyApp.revokeAttachmentPreview = function (attachment = null) {
+    const localUrl = attachment?.localUrl || '';
+    if (typeof localUrl === 'string' && localUrl.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(localUrl);
+      } catch (error) {
+        console.error('[HuskyApp] erro ao revogar preview local', error);
+      }
+    }
+  };
+
+  HuskyApp.prepareLocalFileDraft = async function (file) {
+    if (!file) return null;
+
+    const type = file.type || 'application/octet-stream';
+    const localUrl = URL.createObjectURL(file);
+
+    return {
+      name: file.name,
+      type,
+      size: file.size || 0,
+      uploadedAt: new Date().toISOString(),
+      source: 'local-draft',
+      localUrl,
+      rawFile: file
+    };
+  };
+
+  HuskyApp.optimizeImageFile = async function (file, { maxWidth = 1800, maxHeight = 1800, quality = 0.82 } = {}) {
+    if (!file || !String(file.type || '').startsWith('image/')) {
+      return file;
+    }
+
+    if ((file.size || 0) <= 2 * 1024 * 1024) {
+      return file;
+    }
+
+    try {
+      const imageUrl = URL.createObjectURL(file);
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Não foi possível abrir a imagem.'));
+        img.src = imageUrl;
+      });
+
+      const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+      const targetWidth = Math.max(1, Math.round(image.width * scale));
+      const targetHeight = Math.max(1, Math.round(image.height * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+      const outputType = ['image/png', 'image/webp'].includes(file.type) ? file.type : 'image/jpeg';
+
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob(
+          (result) => resolve(result || file),
+          outputType,
+          outputType === 'image/png' ? undefined : quality
+        );
+      });
+
+      URL.revokeObjectURL(imageUrl);
+
+      if (!(blob instanceof Blob)) {
+        return file;
+      }
+
+      const extension = outputType === 'image/png' ? '.png' : outputType === 'image/webp' ? '.webp' : '.jpg';
+      const baseName = String(file.name || 'imagem').replace(/\.[^.]+$/, '');
+      return new File([blob], `${baseName}${extension}`, { type: outputType });
+    } catch (error) {
+      console.error('[HuskyApp] erro ao otimizar imagem', error);
+      return file;
+    }
+  };
+
+  HuskyApp.uploadFileToCloud = async function (file, { folder = 'proofs' } = {}) {
+    if (!this.isCloudStorageReady()) {
+      throw new Error('Storage em nuvem não está disponível.');
+    }
+
+    const supabase = window.HuskySupabase;
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    const session = sessionData?.session;
+    if (!session?.user) {
+      throw new Error('Faça login na nuvem antes de enviar arquivos.');
+    }
+
+    const preparedFile = await this.optimizeImageFile(file);
+    const bucket = this.getCloudStorageBucket();
+    const safeName = this.sanitizeFileName(file.name);
+    const path = `${window.HUSKY_WORKSPACE_ID || 'husky-principal'}/${folder}/${session.user.id}/${Date.now()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(path, preparedFile, {
+      upsert: false,
+      cacheControl: '3600',
+      contentType: preparedFile.type || file.type || 'application/octet-stream'
+    });
+
+    if (uploadError) throw uploadError;
+
+    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
+
+    return {
+      name: file.name,
+      type: preparedFile.type || file.type || 'application/octet-stream',
+      size: preparedFile.size || file.size || 0,
+      uploadedAt: new Date().toISOString(),
+      source: 'cloud',
+      storageBucket: bucket,
+      storagePath: path,
+      url: publicData?.publicUrl || ''
+    };
+  };
+
+  HuskyApp.deleteCloudFile = async function (attachment = null) {
+    if (!attachment?.storagePath || !this.isCloudStorageReady()) return;
+
+    try {
+      await window.HuskySupabase.storage
+        .from(attachment.storageBucket || this.getCloudStorageBucket())
+        .remove([attachment.storagePath]);
+    } catch (error) {
+      console.error('[HuskyApp] erro ao remover arquivo da nuvem', error);
+    }
+  };
+
+  HuskyApp.isStandaloneApp = function () {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  };
+
+  HuskyApp.isIosDevice = function () {
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent || '');
+  };
+
+  HuskyApp.showInstallHelp = function () {
+    if (this.isIosDevice()) {
+      window.alert('No iPhone, abra no Safari e toque em Compartilhar > Adicionar à Tela de Início.');
+      return;
+    }
+
+    window.alert('No celular, abra no Chrome ou Edge e toque em Instalar app ou Adicionar à Tela inicial.');
+  };
+
+  HuskyApp.ensureInstallShortcut = function () {
+    if (!document.body) return;
+
+    const isMobile = window.innerWidth <= 992;
+    const isStandalone = this.isStandaloneApp();
+    let button = document.getElementById('husky-install-shortcut');
+
+    if (!isMobile || isStandalone) {
+      button?.remove();
+      return;
+    }
+
+    if (!button) {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.id = 'husky-install-shortcut';
+      button.className = 'husky-install-shortcut';
+      document.body.appendChild(button);
+    }
+
+    button.innerHTML = '<span>📲</span><span>Adicionar à tela inicial</span>';
+    button.onclick = async (event) => {
+      event.preventDefault();
+
+      if (this.deferredInstallPrompt) {
+        const promptEvent = this.deferredInstallPrompt;
+        this.deferredInstallPrompt = null;
+        await promptEvent.prompt();
+        await promptEvent.userChoice.catch(() => null);
+        this.ensureInstallShortcut();
+        return;
+      }
+
+      this.showInstallHelp();
+    };
+  };
+
+  HuskyApp.registerPWA = function () {
+    if (this.__pwaReady) {
+      this.ensureInstallShortcut();
+      return;
+    }
+
+    this.__pwaReady = true;
+
+    if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+      navigator.serviceWorker.register('sw.js').catch((error) => {
+        console.error('[HuskyApp] erro ao registrar service worker', error);
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      this.deferredInstallPrompt = event;
+      this.ensureInstallShortcut();
+    });
+
+    window.addEventListener('appinstalled', () => {
+      this.deferredInstallPrompt = null;
+      this.ensureInstallShortcut();
+      this.showToast('Atalho instalado na tela inicial.', 'success');
+    });
+
+    this.ensureInstallShortcut();
+  };
+
+  const __huskyOriginalInitPWA = HuskyApp.init.bind(HuskyApp);
+  HuskyApp.init = function () {
+    __huskyOriginalInitPWA();
+    this.registerPWA();
+    this.ensureInstallShortcut();
+  };
+
+  const __huskyOriginalRefreshShellInstall = HuskyApp.refreshShell.bind(HuskyApp);
+  HuskyApp.refreshShell = function () {
+    __huskyOriginalRefreshShellInstall();
+    this.ensureInstallShortcut();
+  };
+
+  const __huskyOriginalSyncAdaptiveInstall = HuskyApp.syncAdaptiveLayout?.bind(HuskyApp);
+  if (__huskyOriginalSyncAdaptiveInstall) {
+    HuskyApp.syncAdaptiveLayout = function () {
+      __huskyOriginalSyncAdaptiveInstall();
+      this.ensureInstallShortcut();
+    };
+  }
+
   window.HuskyApp = HuskyApp;
   document.addEventListener('DOMContentLoaded', () => HuskyApp.init());
 })();

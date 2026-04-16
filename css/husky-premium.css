@@ -1023,3 +1023,41 @@ body[data-theme-mode="dark"] .husky-login-palette span:nth-child(3) {
     border-radius: 16px;
   }
 }
+
+
+.husky-install-shortcut{
+  position:fixed;
+  left:16px;
+  right:16px;
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 88px);
+  z-index:180;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-height:56px;
+  padding:0 18px;
+  border:none;
+  border-radius:20px;
+  background:linear-gradient(135deg,#2f61a5,#4d7dc0);
+  color:#f8f6f1;
+  font-weight:800;
+  box-shadow:0 16px 34px rgba(18,42,79,.24);
+}
+
+body.is-mobile-shell .husky-install-shortcut{
+  display:flex;
+}
+
+body.theme-dark .husky-install-shortcut,
+html[data-theme="dark"] .husky-install-shortcut{
+  background:linear-gradient(135deg,#183247,#2b4f73);
+  color:#f5f7fb;
+  box-shadow:0 18px 36px rgba(0,0,0,.35);
+}
+
+@media (min-width: 993px){
+  .husky-install-shortcut{
+    display:none !important;
+  }
+}
