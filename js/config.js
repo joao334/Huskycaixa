@@ -163,6 +163,8 @@
         btnSaveUserAccount: document.getElementById('btn-save-user-account'),
         btnUpdateUserAccount: document.getElementById('btn-update-user-account'),
         btnBlockUserAccount: document.getElementById('btn-block-user-account'),
+        btnDeleteUserAccount: document.getElementById('btn-delete-user-account'),
+        btnClearUsers: document.getElementById('btn-clear-users'),
 
         usersSearch: document.getElementById('users-search'),
         usersFilterRole: document.getElementById('users-filter-role'),
@@ -230,6 +232,8 @@
       this.refs.btnSaveUserAccount?.addEventListener('click', () => this.saveUserAccount());
       this.refs.btnUpdateUserAccount?.addEventListener('click', () => this.updateUserAccount());
       this.refs.btnBlockUserAccount?.addEventListener('click', () => this.blockSelectedUser());
+      this.refs.btnDeleteUserAccount?.addEventListener('click', () => this.deleteSelectedUser());
+      this.refs.btnClearUsers?.addEventListener('click', () => this.clearExtraUsers());
 
       [
         this.refs.userName,
@@ -308,6 +312,7 @@
     saveUsers(users) {
       const normalizedUsers = users.map((user) => this.normalizeUser(user));
       localStorage.setItem(app.getStorageKey('auth_users'), JSON.stringify(normalizedUsers));
+      localStorage.setItem('husky_local_auth_users', JSON.stringify(normalizedUsers));
 
       const state = this.getState();
       state.users = normalizedUsers.map((user) => ({
@@ -349,6 +354,9 @@
               canViewFinancial: Boolean(match.permissions?.canViewFinancial)
             }
           };
+        } else {
+          state.currentUser = null;
+          localStorage.removeItem('husky_local_auth_session');
         }
       }
 
@@ -926,6 +934,68 @@
       app.log('Status do usuário alterado.', { email: user.email, status: nextStatus });
     },
 
+    deleteSelectedUser() {
+      const currentId = this.refs.userId?.value || this.editingUserId;
+      if (!currentId) {
+        app.showToast('Selecione um usuário para excluir.', 'warning');
+        return;
+      }
+
+      const users = this.getUsers();
+      const user = users.find((entry) => entry.id === currentId);
+
+      if (!user) {
+        app.showToast('Usuário não encontrado.', 'danger');
+        return;
+      }
+
+      const activeAdmins = users.filter((entry) => entry.role === 'Administrador' && entry.status !== 'Bloqueado');
+
+      if (activeAdmins.length <= 1 && user.role === 'Administrador') {
+        app.showToast('Mantenha ao menos um administrador ativo no sistema.', 'warning');
+        return;
+      }
+
+      if (!app.confirmAction(`Deseja excluir o usuário ${user.name}?`)) return;
+
+      const filtered = users.filter((entry) => entry.id !== currentId);
+      this.saveUsers(filtered);
+      this.renderUsersTable();
+      this.renderCards();
+      this.renderStatusBlocks();
+      this.resetUserForm();
+      app.showToast('Usuário excluído com sucesso.', 'success');
+      app.log('Usuário excluído.', { email: user.email, role: user.role });
+    },
+
+    clearExtraUsers() {
+      const users = this.getUsers();
+      const admin =
+        users.find((entry) => String(entry.email || '').toLowerCase() === 'admin@husky.com') ||
+        this.normalizeUser({
+          name: 'Administrador',
+          email: 'admin@husky.com',
+          role: 'Administrador',
+          status: 'Ativo',
+          permissions: {
+            canManageUsers: true,
+            canViewFinancial: true
+          }
+        });
+
+      if (!app.confirmAction('Deseja limpar a lista de acessos e manter apenas o administrador padrão?')) {
+        return;
+      }
+
+      this.saveUsers([admin]);
+      this.renderUsersTable();
+      this.renderCards();
+      this.renderStatusBlocks();
+      this.loadUserIntoForm(admin.id);
+      app.showToast('Lista de acessos limpa com sucesso.', 'success');
+      app.log('Lista de acessos limpa.', { kept: admin.email });
+    },
+
     loadUserIntoForm(userId) {
       const user = this.getUsers().find((entry) => entry.id === userId);
       if (!user) {
@@ -1063,6 +1133,12 @@
       if (action === 'permissions-user') {
         this.showPermissions(userId);
       }
+
+      if (action === 'delete-user') {
+        this.editingUserId = userId;
+        if (this.refs.userId) this.refs.userId.value = userId;
+        this.deleteSelectedUser();
+      }
     },
 
     showPermissions(userId) {
@@ -1121,6 +1197,9 @@
                 <button type="button" class="btn btn-secondary btn-small" data-action="permissions-user" data-id="${user.id}">Permissões</button>
                 <button type="button" class="btn btn-secondary btn-small" data-action="toggle-user" data-id="${user.id}">
                   ${user.status === 'Bloqueado' ? 'Reativar' : 'Bloquear'}
+                </button>
+                <button type="button" class="btn btn-danger btn-small" data-action="delete-user" data-id="${user.id}">
+                  Excluir
                 </button>
               </div>
             </td>

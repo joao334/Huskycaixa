@@ -4,6 +4,10 @@
   const APP_NAME = 'Husky Confeitaria';
   const APP_VERSION = '1.2.0';
   const STORAGE_PREFIX = 'husky_system';
+  const LOCAL_SESSION_KEY = 'husky_local_auth_session';
+  const LOCAL_USERS_KEY = 'husky_local_auth_users';
+  const REMEMBER_KEY = 'husky_remembered_user';
+  const ACCESS_MIGRATION_KEY = 'husky_access_reset_v4';
   const STATE_CHANGED_EVENT = 'husky:state-changed';
   const SETTINGS_CHANGED_EVENT = 'husky:settings-changed';
 
@@ -98,6 +102,7 @@
     init() {
       this.cacheDom();
       this.ensureBaseState();
+      this.migrateLegacyAccessData();
       this.syncUsersFromAuthStorage();
       this.applySettingsToUI();
       this.injectSidebarOverlay();
@@ -301,6 +306,66 @@ if (themeTrigger) {
 
       const merged = this.deepMerge(this.deepClone(defaultState), migrated);
       this.setStorage('state', merged);
+    },
+
+    migrateLegacyAccessData() {
+      const shouldReset = Boolean(window.HUSKY_RESET_ACCESS_ON_UPGRADE);
+      const alreadyMigrated = localStorage.getItem(ACCESS_MIGRATION_KEY) === 'done';
+
+      if (!shouldReset || alreadyMigrated) {
+        return;
+      }
+
+      const adminUser = {
+        id: crypto.randomUUID(),
+        name: 'Administrador',
+        email: 'admin@husky.com',
+        role: 'Administrador',
+        status: 'Ativo',
+        avatar: 'assets/img/avatar-user.png',
+        lastAccess: null,
+        domain: '',
+        notes: '',
+        permissions: {
+          canManageUsers: true,
+          canViewFinancial: true
+        },
+        passwordHash: '1450575459',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        const state = this.getAppState();
+        state.users = [
+          {
+            id: adminUser.id,
+            name: adminUser.name,
+            email: adminUser.email,
+            role: adminUser.role,
+            status: adminUser.status,
+            avatar: adminUser.avatar,
+            lastAccess: null,
+            domain: '',
+            notes: '',
+            permissions: {
+              canManageUsers: true,
+              canViewFinancial: true
+            }
+          }
+        ];
+        state.currentUser = null;
+        this.setStorage('state', state);
+
+        localStorage.setItem(this.getStorageKey('auth_users'), JSON.stringify([adminUser]));
+        localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify([adminUser]));
+        localStorage.removeItem(this.getStorageKey('auth_session'));
+        localStorage.removeItem(LOCAL_SESSION_KEY);
+        localStorage.removeItem(REMEMBER_KEY);
+        localStorage.setItem(ACCESS_MIGRATION_KEY, 'done');
+      } catch (error) {
+        console.error('[HuskyApp] erro ao limpar acessos antigos', error);
+      }
     },
 
     refreshShell() {
@@ -856,6 +921,8 @@ if (themeTrigger) {
 
       try {
         localStorage.removeItem(this.getStorageKey('auth_session'));
+        localStorage.removeItem(LOCAL_SESSION_KEY);
+        localStorage.removeItem(REMEMBER_KEY);
         sessionStorage.removeItem('husky_auth_message');
       } catch (error) {
         console.error('[HuskyApp] erro ao limpar sessão local', error);

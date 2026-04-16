@@ -1,6 +1,13 @@
 (() => {
   'use strict';
 
+  const authMode = String(window.HUSKY_AUTH_MODE || 'local').toLowerCase();
+
+  if (authMode !== 'supabase') {
+    console.info('[Supabase] Inicialização ignorada: autenticação local ativa.');
+    return;
+  }
+
   if (!window.supabase) {
     console.error('[Supabase] Biblioteca não carregada.');
     return;

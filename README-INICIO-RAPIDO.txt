@@ -18,3 +18,11 @@ Senha: 123456
 
 Observação:
 Se a nuvem não estiver configurada, o sistema continua funcionando em modo local.
+
+
+ATUALIZAÇÃO V4
+- Login local estabilizado.
+- Logout corrigido.
+- Exclusão de usuários disponível em Configurações.
+- Botão 'Limpar lista' mantém apenas admin@husky.com.
+- Acesso padrão: admin@husky.com / 123456.
