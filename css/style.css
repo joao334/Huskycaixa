@@ -3586,3 +3586,29 @@ body[data-theme-mode="dark"] .husky-mobile-dock {
     print-color-adjust: exact;
   }
 }
+
+
+.btn-whatsapp {
+  background: linear-gradient(135deg, #128c7e, #25d366);
+  color: #fff;
+  border-color: rgba(18, 140, 126, 0.55);
+  box-shadow: 0 16px 30px rgba(18, 140, 126, 0.2);
+}
+
+.btn-whatsapp:hover,
+.btn-whatsapp:focus-visible {
+  background: linear-gradient(135deg, #0f7a6d, #1fb95b);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn-whatsapp:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+:root[data-theme='dark'] .btn-whatsapp {
+  border-color: rgba(37, 211, 102, 0.35);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+}

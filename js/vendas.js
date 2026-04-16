@@ -203,6 +203,7 @@
         btnCancelSale: document.getElementById('btn-cancel-sale'),
         btnGenerateReceipt: document.getElementById('btn-generate-receipt'),
         btnPrintReceipt: document.getElementById('btn-print-receipt'),
+        btnSendWhatsApp: document.getElementById('btn-send-whatsapp'),
         btnGenerateSimpleInvoice: document.getElementById('btn-generate-simple-invoice'),
         btnNewSaleTop: document.getElementById('btn-new-sale-top'),
         btnNewSaleHero: document.getElementById('btn-new-sale-hero'),
@@ -274,6 +275,7 @@
       this.refs.btnCancelSale?.addEventListener('click', () => this.handleCancelSale());
       this.refs.btnGenerateReceipt?.addEventListener('click', () => this.prepareReceiptPreview(true));
       this.refs.btnPrintReceipt?.addEventListener('click', () => this.printReceipt());
+      this.refs.btnSendWhatsApp?.addEventListener('click', () => this.sendReceiptToWhatsApp());
       this.refs.btnGenerateSimpleInvoice?.addEventListener('click', () => this.generateSimpleInvoice());
       this.refs.btnNewSaleTop?.addEventListener('click', () => this.resetForm());
       this.refs.btnNewSaleHero?.addEventListener('click', () => this.resetForm());
@@ -1850,6 +1852,67 @@
       printWindow.onload = triggerPrint;
       setTimeout(triggerPrint, 350);
       printWindow.onafterprint = () => printWindow.close();
+    },
+
+    buildWhatsAppReceiptMessage() {
+      const receipt = this.getReceiptPayload();
+      const items = (receipt.items || []).slice(0, 10).map((item) => {
+        const qty = Number(item.quantity || 0);
+        return `• ${qty}x ${item.productName} — ${app.formatCurrency(item.total)}`;
+      });
+
+      if ((receipt.items || []).length > 10) {
+        items.push(`• +${receipt.items.length - 10} item(ns)`);
+      }
+
+      return [
+        `🐾 *${receipt.companyName}*`,
+        '*Comprovante de compra*',
+        '',
+        `Pedido: ${receipt.orderNumber}`,
+        `Data: ${receipt.saleDate}`,
+        `Cliente: ${receipt.clientName}`,
+        '',
+        '*Itens:*',
+        items.length ? items.join('\n') : '• Nenhum item informado',
+        '',
+        `Pagamento: ${receipt.paymentMethod}`,
+        `Status: ${receipt.orderStatus}`,
+        `Total: ${app.formatCurrency(receipt.totals.total)}`,
+        '',
+        receipt.footerMessage,
+        receipt.showCompanyData && receipt.contactLine ? receipt.contactLine : ''
+      ].filter(Boolean).join('\n');
+    },
+
+    normalizeWhatsAppPhone(value) {
+      let digits = String(value || '').replace(/\D/g, '');
+      if (!digits) return '';
+      if (digits.startsWith('00')) digits = digits.slice(2);
+      if (digits.startsWith('0')) digits = digits.replace(/^0+/, '');
+      if (!digits.startsWith('55') && (digits.length === 10 || digits.length === 11)) {
+        digits = `55${digits}`;
+      }
+      return digits;
+    },
+
+    sendReceiptToWhatsApp() {
+      this.prepareReceiptPreview(false);
+
+      const rawPhone = this.refs.saleClientPhone?.value || '';
+      const phone = this.normalizeWhatsAppPhone(rawPhone);
+
+      if (!phone) {
+        app.showToast('Informe o telefone do cliente para enviar pelo WhatsApp.', 'warning');
+        this.refs.saleClientPhone?.focus();
+        return;
+      }
+
+      const message = this.buildWhatsAppReceiptMessage();
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+      app.showToast('WhatsApp aberto com o comprovante pronto para envio.', 'success');
     },
 
     generateSimpleInvoice() {
