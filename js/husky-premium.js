@@ -392,8 +392,27 @@
     enhanceLogin();
   }
 
+  let refreshQueued = false;
+
+  function queueRefreshWorkspace() {
+    if (refreshQueued) return;
+    refreshQueued = true;
+
+    const runner = () => {
+      refreshQueued = false;
+      refreshWorkspace();
+    };
+
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(runner);
+      return;
+    }
+
+    window.setTimeout(runner, 16);
+  }
+
   onReady(() => {
-    refreshWorkspace();
+    queueRefreshWorkspace();
     ensureBodyFocusState('primary');
 
     window.addEventListener('resize', () => {
@@ -402,21 +421,16 @@
       } else {
         document.body.classList.add('mobile-filters-collapsed');
       }
-      refreshWorkspace();
+      queueRefreshWorkspace();
     });
 
-    window.addEventListener('orientationchange', refreshWorkspace);
-    window.addEventListener('husky:state-changed', refreshWorkspace);
-
-    const observer = new MutationObserver(() => {
-      refreshWorkspace();
-    });
-
-    const topbar = document.querySelector('.topbar');
-    const sidebar = document.querySelector('.sidebar-nav');
-    const loginCard = document.querySelector('.husky-login-card-body');
-    [topbar, sidebar, loginCard].filter(Boolean).forEach((node) => {
-      observer.observe(node, { childList: true, subtree: true });
+    window.addEventListener('orientationchange', queueRefreshWorkspace);
+    window.addEventListener('husky:state-changed', queueRefreshWorkspace);
+    window.addEventListener('husky:settings-changed', queueRefreshWorkspace);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        queueRefreshWorkspace();
+      }
     });
   });
 })();
