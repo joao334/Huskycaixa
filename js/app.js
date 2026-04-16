@@ -2,7 +2,7 @@
   'use strict';
 
   const APP_NAME = 'Husky Confeitaria';
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.2.0';
   const STORAGE_PREFIX = 'husky_system';
   const STATE_CHANGED_EVENT = 'husky:state-changed';
   const SETTINGS_CHANGED_EVENT = 'husky:settings-changed';
