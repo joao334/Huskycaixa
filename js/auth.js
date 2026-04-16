@@ -4,33 +4,47 @@
   const LOGIN_PAGE = 'index.html';
   const HOME_PAGE = 'home.html';
   const REMEMBER_KEY = 'husky_remembered_user';
+  const LOCAL_USERS_KEY = 'husky_local_auth_users';
+  const LOCAL_SESSION_KEY = 'husky_local_auth_session';
+  const LOCAL_DEFAULT_ADMIN = {
+    name: 'Administrador',
+    email: 'admin@husky.com',
+    password: '123456',
+    role: 'Administrador',
+    status: 'Ativo',
+    avatar: 'assets/img/avatar-user.png'
+  };
 
   const AuthModule = {
     supabase: null,
     app: null,
     bootstrapped: false,
     authListenerBound: false,
+    localMode: false,
 
     async init() {
-  this.app = window.HuskyApp || null;
+      this.app = window.HuskyApp || null;
 
-  this.bindLogoutButtons();
-  this.bindLoginForm();
-  this.bindRegisterForm();
-  this.bindForgotPassword();
-  this.restoreRememberedEmail();
+      this.bindLogoutButtons();
+      this.bindLoginForm();
+      this.bindRegisterForm();
+      this.bindForgotPassword();
+      this.restoreRememberedEmail();
 
-  this.supabase = await this.waitForSupabase();
+      this.supabase = await this.waitForSupabase();
 
-  if (!this.supabase) {
-    console.error('[Auth] Supabase não encontrado.');
-    this.notify('Conexão com o Supabase não encontrada. Verifique o env.js.', 'danger');
-    return;
-  }
+      if (!this.supabase) {
+        this.localMode = true;
+        this.ensureLocalAdminAccount();
 
-  await this.bootstrapSession();
-  this.bindAuthStateListener();
-},
+        if (this.isLoginPage()) {
+          this.notify('Modo local ativado. Use admin@husky.com e senha 123456 para o primeiro acesso.', 'warning');
+        }
+      }
+
+      await this.bootstrapSession();
+      this.bindAuthStateListener();
+    },
 
     async waitForSupabase() {
       if (window.HuskySupabase) return window.HuskySupabase;
@@ -57,6 +71,12 @@
     },
 
     async bootstrapSession() {
+      if (this.localMode) {
+        this.bootstrapLocalSession();
+        this.bootstrapped = true;
+        return;
+      }
+
       try {
         const { data, error } = await this.supabase.auth.getSession();
 
@@ -85,7 +105,7 @@
     },
 
     bindAuthStateListener() {
-      if (this.authListenerBound) return;
+      if (this.localMode || this.authListenerBound || !this.supabase) return;
       this.authListenerBound = true;
 
       this.supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -104,8 +124,15 @@
     },
 
     async handleAuthenticatedUser(user, allowRedirect = true) {
-      const profile = await this.ensureUserProfile(user);
+      const profile = this.localMode
+        ? this.createPublicProfileFromLocal(user)
+        : await this.ensureUserProfile(user);
+
       this.persistCurrentUser(profile);
+
+      if (this.localMode) {
+        this.setLocalSession(profile);
+      }
 
       if (this.isLoginPage() && allowRedirect) {
         window.location.replace(this.getHomePage());
@@ -247,69 +274,91 @@
     },
 
     bindLoginForm() {
-  const form = document.getElementById('login-form');
-  const loginButton = document.getElementById('btn-login');
+      const form = document.getElementById('login-form');
+      const loginButton = document.getElementById('btn-login');
 
-  const submitLogin = async (event) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+      const submitLogin = async (event) => {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
 
-    if (!this.supabase) {
-      this.supabase = await this.waitForSupabase();
-    }
+        const emailInput = document.getElementById('login-email');
+        const passwordInput = document.getElementById('login-password');
+        const rememberInput = document.getElementById('remember-access');
 
-    const emailInput = document.getElementById('login-email');
-    const passwordInput = document.getElementById('login-password');
-    const rememberInput = document.getElementById('remember-access');
+        const email = String(emailInput?.value || '').trim().toLowerCase();
+        const password = String(passwordInput?.value || '');
+        const remember = Boolean(rememberInput?.checked);
 
-    const email = String(emailInput?.value || '').trim().toLowerCase();
-    const password = String(passwordInput?.value || '');
-    const remember = Boolean(rememberInput?.checked);
+        if (!email || !password) {
+          this.notify('Informe e-mail e senha para entrar.', 'warning');
+          return;
+        }
 
-    if (!email || !password) {
-      this.notify('Informe e-mail e senha para entrar.', 'warning');
-      return;
-    }
+        if (this.localMode) {
+          const localUser = this.authenticateLocalUser(email, password);
 
-    if (!this.supabase) {
-      this.notify('Conexão de login não iniciada. Verifique o env.js.', 'danger');
-      return;
-    }
+          if (!localUser) {
+            this.notify('E-mail ou senha inválidos no modo local.', 'danger');
+            return;
+          }
 
-    try {
-      const { data, error } = await this.supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+          if (remember) {
+            this.setRememberedUser({ email });
+          } else {
+            this.clearRememberedUser();
+          }
 
-      if (error) {
-        this.notify(this.getSupabaseErrorMessage(error), 'danger');
-        return;
-      }
+          await this.handleAuthenticatedUser(localUser, false);
+          this.notify('Login local realizado com sucesso.', 'success');
+          setTimeout(() => window.location.replace(this.getHomePage()), 180);
+          return;
+        }
 
-      if (remember) {
-        this.setRememberedUser({ email });
-      } else {
-        this.clearRememberedUser();
-      }
+        if (!this.supabase) {
+          this.supabase = await this.waitForSupabase();
+        }
 
-      await this.handleAuthenticatedUser(data.user, false);
-      this.notify('Login realizado com sucesso.', 'success');
+        if (!this.supabase) {
+          this.notify('Conexão de login não iniciada. O sistema entrou em modo local.', 'warning');
+          this.localMode = true;
+          this.ensureLocalAdminAccount();
+          return;
+        }
 
-      setTimeout(() => {
-        window.location.replace(this.getHomePage());
-      }, 180);
-    } catch (error) {
-      console.error('[Auth] erro no login', error);
-      this.notify('Não foi possível realizar o login.', 'danger');
-    }
-  };
+        try {
+          const { data, error } = await this.supabase.auth.signInWithPassword({
+            email,
+            password
+          });
 
-  form?.addEventListener('submit', submitLogin);
-  loginButton?.addEventListener('click', submitLogin);
-},
+          if (error) {
+            this.notify(this.getSupabaseErrorMessage(error), 'danger');
+            return;
+          }
+
+          if (remember) {
+            this.setRememberedUser({ email });
+          } else {
+            this.clearRememberedUser();
+          }
+
+          await this.handleAuthenticatedUser(data.user, false);
+          this.notify('Login realizado com sucesso.', 'success');
+
+          setTimeout(() => {
+            window.location.replace(this.getHomePage());
+          }, 180);
+        } catch (error) {
+          console.error('[Auth] erro no login', error);
+          this.notify('Não foi possível realizar o login.', 'danger');
+        }
+      };
+
+      form?.addEventListener('submit', submitLogin);
+      loginButton?.addEventListener('click', submitLogin);
+    },
 
     bindRegisterForm() {
       const registerForm = document.getElementById('register-form');
@@ -345,6 +394,21 @@
 
         if (password !== confirmPassword) {
           this.notify('A confirmação da senha não confere.', 'warning');
+          return;
+        }
+
+        if (this.localMode) {
+          const created = this.createLocalUser({ name, email, password });
+
+          if (!created.ok) {
+            this.notify(created.message, 'danger');
+            return;
+          }
+
+          this.setRememberedUser({ email });
+          await this.handleAuthenticatedUser(created.user, false);
+          this.notify('Login local criado com sucesso.', 'success');
+          setTimeout(() => window.location.replace(this.getHomePage()), 180);
           return;
         }
 
@@ -405,6 +469,11 @@
           return;
         }
 
+        if (this.localMode) {
+          this.notify('No modo local, use a senha cadastrada ou crie um novo acesso.', 'warning');
+          return;
+        }
+
         try {
           const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/${this.getLoginPage()}`
@@ -440,6 +509,13 @@
           }
 
           try {
+            if (this.localMode) {
+              localStorage.removeItem(LOCAL_SESSION_KEY);
+              this.persistCurrentUser(null);
+              window.location.replace(this.getLoginPage());
+              return;
+            }
+
             const { error } = await this.supabase.auth.signOut();
 
             if (error) {
@@ -490,14 +566,157 @@
       localStorage.removeItem(REMEMBER_KEY);
     },
 
+    getLocalUsers() {
+      try {
+        const raw = localStorage.getItem(LOCAL_USERS_KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+      } catch (error) {
+        console.error('[Auth] erro ao ler usuários locais', error);
+        return [];
+      }
+    },
+
+    saveLocalUsers(users) {
+      localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users || []));
+    },
+
+    ensureLocalAdminAccount() {
+      const users = this.getLocalUsers();
+      const exists = users.some(
+        (user) => String(user.email || '').toLowerCase() === LOCAL_DEFAULT_ADMIN.email
+      );
+
+      if (exists) return;
+
+      users.unshift({
+        id: crypto.randomUUID(),
+        ...LOCAL_DEFAULT_ADMIN,
+        createdAt: new Date().toISOString(),
+        lastAccess: null
+      });
+
+      this.saveLocalUsers(users);
+    },
+
+    authenticateLocalUser(email, password) {
+      const users = this.getLocalUsers();
+      const found = users.find(
+        (user) =>
+          String(user.email || '').toLowerCase() === String(email || '').toLowerCase() &&
+          String(user.password || '') === String(password || '')
+      );
+
+      if (!found) return null;
+
+      found.lastAccess = new Date().toISOString();
+      this.saveLocalUsers(users);
+      return found;
+    },
+
+    createLocalUser({ name, email, password }) {
+      const users = this.getLocalUsers();
+      const exists = users.some(
+        (user) => String(user.email || '').toLowerCase() === String(email || '').toLowerCase()
+      );
+
+      if (exists) {
+        return {
+          ok: false,
+          message: 'Este e-mail já está cadastrado no modo local.'
+        };
+      }
+
+      const user = {
+        id: crypto.randomUUID(),
+        name,
+        email,
+        password,
+        role: 'Administrador',
+        status: 'Ativo',
+        avatar: 'assets/img/avatar-user.png',
+        createdAt: new Date().toISOString(),
+        lastAccess: new Date().toISOString()
+      };
+
+      users.unshift(user);
+      this.saveLocalUsers(users);
+
+      return { ok: true, user };
+    },
+
+    createPublicProfileFromLocal(localUser) {
+      return {
+        id: localUser.id,
+        name: localUser.name || this.getNameFromEmail(localUser.email),
+        email: localUser.email || '',
+        role: localUser.role || 'Administrador',
+        status: localUser.status || 'Ativo',
+        avatar: localUser.avatar || 'assets/img/avatar-user.png',
+        lastAccess: new Date().toISOString()
+      };
+    },
+
+    setLocalSession(profile) {
+      try {
+        localStorage.setItem(
+          LOCAL_SESSION_KEY,
+          JSON.stringify({
+            id: profile.id,
+            email: profile.email,
+            lastAccess: new Date().toISOString()
+          })
+        );
+      } catch (error) {
+        console.error('[Auth] erro ao salvar sessão local', error);
+      }
+    },
+
+    bootstrapLocalSession() {
+      try {
+        const raw = localStorage.getItem(LOCAL_SESSION_KEY);
+        const session = raw ? JSON.parse(raw) : null;
+
+        if (!session?.email && !session?.id) {
+          this.handleNoSession();
+          return;
+        }
+
+        const localUsers = this.getLocalUsers();
+        const user =
+          localUsers.find(
+            (entry) =>
+              entry.id === session.id ||
+              String(entry.email || '').toLowerCase() === String(session.email || '').toLowerCase()
+          ) || null;
+
+        if (!user) {
+          localStorage.removeItem(LOCAL_SESSION_KEY);
+          this.handleNoSession();
+          return;
+        }
+
+        this.persistCurrentUser(this.createPublicProfileFromLocal(user));
+
+        if (this.isLoginPage()) {
+          window.location.replace(this.getHomePage());
+        }
+      } catch (error) {
+        console.error('[Auth] erro ao iniciar sessão local', error);
+        this.handleNoSession();
+      }
+    },
+
     getNameFromEmail(email) {
       const local = String(email || '').split('@')[0] || 'Administrador';
       const normalized = local.replace(/[._-]+/g, ' ').trim();
-      return normalized
-        .split(' ')
-        .filter(Boolean)
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ') || 'Administrador';
+      return (
+        normalized
+          .split(' ')
+          .filter(Boolean)
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ') || 'Administrador'
+      );
     },
 
     notify(message, type = 'info') {

@@ -825,3 +825,212 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+/* =========================================================
+   MOBILE PREMIUM • menos informação e botões dinâmicos
+   ========================================================= */
+@media (max-width: 768px) {
+  body.mobile-compact .app-pattern,
+  body.mobile-compact .sync-badge,
+  body.mobile-compact .husky-topbar-pills,
+  body.mobile-compact .hero-panel,
+  body.mobile-compact .hero-panel-compact,
+  body.mobile-compact .page-heading p,
+  body.mobile-compact .panel-header p,
+  body.mobile-compact .panel-subsection-header p,
+  body.mobile-compact .section-header p,
+  body.mobile-compact .metric-card small,
+  body.mobile-compact .quick-link-card p,
+  body.mobile-compact .summary-card p,
+  body.mobile-compact .catalog-mini-content p,
+  body.mobile-compact .product-preview-content p,
+  body.mobile-compact .husky-page-footer,
+  body.mobile-compact #husky-fab,
+  body.mobile-compact .desktop-only-mobile-hide {
+    display: none !important;
+  }
+
+  body.mobile-compact #husky-mobile-dock,
+  body.mobile-compact #husky-mobile-primary {
+    display: block !important;
+  }
+
+  body.mobile-compact .topbar {
+    padding: 12px !important;
+    gap: 10px !important;
+    border-radius: 20px !important;
+  }
+
+  body.mobile-compact .topbar-right,
+  body.mobile-compact .topbar-actions {
+    width: 100%;
+  }
+
+  body.mobile-compact .topbar-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.mobile-compact .topbar-actions .btn:not(#btn-toggle-theme) {
+    display: none !important;
+  }
+
+  body.mobile-compact .page-heading {
+    gap: 2px;
+  }
+
+  body.mobile-compact .page-heading h1,
+  body.mobile-compact .page-heading h2,
+  body.mobile-compact .hero-content h2 {
+    font-size: 24px !important;
+  }
+
+  body.mobile-compact .cards-grid.metrics-grid,
+  body.mobile-compact .metrics-grid-secondary,
+  body.mobile-compact .summary-cards,
+  body.mobile-compact .quick-links-grid,
+  body.mobile-compact .husky-home-metrics,
+  body.mobile-compact .husky-home-actions {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(78%, 1fr) !important;
+    grid-template-columns: unset !important;
+    overflow-x: auto !important;
+    gap: 10px !important;
+    padding-bottom: 4px !important;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.mobile-compact .cards-grid.metrics-grid > *,
+  body.mobile-compact .metrics-grid-secondary > *,
+  body.mobile-compact .summary-cards > *,
+  body.mobile-compact .quick-links-grid > *,
+  body.mobile-compact .husky-home-metrics > *,
+  body.mobile-compact .husky-home-actions > * {
+    scroll-snap-align: start;
+  }
+
+  body.mobile-compact .metric-card,
+  body.mobile-compact .summary-card,
+  body.mobile-compact .quick-link-card,
+  body.mobile-compact .husky-home-metric,
+  body.mobile-compact .husky-home-action {
+    min-height: 96px !important;
+    padding: 14px !important;
+  }
+
+  body.mobile-compact .metric-card strong,
+  body.mobile-compact .husky-home-metric strong {
+    font-size: 22px !important;
+  }
+
+  body.mobile-compact .panel,
+  body.mobile-compact .husky-home-card,
+  body.mobile-compact .husky-home-shell,
+  body.mobile-compact .table-wrapper {
+    border-radius: 20px !important;
+  }
+
+  body.mobile-compact .panel,
+  body.mobile-compact .husky-home-card-body,
+  body.mobile-compact .panel-subsection,
+  body.mobile-compact .table-wrapper {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body.mobile-compact .panel-header,
+  body.mobile-compact .section-header,
+  body.mobile-compact .panel-subsection-header {
+    margin-bottom: 8px !important;
+  }
+
+  body.mobile-compact .toolbar-grid,
+  body.mobile-compact .report-filter-grid,
+  body.mobile-compact .sales-filter-grid,
+  body.mobile-compact .products-filter-grid,
+  body.mobile-compact .estoque-filter-grid,
+  body.mobile-compact .estoque-history-filter-grid,
+  body.mobile-compact .despesas-filter-grid,
+  body.mobile-compact .clientes-filter-grid,
+  body.mobile-compact .comprovantes-filter-grid,
+  body.mobile-compact .users-toolbar-grid,
+  body.mobile-compact .date-filter-bar,
+  body.mobile-compact .hero-actions,
+  body.mobile-compact .form-actions,
+  body.mobile-compact .summary-action-list,
+  body.mobile-compact .section-actions {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  body.mobile-compact .sales-main-grid,
+  body.mobile-compact .products-main-grid,
+  body.mobile-compact .estoque-main-grid,
+  body.mobile-compact .despesas-main-grid,
+  body.mobile-compact .clientes-main-grid,
+  body.mobile-compact .comprovantes-main-grid,
+  body.mobile-compact .content-grid.two-columns,
+  body.mobile-compact .husky-home-content,
+  body.mobile-compact .husky-home-column {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  body.mobile-compact .husky-home-content .husky-home-column:last-child .husky-home-card:last-child {
+    display: none !important;
+  }
+
+  body.mobile-compact .husky-home-banner {
+    border-radius: 0 0 22px 22px !important;
+  }
+
+  body.mobile-compact .husky-home-banner p,
+  body.mobile-compact .husky-home-action p {
+    display: none !important;
+  }
+
+  body.mobile-compact .table-wrapper {
+    overflow-x: auto !important;
+  }
+
+  body.mobile-compact table {
+    min-width: 460px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  body.mobile-compact .content-area {
+    padding: 8px 8px 116px !important;
+  }
+
+  body.mobile-compact .cards-grid.metrics-grid,
+  body.mobile-compact .metrics-grid-secondary,
+  body.mobile-compact .summary-cards,
+  body.mobile-compact .quick-links-grid,
+  body.mobile-compact .husky-home-metrics,
+  body.mobile-compact .husky-home-actions {
+    grid-auto-columns: minmax(86%, 1fr) !important;
+  }
+
+  body.mobile-compact #husky-mobile-primary {
+    right: 12px;
+    left: 12px;
+    bottom: 88px;
+    min-width: unset;
+    width: auto;
+    justify-content: center;
+  }
+
+  body.mobile-compact .husky-mobile-dock {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border-radius: 20px;
+  }
+
+  body.mobile-compact .husky-mobile-dock__item {
+    min-height: 54px;
+    border-radius: 16px;
+  }
+}

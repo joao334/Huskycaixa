@@ -890,6 +890,518 @@ if (themeTrigger) {
     }
   };
 
+
+  HuskyApp.commandState = {
+    items: [],
+    filtered: [],
+    isOpen: false,
+    activeIndex: 0
+  };
+
+  HuskyApp.getQuickActions = function () {
+    return [
+      {
+        id: 'go-home',
+        icon: '🏠',
+        title: 'Ir para Início',
+        subtitle: 'Painel principal com visão geral da operação.',
+        keywords: 'home inicio dashboard painel',
+        handler: () => window.location.assign('home.html')
+      },
+      {
+        id: 'go-sales',
+        icon: '💸',
+        title: 'Nova venda / Vendas',
+        subtitle: 'Abrir o caixa rápido e registrar pedidos.',
+        keywords: 'vendas venda caixa pedido pedidos',
+        handler: () => window.location.assign('vendas.html')
+      },
+      {
+        id: 'go-products',
+        icon: '🧁',
+        title: 'Produtos',
+        subtitle: 'Gerenciar catálogo, categorias e preços.',
+        keywords: 'produtos catalogo cardapio doces',
+        handler: () => window.location.assign('produtos.html')
+      },
+      {
+        id: 'go-stock',
+        icon: '📦',
+        title: 'Estoque',
+        subtitle: 'Consultar entradas, saídas e níveis de estoque.',
+        keywords: 'estoque insumos entradas saidas',
+        handler: () => window.location.assign('estoque.html')
+      },
+      {
+        id: 'go-expenses',
+        icon: '🧾',
+        title: 'Despesas',
+        subtitle: 'Controlar custos fixos e variáveis.',
+        keywords: 'despesas gastos custos financeiro',
+        handler: () => window.location.assign('despesas.html')
+      },
+      {
+        id: 'go-reports',
+        icon: '📈',
+        title: 'Relatórios',
+        subtitle: 'Visualizar faturamento, lucro e desempenho.',
+        keywords: 'relatorios analise desempenho lucro',
+        handler: () => window.location.assign('relatorios.html')
+      },
+      {
+        id: 'go-clients',
+        icon: '👥',
+        title: 'Clientes',
+        subtitle: 'Cadastrar e acompanhar relacionamento.',
+        keywords: 'clientes cadastro recorrencia vip',
+        handler: () => window.location.assign('clientes.html')
+      },
+      {
+        id: 'go-proofs',
+        icon: '✅',
+        title: 'Comprovantes',
+        subtitle: 'Conferir comprovantes Pix e pendências.',
+        keywords: 'comprovantes pix anexos pagamento',
+        handler: () => window.location.assign('comprovantes.html')
+      },
+      {
+        id: 'go-settings',
+        icon: '⚙️',
+        title: 'Configurações',
+        subtitle: 'Personalizar empresa, backup e usuários.',
+        keywords: 'configuracoes empresa backup usuarios sistema',
+        handler: () => window.location.assign('configuracoes.html')
+      },
+      {
+        id: 'toggle-theme',
+        icon: '🌙',
+        title: 'Alternar tema',
+        subtitle: 'Trocar entre modo claro e escuro.',
+        keywords: 'tema dark claro aparencia',
+        handler: () => this.toggleThemeMode()
+      },
+      {
+        id: 'export-backup',
+        icon: '⬇️',
+        title: 'Exportar backup',
+        subtitle: 'Baixar uma cópia completa dos dados atuais.',
+        keywords: 'backup exportar baixar seguranca',
+        handler: () => this.exportBackup()
+      }
+    ];
+  };
+
+  HuskyApp.injectWorkspaceEnhancements = function () {
+    if (this.enhancementsReady) {
+      this.updateThemeButtons();
+      this.renderTopbarPills();
+      this.injectPageFooter();
+      return;
+    }
+
+    this.enhancementsReady = true;
+    this.ensureCommandPalette();
+    this.ensureFloatingButton();
+    this.bindWorkspaceShortcuts();
+    this.updateThemeButtons();
+    this.renderTopbarPills();
+    this.injectPageFooter();
+  };
+
+  HuskyApp.ensureCommandPalette = function () {
+    if (!document.body || document.getElementById('husky-command-backdrop')) return;
+    if (!document.body.classList.contains('app-page-body')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'husky-command-backdrop';
+    wrapper.className = 'husky-command-backdrop';
+    wrapper.innerHTML = `
+      <div class="husky-command" role="dialog" aria-modal="true" aria-label="Atalhos rápidos">
+        <div class="husky-command-header">
+          <input id="husky-command-input" class="husky-command-input" type="text" placeholder="Buscar páginas, ações e atalhos..." autocomplete="off" />
+        </div>
+        <div class="husky-command-meta">
+          <span>Ambiente rápido da Husky • navegue por tudo em segundos</span>
+          <span><span class="husky-kbd">Enter</span> abrir &nbsp; <span class="husky-kbd">Esc</span> fechar</span>
+        </div>
+        <div id="husky-command-list" class="husky-command-list"></div>
+      </div>
+    `;
+
+    document.body.appendChild(wrapper);
+
+    wrapper.addEventListener('click', (event) => {
+      if (event.target === wrapper) {
+        this.closeCommandPalette();
+      }
+    });
+
+    const input = wrapper.querySelector('#husky-command-input');
+    input?.addEventListener('input', () => this.renderCommandPalette(input.value));
+    input?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const first = this.commandState.filtered?.[0];
+        if (first) {
+          this.runQuickAction(first.id);
+        }
+      }
+    });
+
+    this.commandState.items = this.getQuickActions();
+    this.renderCommandPalette('');
+  };
+
+  HuskyApp.ensureFloatingButton = function () {
+    if (!document.body || !document.body.classList.contains('app-page-body')) return;
+    if (document.getElementById('husky-fab')) return;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'husky-fab';
+    button.className = 'husky-fab';
+    button.textContent = 'Atalhos';
+    button.setAttribute('aria-label', 'Abrir atalhos rápidos');
+    button.addEventListener('click', () => this.openCommandPalette());
+    document.body.appendChild(button);
+  };
+
+  HuskyApp.bindWorkspaceShortcuts = function () {
+    if (this.shortcutsBound) return;
+    this.shortcutsBound = true;
+
+    document.addEventListener('keydown', (event) => {
+      const target = event.target;
+      const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable;
+
+      if ((event.ctrlKey || event.metaKey) && String(event.key).toLowerCase() === 'k') {
+        event.preventDefault();
+        this.toggleCommandPalette();
+        return;
+      }
+
+      if (this.commandState.isOpen && event.key === 'Escape') {
+        event.preventDefault();
+        this.closeCommandPalette();
+        return;
+      }
+
+      if (!isTyping && event.key === '?' && document.body.classList.contains('app-page-body')) {
+        event.preventDefault();
+        this.openCommandPalette();
+      }
+    });
+  };
+
+  HuskyApp.renderCommandPalette = function (query = '') {
+    const list = document.getElementById('husky-command-list');
+    if (!list) return;
+
+    const safeQuery = this.normalizeText(query || '');
+    const items = this.commandState.items || this.getQuickActions();
+    const filtered = !safeQuery
+      ? items
+      : items.filter((item) => {
+          const haystack = `${item.title} ${item.subtitle} ${item.keywords || ''}`;
+          return this.includesText(haystack, safeQuery);
+        });
+
+    this.commandState.filtered = filtered;
+
+    if (!filtered.length) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <strong>Nenhum atalho encontrado.</strong>
+          <p>Tente buscar por vendas, estoque, clientes, relatórios ou backup.</p>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = filtered
+      .map(
+        (item) => `
+          <button type="button" class="husky-command-item" data-command-id="${item.id}">
+            <span class="husky-command-icon">${item.icon}</span>
+            <span class="husky-command-copy">
+              <strong>${item.title}</strong>
+              <span>${item.subtitle}</span>
+            </span>
+            <span class="husky-kbd">Enter</span>
+          </button>
+        `
+      )
+      .join('');
+
+    list.querySelectorAll('[data-command-id]').forEach((button) => {
+      button.addEventListener('click', () => this.runQuickAction(button.getAttribute('data-command-id')));
+    });
+  };
+
+  HuskyApp.runQuickAction = function (id) {
+    const items = this.commandState.items || this.getQuickActions();
+    const action = items.find((item) => item.id === id);
+    if (!action) return;
+
+    this.closeCommandPalette();
+    try {
+      action.handler();
+    } catch (error) {
+      console.error('[HuskyApp] erro ao executar atalho', error);
+      this.showToast('Não foi possível executar este atalho.', 'danger');
+    }
+  };
+
+  HuskyApp.openCommandPalette = function () {
+    const backdrop = document.getElementById('husky-command-backdrop');
+    if (!backdrop) return;
+    backdrop.classList.add('is-open');
+    this.commandState.isOpen = true;
+    const input = document.getElementById('husky-command-input');
+    if (input) {
+      input.value = '';
+      this.renderCommandPalette('');
+      setTimeout(() => input.focus(), 30);
+    }
+  };
+
+  HuskyApp.closeCommandPalette = function () {
+    const backdrop = document.getElementById('husky-command-backdrop');
+    if (!backdrop) return;
+    backdrop.classList.remove('is-open');
+    this.commandState.isOpen = false;
+  };
+
+  HuskyApp.toggleCommandPalette = function () {
+    if (this.commandState.isOpen) {
+      this.closeCommandPalette();
+    } else {
+      this.openCommandPalette();
+    }
+  };
+
+  HuskyApp.updateThemeButtons = function () {
+    const isDark = (this.getSettings?.().visual?.themeMode || 'husky-default') === 'dark';
+    document.querySelectorAll('#btn-toggle-theme, .theme-toggle-btn').forEach((button) => {
+      button.textContent = isDark ? 'Tema claro' : 'Tema escuro';
+      button.setAttribute('aria-label', isDark ? 'Trocar para tema claro' : 'Trocar para tema escuro');
+      button.title = 'Alternar aparência';
+    });
+  };
+
+  HuskyApp.renderTopbarPills = function () {
+    if (!document.body.classList.contains('app-page-body')) return;
+    const right = document.querySelector('.topbar-right');
+    if (!right) return;
+
+    let pills = document.getElementById('husky-topbar-pills');
+    if (!pills) {
+      pills = document.createElement('div');
+      pills.id = 'husky-topbar-pills';
+      pills.className = 'husky-topbar-pills';
+      right.prepend(pills);
+    }
+
+    const isDark = (this.getSettings?.().visual?.themeMode || 'husky-default') === 'dark';
+    const today = new Date();
+    const formatted = today.toLocaleDateString('pt-BR', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short'
+    });
+
+    pills.innerHTML = `
+      <span class="husky-topbar-pill">📅 ${formatted}</span>
+      <span class="husky-topbar-pill">⌘ Ctrl + K</span>
+      <span class="husky-topbar-pill">${isDark ? '🌙 Escuro' : '☀️ Claro'}</span>
+    `;
+  };
+
+  HuskyApp.injectPageFooter = function () {
+    if (!document.body.classList.contains('app-page-body')) return;
+    const contentArea = document.querySelector('.content-area');
+    if (!contentArea) return;
+
+    let footer = document.getElementById('husky-page-footer');
+    if (!footer) {
+      footer = document.createElement('div');
+      footer.id = 'husky-page-footer';
+      footer.className = 'husky-page-footer';
+      contentArea.appendChild(footer);
+    }
+
+    footer.textContent = `${APP_NAME} • versão ${APP_VERSION} • ambiente elegante e rápido`;
+  };
+
+  const __huskyOriginalInit = HuskyApp.init.bind(HuskyApp);
+  HuskyApp.init = function () {
+    __huskyOriginalInit();
+    this.injectWorkspaceEnhancements();
+  };
+
+  const __huskyOriginalRefreshShell = HuskyApp.refreshShell.bind(HuskyApp);
+  HuskyApp.refreshShell = function () {
+    __huskyOriginalRefreshShell();
+    this.injectWorkspaceEnhancements();
+  };
+
+  const __huskyOriginalLogout = HuskyApp.logout.bind(HuskyApp);
+  HuskyApp.logout = async function () {
+    try {
+      localStorage.removeItem('husky_local_auth_session');
+    } catch (error) {
+      console.error('[HuskyApp] erro ao limpar sessão local', error);
+    }
+
+    return __huskyOriginalLogout();
+  };
+
+
+
+  HuskyApp.getCurrentPageKey = function () {
+    const currentFile = window.location.pathname.split('/').pop() || 'index.html';
+    return currentFile.replace(/\.html$/i, '') || 'index';
+  };
+
+  HuskyApp.updateThemeMeta = function () {
+    const isDark = (this.getSettings?.().visual?.themeMode || 'husky-default') === 'dark';
+    const themeColor = isDark ? '#111b27' : '#2f61a5';
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute('content', themeColor);
+    });
+    if (document.documentElement) {
+      document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    }
+  };
+
+  HuskyApp.getMobilePrimaryActionConfig = function () {
+    const page = this.getCurrentPageKey();
+    const map = {
+      home: { label: 'Nova venda', icon: '＋', href: 'vendas.html' },
+      vendas: { label: 'Nova venda', icon: '＋', selector: '#btn-new-sale-top, #btn-save-sale' },
+      produtos: { label: 'Novo produto', icon: '＋', selector: '#btn-new-product-top, #btn-save-product' },
+      estoque: { label: 'Movimentar estoque', icon: '＋', selector: '#btn-new-stock-movement-top, #btn-save-stock-movement' },
+      despesas: { label: 'Nova despesa', icon: '＋', selector: '#btn-new-expense-top, #btn-save-expense' },
+      clientes: { label: 'Novo cliente', icon: '＋', selector: '#btn-new-client-top, #btn-save-client' },
+      comprovantes: { label: 'Novo comprovante', icon: '＋', selector: '#btn-new-proof-top, #btn-save-proof' },
+      relatorios: { label: 'Gerar relatório', icon: '▣', selector: '#btn-generate-report, #btn-generate-report-hero' },
+      configuracoes: { label: 'Salvar ajustes', icon: '✓', selector: '#btn-save-all-settings-top, #btn-save-all-settings-hero' }
+    };
+    return map[page] || { label: 'Ir para início', icon: '⌂', href: 'home.html' };
+  };
+
+  HuskyApp.ensureMobileDock = function () {
+    if (!document.body || !document.body.classList.contains('app-page-body')) return;
+
+    let dock = document.getElementById('husky-mobile-dock');
+    if (!dock) {
+      dock = document.createElement('nav');
+      dock.id = 'husky-mobile-dock';
+      dock.className = 'husky-mobile-dock';
+      dock.setAttribute('aria-label', 'Navegação rápida mobile');
+      document.body.appendChild(dock);
+    }
+
+    const current = this.getCurrentPageKey();
+    const items = [
+      { href: 'home.html', icon: '🏠', label: 'Início', active: current === 'home' },
+      { href: 'vendas.html', icon: '💸', label: 'Vendas', active: current === 'vendas' },
+      { href: 'produtos.html', icon: '🧁', label: 'Produtos', active: current === 'produtos' },
+      { action: 'menu', icon: '☰', label: 'Menu', active: false }
+    ];
+
+    dock.innerHTML = `
+      <div class="husky-mobile-dock__grid">
+        ${items
+          .map((item) => {
+            if (item.action === 'menu') {
+              return `
+                <button type="button" class="husky-mobile-dock__item ${item.active ? 'is-active' : ''}" data-mobile-dock-action="menu">
+                  <span>${item.icon}</span>
+                  <span>${item.label}</span>
+                </button>
+              `;
+            }
+            return `
+              <a href="${item.href}" class="husky-mobile-dock__item ${item.active ? 'is-active' : ''}">
+                <span>${item.icon}</span>
+                <span>${item.label}</span>
+              </a>
+            `;
+          })
+          .join('')}
+      </div>
+    `;
+
+    dock.querySelector('[data-mobile-dock-action="menu"]')?.addEventListener('click', (event) => {
+      event.preventDefault();
+      this.openSidebar();
+    });
+
+    let primary = document.getElementById('husky-mobile-primary');
+    if (!primary) {
+      primary = document.createElement('button');
+      primary.type = 'button';
+      primary.id = 'husky-mobile-primary';
+      primary.setAttribute('aria-label', 'Ação principal desta página');
+      document.body.appendChild(primary);
+    }
+
+    const config = this.getMobilePrimaryActionConfig();
+    primary.innerHTML = `${config.icon} ${config.label}`;
+    primary.onclick = (event) => {
+      event.preventDefault();
+      if (config.selector) {
+        const target = document.querySelector(config.selector);
+        if (target) {
+          target.click();
+          if (typeof target.scrollIntoView === 'function') {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return;
+        }
+      }
+      if (config.href) {
+        window.location.assign(config.href);
+      }
+    };
+  };
+
+  HuskyApp.syncAdaptiveLayout = function () {
+    if (!document.body) return;
+    const isMobile = window.innerWidth <= 992;
+    const isCompact = window.innerWidth <= 768;
+    document.body.dataset.page = this.getCurrentPageKey();
+    document.body.classList.toggle('is-mobile-shell', isMobile);
+    document.body.classList.toggle('mobile-compact', isCompact);
+    this.updateThemeMeta();
+    this.ensureMobileDock();
+  };
+
+  const __huskyOriginalApplySettingsToUI = HuskyApp.applySettingsToUI.bind(HuskyApp);
+  HuskyApp.applySettingsToUI = function () {
+    __huskyOriginalApplySettingsToUI();
+    this.updateThemeMeta();
+    this.syncAdaptiveLayout();
+  };
+
+  const __huskyOriginalUpdateThemeButtons = HuskyApp.updateThemeButtons.bind(HuskyApp);
+  HuskyApp.updateThemeButtons = function () {
+    __huskyOriginalUpdateThemeButtons();
+    const isDark = (this.getSettings?.().visual?.themeMode || 'husky-default') === 'dark';
+    const compact = window.innerWidth <= 768;
+    document.querySelectorAll('#btn-toggle-theme, .theme-toggle-btn').forEach((button) => {
+      button.textContent = compact ? (isDark ? '☀️ Claro' : '🌙 Escuro') : (isDark ? 'Tema claro' : 'Tema escuro');
+    });
+  };
+
+  const __huskyOriginalBindGlobalEvents = HuskyApp.bindGlobalEvents.bind(HuskyApp);
+  HuskyApp.bindGlobalEvents = function () {
+    __huskyOriginalBindGlobalEvents();
+    window.addEventListener('resize', () => this.syncAdaptiveLayout());
+    window.addEventListener('orientationchange', () => this.syncAdaptiveLayout());
+  };
+
   window.HuskyApp = HuskyApp;
   document.addEventListener('DOMContentLoaded', () => HuskyApp.init());
 })();
