@@ -7,6 +7,9 @@
   const LOCAL_USERS_KEY = 'husky_local_auth_users';
   const LOCAL_SESSION_KEY = 'husky_local_auth_session';
   const AUTH_MODE = String(window.HUSKY_AUTH_MODE || 'local').toLowerCase();
+  const REDIRECT_GUARD_KEY = 'husky_redirect_guard';
+  const REDIRECT_GUARD_WINDOW_MS = 1500;
+
 
   const LOCAL_DEFAULT_ADMIN = {
     id: crypto.randomUUID(),
@@ -96,6 +99,50 @@
       return LOGIN_PAGE;
     },
 
+    getCurrentFile() {
+      return window.location.pathname.split('/').pop() || LOGIN_PAGE;
+    },
+
+    shouldThrottleRedirect(targetPage) {
+      try {
+        const raw = sessionStorage.getItem(REDIRECT_GUARD_KEY);
+        const payload = raw ? JSON.parse(raw) : null;
+        if (!payload?.target || !payload?.at) return false;
+        return payload.target === targetPage && Date.now() - Number(payload.at) < REDIRECT_GUARD_WINDOW_MS;
+      } catch (_error) {
+        return false;
+      }
+    },
+
+    rememberRedirect(targetPage) {
+      try {
+        sessionStorage.setItem(REDIRECT_GUARD_KEY, JSON.stringify({ target: targetPage, at: Date.now() }));
+      } catch (_error) {}
+    },
+
+    clearRedirectGuard() {
+      try {
+        sessionStorage.removeItem(REDIRECT_GUARD_KEY);
+      } catch (_error) {}
+    },
+
+    safeRedirect(targetPage, replace = true) {
+      const currentFile = this.getCurrentFile();
+      if (!targetPage || currentFile === targetPage) return;
+      if (this.shouldThrottleRedirect(targetPage)) {
+        console.warn('[Auth] redirecionamento repetido bloqueado para', targetPage);
+        return;
+      }
+
+      this.rememberRedirect(targetPage);
+
+      if (replace) {
+        window.location.replace(targetPage);
+      } else {
+        window.location.assign(targetPage);
+      }
+    },
+
     async bootstrapSession() {
       if (this.localMode) {
         this.bootstrapLocalSession();
@@ -154,6 +201,7 @@
         ? this.createPublicProfileFromLocal(user)
         : await this.ensureUserProfile(user);
 
+      this.clearRedirectGuard();
       this.persistCurrentUser(profile);
 
       if (this.localMode) {
@@ -161,16 +209,19 @@
       }
 
       if (this.isLoginPage() && allowRedirect) {
-        window.location.replace(this.getHomePage());
+        this.safeRedirect(this.getHomePage());
       }
     },
 
     handleNoSession() {
       this.persistCurrentUser(null);
 
-      if (!this.isLoginPage()) {
-        window.location.replace(this.getLoginPage());
+      if (this.isLoginPage()) {
+        this.clearRedirectGuard();
+        return;
       }
+
+      this.safeRedirect(this.getLoginPage());
     },
 
     async ensureUserProfile(user) {
@@ -301,6 +352,7 @@
 
     bindLoginForm() {
       const form = document.getElementById('login-form');
+      const loginButton = document.getElementById('btn-login');
       if (!form) return;
 
       const submitLogin = async (event) => {
@@ -311,6 +363,7 @@
 
         if (this.isSubmittingLogin) return;
         this.isSubmittingLogin = true;
+        if (loginButton) loginButton.disabled = true;
 
         try {
           const emailInput = document.getElementById('login-email');
@@ -381,14 +434,17 @@
           this.notify('Não foi possível realizar o login.', 'danger');
         } finally {
           this.isSubmittingLogin = false;
+          if (loginButton) loginButton.disabled = false;
         }
       };
 
       form.addEventListener('submit', submitLogin);
+      loginButton?.addEventListener('click', submitLogin);
     },
 
     bindRegisterForm() {
       const registerForm = document.getElementById('register-form');
+      const registerButton = document.getElementById('btn-create-account');
       if (!registerForm) return;
 
       const submitRegister = async (event) => {
@@ -399,6 +455,7 @@
 
         if (this.isSubmittingRegister) return;
         this.isSubmittingRegister = true;
+        if (registerButton) registerButton.disabled = true;
 
         try {
           const nameInput = document.getElementById('register-name');
@@ -464,7 +521,7 @@
             this.notify('Login criado com sucesso.', 'success');
 
             setTimeout(() => {
-              window.location.replace(this.getHomePage());
+              this.safeRedirect(this.getHomePage());
             }, 180);
             return;
           }
@@ -480,10 +537,12 @@
           this.notify('Não foi possível criar o login.', 'danger');
         } finally {
           this.isSubmittingRegister = false;
+          if (registerButton) registerButton.disabled = false;
         }
       };
 
       registerForm.addEventListener('submit', submitRegister);
+      registerButton?.addEventListener('click', submitRegister);
     },
 
     bindForgotPassword() {
@@ -543,7 +602,7 @@
               localStorage.removeItem(LOCAL_SESSION_KEY);
               localStorage.removeItem(REMEMBER_KEY);
               this.persistCurrentUser(null);
-              window.location.replace(this.getLoginPage());
+              this.safeRedirect(this.getLoginPage());
               return;
             }
 
@@ -555,7 +614,7 @@
             }
 
             this.persistCurrentUser(null);
-            window.location.replace(this.getLoginPage());
+            this.safeRedirect(this.getLoginPage());
           } catch (error) {
             console.error('[Auth] erro ao sair', error);
             this.notify('Não foi possível encerrar a sessão.', 'danger');
@@ -783,7 +842,7 @@
         this.persistCurrentUser(this.createPublicProfileFromLocal(user));
 
         if (this.isLoginPage()) {
-          window.location.replace(this.getHomePage());
+          this.safeRedirect(this.getHomePage());
         }
       } catch (error) {
         console.error('[Auth] erro ao iniciar sessão local', error);

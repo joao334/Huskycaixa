@@ -14,6 +14,16 @@
 
     async init() {
       this.app = window.HuskyApp || null;
+      const authMode = String(window.HUSKY_AUTH_MODE || 'local').toLowerCase();
+
+      if (authMode !== 'supabase') {
+        if (this.app && typeof this.setCloudStatus === 'function') {
+          this.setCloudStatus(false, null);
+        }
+        console.info('[Cloud Sync] Sincronização em nuvem ignorada: modo local ativo.');
+        return;
+      }
+
       this.supabase = await this.waitForSupabase();
 
       if (!this.app || !this.supabase) {
