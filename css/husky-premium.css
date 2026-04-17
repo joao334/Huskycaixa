@@ -1116,8 +1116,8 @@ html[data-theme="dark"] .husky-install-shortcut{
 }
 
 .husky-ingredient-head .husky-ingredient-icon {
-  width: 46px;
-  height: 46px;
+  width: 36px;
+  height: 36px;
   border-radius: 16px;
   display: grid;
   place-items: center;
@@ -1126,8 +1126,8 @@ html[data-theme="dark"] .husky-install-shortcut{
 }
 
 .husky-ingredient-head .husky-ingredient-icon img {
-  width: 26px;
-  height: 26px;
+  width: 18px;
+  height: 18px;
 }
 
 .husky-ingredient-head h4 {
@@ -1151,8 +1151,8 @@ html[data-theme="dark"] .husky-install-shortcut{
 }
 
 .husky-form-tip img {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 
 .husky-ingredient-preview {
@@ -1174,8 +1174,8 @@ html[data-theme="dark"] .husky-install-shortcut{
 }
 
 .husky-preview-chip img {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 
 .expense-inline-note {
@@ -1198,4 +1198,39 @@ body[data-theme-mode="dark"] .husky-ingredient-head .husky-ingredient-icon {
 body[data-theme-mode="dark"] .husky-preview-chip {
   background: rgba(143, 182, 235, 0.12);
   color: #f5f1eb;
+}
+
+
+/* Ajuste fino dos ícones da área de despesas */
+.husky-ingredient-head {
+  gap: 10px;
+}
+
+.husky-preview-chip {
+  padding: 8px 10px;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.husky-form-tip {
+  font-size: 11px;
+}
+
+@media (max-width: 768px) {
+  .husky-ingredient-head .husky-ingredient-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+  }
+
+  .husky-ingredient-head .husky-ingredient-icon img {
+    width: 16px;
+    height: 16px;
+  }
+
+  .husky-preview-chip img,
+  .husky-form-tip img {
+    width: 11px;
+    height: 11px;
+  }
 }
