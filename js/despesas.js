@@ -39,6 +39,12 @@
         expenseStatus: document.getElementById('expense-status'),
         expenseTitle: document.getElementById('expense-title'),
         expenseCategory: document.getElementById('expense-category'),
+        expenseItemName: document.getElementById('expense-item-name'),
+        expenseItemQuantity: document.getElementById('expense-item-quantity'),
+        expenseItemUnit: document.getElementById('expense-item-unit'),
+        expenseItemUnitValue: document.getElementById('expense-item-unit-value'),
+        expenseItemPreview: document.getElementById('expense-item-preview'),
+        expenseItemTotalPreview: document.getElementById('expense-item-total-preview'),
         expenseValue: document.getElementById('expense-value'),
         expensePaymentMethod: document.getElementById('expense-payment-method'),
         expenseDueDate: document.getElementById('expense-due-date'),
@@ -105,6 +111,10 @@
         this.refs.expenseStatus,
         this.refs.expenseTitle,
         this.refs.expenseCategory,
+        this.refs.expenseItemName,
+        this.refs.expenseItemQuantity,
+        this.refs.expenseItemUnit,
+        this.refs.expenseItemUnitValue,
         this.refs.expenseValue,
         this.refs.expensePaymentMethod,
         this.refs.expenseDueDate,
@@ -117,6 +127,14 @@
         field?.addEventListener('input', () => this.updateLiveSummary());
         field?.addEventListener('change', () => this.updateLiveSummary());
       });
+
+      [this.refs.expenseItemQuantity, this.refs.expenseItemUnitValue].forEach((field) => {
+        field?.addEventListener('input', () => this.updateCalculatedExpenseValue());
+        field?.addEventListener('change', () => this.updateCalculatedExpenseValue());
+      });
+
+      this.refs.expenseItemName?.addEventListener('input', () => this.updateItemPreview());
+      this.refs.expenseItemUnit?.addEventListener('change', () => this.updateItemPreview());
 
       this.refs.btnFilterExpenses?.addEventListener('click', () => this.applyFilters());
       this.refs.btnClearExpensesFilter?.addEventListener('click', () => this.clearFilters());
@@ -256,6 +274,10 @@
       this.refs.expenseTime.value = this.currentTimeHHMM();
       this.refs.expenseStatus.value = 'Pago';
       this.refs.expenseCategory.value = 'Compras';
+      this.refs.expenseItemName.value = '';
+      this.refs.expenseItemQuantity.value = '';
+      this.refs.expenseItemUnit.value = 'un';
+      this.refs.expenseItemUnitValue.value = '';
       this.refs.expensePaymentMethod.value = 'Pix';
       this.refs.expenseInstallments.value = 1;
       this.refs.expenseDueDate.value = this.todayISO();
@@ -266,6 +288,7 @@
 
       this.updateModeTag('Novo lançamento');
       this.updateAttachmentPreview();
+      this.updateItemPreview();
       this.updateLiveSummary();
 
       if (!skipScroll) {
@@ -331,6 +354,10 @@
         status: this.refs.expenseStatus.value,
         description: this.refs.expenseTitle.value.trim(),
         category: this.refs.expenseCategory.value,
+        itemName: this.refs.expenseItemName.value.trim(),
+        itemQuantity: this.toNumber(this.refs.expenseItemQuantity.value || 0),
+        itemUnit: this.refs.expenseItemUnit.value || 'un',
+        itemUnitValue: this.toNumber(this.refs.expenseItemUnitValue.value || 0),
         value: this.toNumber(this.refs.expenseValue.value || 0),
         paymentMethod: this.refs.expensePaymentMethod.value,
         dueDate: this.refs.expenseDueDate.value || this.refs.expenseDate.value,
@@ -445,6 +472,35 @@
       reader.readAsDataURL(file);
     },
 
+
+    updateCalculatedExpenseValue() {
+      const quantity = this.toNumber(this.refs.expenseItemQuantity?.value || 0);
+      const unitValue = this.toNumber(this.refs.expenseItemUnitValue?.value || 0);
+
+      if (quantity > 0 && unitValue > 0 && this.refs.expenseValue) {
+        this.refs.expenseValue.value = (quantity * unitValue).toFixed(2);
+      }
+
+      this.updateItemPreview();
+      this.updateLiveSummary();
+    },
+
+    updateItemPreview() {
+      if (!this.refs.expenseItemPreview || !this.refs.expenseItemTotalPreview) return;
+
+      const name = this.refs.expenseItemName?.value.trim() || '';
+      const quantity = this.toNumber(this.refs.expenseItemQuantity?.value || 0);
+      const unit = this.refs.expenseItemUnit?.value || 'un';
+      const unitValue = this.toNumber(this.refs.expenseItemUnitValue?.value || 0);
+      const total = quantity * unitValue;
+
+      this.refs.expenseItemPreview.textContent = name
+        ? `${name}${quantity > 0 ? ` • ${quantity} ${unit}` : ''}`
+        : 'Nenhum item informado';
+
+      this.refs.expenseItemTotalPreview.textContent = this.formatCurrency(total);
+    },
+
     updateAttachmentPreview() {
       if (!this.refs.expenseAttachmentPreview) return;
 
@@ -530,7 +586,9 @@
             expense.supplier,
             expense.reference,
             expense.note,
-            expense.category
+            expense.category,
+            expense.itemName,
+            expense.itemUnit
           ].join(' ');
 
           const matchesSearch = !this.filters.search || this.includesText(haystack, this.filters.search);
@@ -656,7 +714,10 @@
       this.refs.expensesTableBody.innerHTML = expenses.map((expense) => `
         <tr>
           <td>${this.formatDate(expense.date)}</td>
-          <td>${this.escapeHtml(expense.description)}</td>
+          <td>
+            <div><strong>${this.escapeHtml(expense.description)}</strong></div>
+            ${expense.itemName ? `<small>${this.escapeHtml(expense.itemName)}${expense.itemQuantity ? ` • ${this.escapeHtml(String(expense.itemQuantity))} ${this.escapeHtml(expense.itemUnit || 'un')}` : ''}${expense.itemUnitValue ? ` • ${this.formatCurrency(expense.itemUnitValue)}/un` : ''}</small>` : ''}
+          </td>
           <td>${this.escapeHtml(expense.category || '-')}</td>
           <td>${this.escapeHtml(expense.supplier || '-')}</td>
           <td>${this.escapeHtml(expense.paymentMethod || '-')}</td>
@@ -691,7 +752,10 @@
 
       this.refs.recurringExpensesTableBody.innerHTML = recurring.map((expense) => `
         <tr>
-          <td>${this.escapeHtml(expense.description)}</td>
+          <td>
+            <div><strong>${this.escapeHtml(expense.description)}</strong></div>
+            ${expense.itemName ? `<small>${this.escapeHtml(expense.itemName)}${expense.itemQuantity ? ` • ${this.escapeHtml(String(expense.itemQuantity))} ${this.escapeHtml(expense.itemUnit || 'un')}` : ''}${expense.itemUnitValue ? ` • ${this.formatCurrency(expense.itemUnitValue)}/un` : ''}</small>` : ''}
+          </td>
           <td>${this.escapeHtml(expense.category || '-')}</td>
           <td>${this.formatCurrency(expense.value || 0)}</td>
           <td>${expense.dueDate ? this.formatDate(expense.dueDate) : '-'}</td>
@@ -812,6 +876,7 @@
 
       this.updateModeTag('Editando despesa');
       this.updateAttachmentPreview();
+      this.updateItemPreview();
       this.updateLiveSummary();
 
       if (scrollToTop) {

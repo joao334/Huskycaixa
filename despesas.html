@@ -199,10 +199,69 @@
                 </div>
               </div>
 
+              <section class="husky-ingredient-card">
+                <div class="husky-ingredient-head">
+                  <span class="husky-ingredient-icon" aria-hidden="true">
+                    <img src="assets/img/icons/cupcake.svg" alt="" />
+                  </span>
+                  <div>
+                    <h4>Ingredientes / produto da despesa</h4>
+                    <p>Use esta área para lançar insumos como leite condensado, chocolate, embalagens ou outros itens.</p>
+                  </div>
+                </div>
+
+                <div class="form-grid cols-4">
+                  <div class="form-group">
+                    <label for="expense-item-name">Produto / insumo</label>
+                    <input type="text" id="expense-item-name" placeholder="Ex.: leite condensado" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="expense-item-quantity">Quantidade</label>
+                    <input type="number" id="expense-item-quantity" min="0" step="0.01" placeholder="Ex.: 3" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="expense-item-unit">Unidade</label>
+                    <select id="expense-item-unit">
+                      <option value="un">un</option>
+                      <option value="kg">kg</option>
+                      <option value="g">g</option>
+                      <option value="L">L</option>
+                      <option value="ml">ml</option>
+                      <option value="caixa">caixa</option>
+                      <option value="pacote">pacote</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="expense-item-unit-value">Valor unitário</label>
+                    <input type="number" id="expense-item-unit-value" step="0.01" min="0" placeholder="0,00" />
+                  </div>
+                </div>
+
+                <div class="husky-form-tip">
+                  <img src="assets/img/icons/paw.svg" alt="" />
+                  <span>Se informar quantidade e valor unitário, o total abaixo é calculado automaticamente.</span>
+                </div>
+
+                <div class="husky-ingredient-preview" aria-live="polite">
+                  <span class="husky-preview-chip">
+                    <img src="assets/img/icons/husky-head.svg" alt="" />
+                    <span id="expense-item-preview">Nenhum item informado</span>
+                  </span>
+                  <span class="husky-preview-chip">
+                    <img src="assets/img/icons/paw.svg" alt="" />
+                    <span>Total estimado: <strong id="expense-item-total-preview">R$ 0,00</strong></span>
+                  </span>
+                </div>
+              </section>
+
               <div class="form-grid cols-4">
                 <div class="form-group">
-                  <label for="expense-value">Valor</label>
+                  <label for="expense-value">Valor total</label>
                   <input type="number" id="expense-value" step="0.01" min="0" placeholder="0,00" />
+                  <small class="expense-inline-note">Você pode preencher manualmente ou usar o cálculo automático do item acima.</small>
                 </div>
 
                 <div class="form-group">

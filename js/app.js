@@ -1357,6 +1357,10 @@ if (themeTrigger) {
     return map[page] || { label: 'Ir para início', icon: '⌂', href: 'home.html' };
   };
 
+  HuskyApp.getUiIcon = function (name, alt = '') {
+    return `<img src="assets/img/icons/${name}.svg" alt="${alt}" class="husky-ui-icon" />`;
+  };
+
   HuskyApp.ensureMobileDock = function () {
     if (!document.body || !document.body.classList.contains('app-page-body')) return;
 
@@ -1371,9 +1375,9 @@ if (themeTrigger) {
 
     const current = this.getCurrentPageKey();
     const items = [
-      { href: 'home.html', icon: '🏠', label: 'Início', active: current === 'home' },
-      { href: 'vendas.html', icon: '💸', label: 'Vendas', active: current === 'vendas' },
-      { href: 'produtos.html', icon: '🧁', label: 'Produtos', active: current === 'produtos' },
+      { href: 'home.html', icon: this.getUiIcon('home', 'Início'), label: 'Início', active: current === 'home' },
+      { href: 'vendas.html', icon: this.getUiIcon('sales', 'Vendas'), label: 'Vendas', active: current === 'vendas' },
+      { href: 'produtos.html', icon: this.getUiIcon('cupcake', 'Produtos'), label: 'Produtos', active: current === 'produtos' },
       { action: 'menu', icon: '☰', label: 'Menu', active: false }
     ];
 
@@ -1384,7 +1388,7 @@ if (themeTrigger) {
             if (item.action === 'menu') {
               return `
                 <button type="button" class="husky-mobile-dock__item ${item.active ? 'is-active' : ''}" data-mobile-dock-action="menu">
-                  <span>${item.icon}</span>
+                  <span class="dock-icon">${item.icon}</span>
                   <span>${item.label}</span>
                 </button>
               `;

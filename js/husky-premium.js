@@ -1,25 +1,29 @@
 (() => {
   'use strict';
 
+  function icon(name, alt = '') {
+    return `<img src="assets/img/icons/${name}.svg" alt="${alt}" class="husky-ui-icon" />`;
+  }
+
   const NAV_META = {
-    'home.html': { icon: '🏠', label: 'Início', sub: 'Visão geral', group: 'principal' },
-    'vendas.html': { icon: '💸', label: 'Vendas', sub: 'Caixa rápido', group: 'operacao' },
-    'produtos.html': { icon: '🧁', label: 'Produtos', sub: 'Catálogo', group: 'operacao' },
-    'estoque.html': { icon: '📦', label: 'Estoque', sub: 'Entradas e saídas', group: 'operacao' },
-    'despesas.html': { icon: '🧾', label: 'Despesas', sub: 'Custos', group: 'gestao' },
-    'relatorios.html': { icon: '📈', label: 'Relatórios', sub: 'Resultados', group: 'gestao' },
-    'clientes.html': { icon: '👥', label: 'Clientes', sub: 'Relacionamento', group: 'gestao' },
-    'comprovantes.html': { icon: '✅', label: 'Comprovantes', sub: 'Pix e anexos', group: 'gestao' },
-    'configuracoes.html': { icon: '⚙️', label: 'Configurações', sub: 'Ajustes', group: 'sistema' }
+    'home.html': { icon: icon('home', 'Início'), label: 'Início', sub: 'Visão geral', group: 'principal' },
+    'vendas.html': { icon: icon('sales', 'Vendas'), label: 'Vendas', sub: 'Caixa rápido', group: 'operacao' },
+    'produtos.html': { icon: icon('cupcake', 'Produtos'), label: 'Produtos', sub: 'Catálogo', group: 'operacao' },
+    'estoque.html': { icon: icon('box', 'Estoque'), label: 'Estoque', sub: 'Entradas e saídas', group: 'operacao' },
+    'despesas.html': { icon: icon('receipt', 'Despesas'), label: 'Despesas', sub: 'Custos', group: 'gestao' },
+    'relatorios.html': { icon: icon('chart', 'Relatórios'), label: 'Relatórios', sub: 'Resultados', group: 'gestao' },
+    'clientes.html': { icon: icon('users', 'Clientes'), label: 'Clientes', sub: 'Relacionamento', group: 'gestao' },
+    'comprovantes.html': { icon: icon('proof', 'Comprovantes'), label: 'Comprovantes', sub: 'Pix e anexos', group: 'gestao' },
+    'configuracoes.html': { icon: icon('settings', 'Configurações'), label: 'Configurações', sub: 'Ajustes', group: 'sistema' }
   };
 
   const WORKSPACE_ITEMS = [
-    { href: 'home.html', icon: '🏠', title: 'Painel', sub: 'Hoje' },
-    { href: 'vendas.html', icon: '💸', title: 'Vendas', sub: 'Pedidos' },
-    { href: 'produtos.html', icon: '🧁', title: 'Produtos', sub: 'Cardápio' },
-    { href: 'estoque.html', icon: '📦', title: 'Estoque', sub: 'Controle' },
-    { href: 'relatorios.html', icon: '📈', title: 'Relatórios', sub: 'Análises' },
-    { href: 'clientes.html', icon: '👥', title: 'Clientes', sub: 'Contato' }
+    { href: 'home.html', icon: icon('home', 'Início'), title: 'Painel', sub: 'Hoje' },
+    { href: 'vendas.html', icon: icon('sales', 'Vendas'), title: 'Vendas', sub: 'Pedidos' },
+    { href: 'produtos.html', icon: icon('cupcake', 'Produtos'), title: 'Produtos', sub: 'Cardápio' },
+    { href: 'estoque.html', icon: icon('box', 'Estoque'), title: 'Estoque', sub: 'Controle' },
+    { href: 'relatorios.html', icon: icon('chart', 'Relatórios'), title: 'Relatórios', sub: 'Análises' },
+    { href: 'clientes.html', icon: icon('users', 'Clientes'), title: 'Clientes', sub: 'Contato' }
   ];
 
   function onReady(fn) {
@@ -164,7 +168,7 @@
       <div class="husky-workspace-strip__tabs">
         ${WORKSPACE_ITEMS.map((item) => `
           <a href="${item.href}" class="husky-workspace-tab ${activeFile === item.href ? 'is-active' : ''}">
-            <span>${item.icon}</span>
+            <span class="husky-workspace-tab__icon">${item.icon}</span>
             <strong>${item.title}</strong>
             <small>${item.sub}</small>
           </a>
