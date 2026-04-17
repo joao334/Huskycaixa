@@ -274,10 +274,10 @@
       this.refs.expenseTime.value = this.currentTimeHHMM();
       this.refs.expenseStatus.value = 'Pago';
       this.refs.expenseCategory.value = 'Compras';
-      this.refs.expenseItemName.value = '';
-      this.refs.expenseItemQuantity.value = '';
-      this.refs.expenseItemUnit.value = 'un';
-      this.refs.expenseItemUnitValue.value = '';
+      if (this.refs.expenseItemName) this.refs.expenseItemName.value = '';
+      if (this.refs.expenseItemQuantity) this.refs.expenseItemQuantity.value = '';
+      if (this.refs.expenseItemUnit) this.refs.expenseItemUnit.value = 'un';
+      if (this.refs.expenseItemUnitValue) this.refs.expenseItemUnitValue.value = '';
       this.refs.expensePaymentMethod.value = 'Pix';
       this.refs.expenseInstallments.value = 1;
       this.refs.expenseDueDate.value = this.todayISO();
@@ -354,10 +354,10 @@
         status: this.refs.expenseStatus.value,
         description: this.refs.expenseTitle.value.trim(),
         category: this.refs.expenseCategory.value,
-        itemName: this.refs.expenseItemName.value.trim(),
-        itemQuantity: this.toNumber(this.refs.expenseItemQuantity.value || 0),
-        itemUnit: this.refs.expenseItemUnit.value || 'un',
-        itemUnitValue: this.toNumber(this.refs.expenseItemUnitValue.value || 0),
+        itemName: this.refs.expenseItemName?.value?.trim?.() || '',
+        itemQuantity: this.toNumber(this.refs.expenseItemQuantity?.value || 0),
+        itemUnit: this.refs.expenseItemUnit?.value || 'un',
+        itemUnitValue: this.toNumber(this.refs.expenseItemUnitValue?.value || 0),
         value: this.toNumber(this.refs.expenseValue.value || 0),
         paymentMethod: this.refs.expensePaymentMethod.value,
         dueDate: this.refs.expenseDueDate.value || this.refs.expenseDate.value,
