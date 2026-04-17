@@ -1234,3 +1234,23 @@ body[data-theme-mode="dark"] .husky-preview-chip {
     height: 11px;
   }
 }
+
+
+/* Despesas sem ícones decorativos */
+.husky-ingredient-head {
+  align-items: flex-start;
+}
+
+.husky-form-tip {
+  gap: 0;
+}
+
+.husky-preview-chip {
+  padding: 8px 12px;
+}
+
+.husky-preview-chip img,
+.husky-form-tip img,
+.husky-ingredient-icon {
+  display: none !important;
+}
