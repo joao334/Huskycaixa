@@ -275,7 +275,7 @@
       this.refs.expenseStatus.value = 'Pago';
       this.refs.expenseCategory.value = 'Compras';
       if (this.refs.expenseItemName) this.refs.expenseItemName.value = '';
-      if (this.refs.expenseItemQuantity) this.refs.expenseItemQuantity.value = '';
+      if (this.refs.expenseItemQuantity) this.refs.expenseItemQuantity.value = '1';
       if (this.refs.expenseItemUnit) this.refs.expenseItemUnit.value = 'un';
       if (this.refs.expenseItemUnitValue) this.refs.expenseItemUnitValue.value = '';
       this.refs.expensePaymentMethod.value = 'Pix';
@@ -478,7 +478,7 @@
       const unitValue = this.toNumber(this.refs.expenseItemUnitValue?.value || 0);
 
       if (quantity > 0 && unitValue > 0 && this.refs.expenseValue) {
-        this.refs.expenseValue.value = (quantity * unitValue).toFixed(2);
+        this.refs.expenseValue.value = String((quantity * unitValue).toFixed(2)).replace('.', ',');
       }
 
       this.updateItemPreview();
@@ -862,6 +862,8 @@
       this.refs.expenseStatus.value = expense.status || 'Pago';
       this.refs.expenseTitle.value = expense.description || '';
       this.refs.expenseCategory.value = expense.category || 'Compras';
+      if (this.refs.expenseItemQuantity) this.refs.expenseItemQuantity.value = expense.itemQuantity || '';
+      if (this.refs.expenseItemUnitValue) this.refs.expenseItemUnitValue.value = expense.itemUnitValue || '';
       this.refs.expenseValue.value = expense.value || '';
       this.refs.expensePaymentMethod.value = expense.paymentMethod || 'Pix';
       this.refs.expenseDueDate.value = expense.dueDate || expense.date || this.todayISO();

@@ -697,16 +697,60 @@ if (themeTrigger) {
     },
 
     toNumber(value) {
-      if (typeof value === 'number') return value;
-      if (!value) return 0;
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+      if (value === null || value === undefined || value === '') return 0;
 
-      const normalized = String(value)
-        .replace(/\./g, '')
-        .replace(',', '.')
-        .replace(/[^\d.-]/g, '');
+      let normalized = String(value).trim().replace(/\s+/g, '').replace(/R\$/gi, '');
+      if (!normalized) return 0;
 
+      const hasComma = normalized.includes(',');
+      const hasDot = normalized.includes('.');
+
+      if (hasComma && hasDot) {
+        const lastComma = normalized.lastIndexOf(',');
+        const lastDot = normalized.lastIndexOf('.');
+        const decimalSeparator = lastComma > lastDot ? ',' : '.';
+        const thousandsSeparator = decimalSeparator == ',' ? '.' : ',';
+        normalized = normalized.split(thousandsSeparator).join('');
+        if (decimalSeparator === ',') normalized = normalized.replace(',', '.');
+      } else if (hasComma) {
+        normalized = normalized.replace(/\./g, '').replace(',', '.');
+      } else if (hasDot) {
+        const parts = normalized.split('.');
+        if (parts.length > 2) {
+          const decimal = parts.pop();
+          normalized = parts.join('') + '.' + decimal;
+        }
+      }
+
+      normalized = normalized.replace(/[^\d.-]/g, '');
       const parsed = Number(normalized);
       return Number.isFinite(parsed) ? parsed : 0;
+    },
+
+    prepareDecimalInputs(scope = document) {
+      const selectors = [
+        '#proof-amount',
+        '#expense-value',
+        '#expense-item-unit-value',
+        '#stock-unit-cost',
+        '#stock-total-cost',
+        '#product-sale-price',
+        '#product-cost-price',
+        '#sale-discount',
+        '#sale-extra-fee',
+        '#sale-shipping-fee'
+      ];
+
+      selectors.forEach((selector) => {
+        scope.querySelectorAll(selector).forEach((input) => {
+          if (!(input instanceof HTMLInputElement)) return;
+          input.setAttribute('type', 'text');
+          input.setAttribute('inputmode', 'decimal');
+          input.setAttribute('autocomplete', 'off');
+          input.setAttribute('spellcheck', 'false');
+        });
+      });
     },
 
     sum(list = [], mapper = (item) => item) {

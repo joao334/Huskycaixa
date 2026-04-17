@@ -201,9 +201,20 @@
 
 <div class="form-grid cols-4">
                 <div class="form-group">
+                  <label for="expense-item-quantity">Quantidade</label>
+                  <input type="number" id="expense-item-quantity" step="0.01" min="0" placeholder="1" />
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-item-unit-value">Valor unitário</label>
+                  <input type="text" inputmode="decimal" id="expense-item-unit-value" placeholder="0,00" />
+                </div>
+
+                <div class="form-group">
                   <label for="expense-value">Valor total</label>
-                  <input type="number" id="expense-value" step="0.01" min="0" placeholder="0,00" />
-</div>
+                  <input type="text" inputmode="decimal" id="expense-value" step="0.01" min="0" placeholder="0,00" />
+                  <small class="expense-inline-note">Preencha quantidade e valor unitário para calcular o total automaticamente.</small>
+                </div>
 
                 <div class="form-group">
                   <label for="expense-payment-method">Forma de pagamento</label>
