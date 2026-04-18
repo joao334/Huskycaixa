@@ -1,26 +1,29 @@
-APP DO CLIENTE + PEDIDOS ONLINE
-=================================
+APP DO CLIENTE • HUSKY CONFEITARIA
 
-ARQUIVOS NOVOS:
-- app-cliente.html
-- pedidos-online.html
-- js/app-cliente.js
-- js/pedidos-online.js
-- css/app-cliente.css
-- css/pedidos-online.css
-- SUPABASE-PEDIDOS-CLIENTE.sql
-- cliente-manifest.webmanifest
-- sw-cliente.js
+ARQUIVOS PRINCIPAIS
+- app-cliente.html = tela de pedido para o cliente no celular
+- pedidos-online.html = painel interno para receber/importar pedidos
+- SUPABASE-PEDIDOS-CLIENTE.sql = estrutura necessária no Supabase
 
-COMO ATIVAR:
-1) Execute o arquivo SUPABASE-SETUP.sql (caso ainda não tenha feito).
-2) Execute o arquivo SUPABASE-PEDIDOS-CLIENTE.sql no SQL Editor do Supabase.
-3) Entre no sistema normal e abra a página "Pedidos online".
-4) Clique em "Publicar catálogo" para enviar os produtos ativos para o app do cliente.
-5) Compartilhe o link do app-cliente.html com o cliente.
-6) Quando o pedido chegar, abra "Pedidos online" e clique em "Importar para vendas".
+COMO ATIVAR CERTO
+1) Execute o arquivo SUPABASE-PEDIDOS-CLIENTE.sql no SQL Editor do Supabase.
+2) Entre no sistema interno.
+3) Abra a página "Pedidos online".
+4) Clique em "Publicar catálogo".
 
-OBSERVAÇÃO:
-- O app do cliente é uma PWA / web app com visual de aplicativo para celular.
-- O pedido entra em customer_orders e, ao importar, vira uma venda no sistema principal.
-- A emissão fiscal oficial continua dependendo da sua integração fiscal.
+O QUE MUDOU NESTA VERSÃO
+- visual da tela do cliente mais bonito e mais profissional
+- catálogo com fallback público pelo Storage
+- mensagens de erro mais claras
+- carrinho flutuante e experiência melhor no celular
+
+SE APARECER "CATÁLOGO AINDA NÃO CONFIGURADO"
+- execute o SUPABASE-PEDIDOS-CLIENTE.sql
+- depois publique o catálogo outra vez
+
+SE O CATÁLOGO ABRIR, MAS O PEDIDO NÃO ENVIAR
+- a tabela customer_orders ainda não foi criada ou liberada
+- execute novamente o SUPABASE-PEDIDOS-CLIENTE.sql
+
+DICA
+Mesmo que a tabela pública do catálogo falhe, a nova versão tenta carregar o catálogo publicado em arquivo público do bucket husky-files.

@@ -23,7 +23,7 @@
           <img src="assets/img/logo-husky.png" alt="Logo Husky" />
           <div>
             <strong>Husky Confeitaria</strong>
-            <span>Pedidos no celular • rápido e bonito</span>
+            <span>Pedidos online no celular</span>
           </div>
         </a>
 
@@ -40,27 +40,85 @@
     <main class="client-main" id="topo">
       <section class="hero-client">
         <div class="hero-client-inner">
-          <div>
-            <h1>Peça pelo celular</h1>
+          <div class="hero-copy-client">
+            <div class="eyebrow-client">Confeitaria com cara premium</div>
+            <h1>Peça seus doces favoritos sem sair do celular.</h1>
             <p>Escolha seus produtos, monte o carrinho e envie seu pedido direto para a equipe da Husky. O pedido entra no sistema para acompanhamento.</p>
+
+            <div class="hero-badges-client">
+              <span class="hero-badge-client">Feito na hora com carinho</span>
+              <span class="hero-badge-client">Pedido fácil e rápido</span>
+              <span class="hero-badge-client">Entrega ou retirada</span>
+            </div>
+
+            <div class="hero-cta-client">
+              <button type="button" id="btn-scroll-catalog" class="client-btn">Ver catálogo</button>
+              <button type="button" id="btn-hero-open-cart" class="client-btn secondary">Abrir carrinho</button>
+            </div>
           </div>
-          <img src="assets/img/mascote-3d.png" alt="Mascote Husky" />
+
+          <div class="hero-side-card-client">
+            <img src="assets/img/mascote-3d.png" alt="Mascote Husky" />
+            <div class="hero-side-content">
+              <strong>Husky no seu bolso</strong>
+              <p>Escolha, personalize e envie o pedido com poucos toques.</p>
+              <div class="hero-mini-stats">
+                <div>
+                  <span>Produtos</span>
+                  <strong id="catalog-products-count">0</strong>
+                </div>
+                <div>
+                  <span>Itens no carrinho</span>
+                  <strong id="catalog-cart-items-count">0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div id="client-status-banner" class="status-banner">Carregando catálogo...</div>
+      <div id="client-status-banner" class="status-banner" role="status" aria-live="polite">
+        <div class="status-banner-title">Carregando catálogo...</div>
+        <div class="status-banner-text">Estamos preparando o cardápio para você.</div>
+      </div>
 
-      <section class="toolbar-client">
-        <input type="search" id="catalog-search" class="search-client" placeholder="Buscar produto" />
-        <div class="categories-client" id="catalog-categories"></div>
+      <section class="catalog-shell-client" id="catalogo">
+        <div class="catalog-shell-header">
+          <div>
+            <span class="section-kicker-client">Catálogo</span>
+            <h2>Escolha seus queridinhos da Husky</h2>
+            <p>Filtre por categoria, pesquise e adicione ao carrinho.</p>
+          </div>
+          <div class="catalog-shell-meta">
+            <span class="soft-pill-client" id="catalog-source-pill">Fonte: carregando...</span>
+            <span class="soft-pill-client" id="catalog-count-pill">0 itens</span>
+          </div>
+        </div>
+
+        <section class="toolbar-client">
+          <div class="search-wrap-client">
+            <span class="search-icon-client">⌕</span>
+            <input type="search" id="catalog-search" class="search-client" placeholder="Buscar produto, sabor ou categoria" />
+          </div>
+          <div class="categories-client" id="catalog-categories"></div>
+        </section>
+
+        <section class="catalog-grid" id="client-catalog-grid"></section>
       </section>
 
-      <section class="catalog-grid" id="client-catalog-grid"></section>
       <section id="client-order-success"></section>
     </main>
 
+    <button type="button" id="btn-floating-cart" class="floating-cart-btn" aria-label="Abrir carrinho">
+      <span>Ver carrinho</span>
+      <strong id="floating-cart-total">R$ 0,00</strong>
+    </button>
+
     <footer class="client-footer">
-      <p>Husky Confeitaria • pedidos online com envio direto para o sistema interno.</p>
+      <div class="client-footer-card">
+        <strong>Husky Confeitaria</strong>
+        <p>Pedidos online com envio para o sistema interno. Caso algum item não apareça, atualize a página ou tente novamente em instantes.</p>
+      </div>
     </footer>
   </div>
 
@@ -78,7 +136,12 @@
       <section id="cart-items-container"></section>
 
       <section class="form-card-client">
-        <h3>Seus dados</h3>
+        <div class="form-card-heading-client">
+          <div>
+            <span class="section-kicker-client">Etapa 1</span>
+            <h3>Seus dados</h3>
+          </div>
+        </div>
         <div class="field-grid-client">
           <div class="field-client">
             <label for="customer-name">Nome</label>
@@ -100,7 +163,12 @@
       </section>
 
       <section class="form-card-client">
-        <h3>Entrega e pagamento</h3>
+        <div class="form-card-heading-client">
+          <div>
+            <span class="section-kicker-client">Etapa 2</span>
+            <h3>Entrega e pagamento</h3>
+          </div>
+        </div>
         <div class="field-grid-client">
           <div class="field-client">
             <label for="delivery-type">Como prefere receber?</label>
@@ -141,7 +209,7 @@
     <div class="cart-footer">
       <div class="cart-total-row"><span>Subtotal</span><strong id="cart-subtotal">R$ 0,00</strong></div>
       <div class="cart-total-row"><span>Entrega</span><strong id="cart-delivery-fee">R$ 0,00</strong></div>
-      <div class="cart-total-row"><span>Total</span><strong id="cart-total">R$ 0,00</strong></div>
+      <div class="cart-total-row total"><span>Total</span><strong id="cart-total">R$ 0,00</strong></div>
       <button type="button" id="btn-submit-order" class="client-btn">Enviar pedido</button>
     </div>
   </aside>

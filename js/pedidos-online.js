@@ -125,6 +125,39 @@
         }));
     },
 
+
+    getCatalogStorageBucket() {
+      return 'husky-files';
+    },
+
+    getCatalogStoragePath() {
+      return `${this.workspaceId}/catalog/public/catalog.json`;
+    },
+
+    async publishCatalogJson(payload = []) {
+      if (!Array.isArray(payload) || !payload.length) return null;
+      const fileBody = JSON.stringify({
+        workspaceId: this.workspaceId,
+        publishedAt: new Date().toISOString(),
+        items: payload
+      });
+
+      const file = new Blob([fileBody], { type: 'application/json' });
+      const bucket = this.getCatalogStorageBucket();
+      const path = this.getCatalogStoragePath();
+
+      const { error } = await this.supabase.storage.from(bucket).upload(path, file, {
+        upsert: true,
+        cacheControl: '60',
+        contentType: 'application/json'
+      });
+
+      if (error) throw error;
+
+      const { data } = this.supabase.storage.from(bucket).getPublicUrl(path);
+      return data?.publicUrl || '';
+    },
+
     async publishCatalog() {
       const products = this.getPublishableProducts();
       if (!products.length) {
@@ -135,13 +168,6 @@
       try {
         this.refs.btnPublishCatalog.disabled = true;
         this.refs.btnPublishCatalog.textContent = 'Publicando...';
-
-        const deactivate = await this.supabase
-          .from('customer_catalog_items')
-          .update({ active: false })
-          .eq('workspace_id', this.workspaceId);
-
-        if (deactivate.error && deactivate.error.code !== 'PGRST116') throw deactivate.error;
 
         const payload = products.map((product) => ({
           workspace_id: this.workspaceId,
@@ -162,16 +188,69 @@
           }
         }));
 
-        const { error } = await this.supabase
-          .from('customer_catalog_items')
-          .upsert(payload, { onConflict: 'workspace_id,product_id' });
+        let dbPublished = false;
+        let publicCatalogUrl = '';
 
-        if (error) throw error;
+        try {
+          const deactivate = await this.supabase
+            .from('customer_catalog_items')
+            .update({ active: false })
+            .eq('workspace_id', this.workspaceId);
 
-        await this.loadCatalog();
+          if (deactivate.error && deactivate.error.code !== 'PGRST116') throw deactivate.error;
+
+          const { error } = await this.supabase
+            .from('customer_catalog_items')
+            .upsert(payload, { onConflict: 'workspace_id,product_id' });
+
+          if (error) throw error;
+          dbPublished = true;
+        } catch (dbError) {
+          console.error('[Pedidos Online] erro ao publicar catálogo em tabela', dbError);
+        }
+
+        try {
+          publicCatalogUrl = await this.publishCatalogJson(payload.map((item) => ({
+            id: item.product_id,
+            product_id: item.product_id,
+            name: item.name,
+            short_name: item.short_name,
+            category: item.category,
+            description: item.description,
+            unit: item.unit,
+            price: item.price,
+            image_url: item.image_url,
+            featured: item.featured,
+            active: item.active,
+            sort_order: item.sort_order,
+            metadata: item.metadata || {}
+          })));
+        } catch (storageError) {
+          console.error('[Pedidos Online] erro ao publicar catálogo em storage', storageError);
+        }
+
+        if (!dbPublished && !publicCatalogUrl) {
+          throw new Error('catalog_publish_failed');
+        }
+
+        await this.loadCatalog().catch(() => {
+          this.catalog = payload;
+        });
         this.renderCatalog();
         this.renderMetrics();
-        app.showToast('Catálogo publicado no app do cliente.', 'success');
+
+        if (this.refs.catalogPublishSummary) {
+          const suffix = publicCatalogUrl
+            ? ' Versão pública do catálogo atualizada com sucesso.'
+            : ' O catálogo visual depende do SQL novo no Supabase.';
+          this.refs.catalogPublishSummary.textContent = `Catálogo publicado com ${payload.length} item(ns).${suffix}`;
+        }
+
+        if (dbPublished) {
+          app.showToast('Catálogo publicado no app do cliente.', 'success');
+        } else {
+          app.showToast('Catálogo visual publicado, mas execute o SQL novo para ativar a leitura completa e os pedidos.', 'warning');
+        }
       } catch (error) {
         console.error('[Pedidos Online] erro ao publicar catálogo', error);
         app.showToast('Não foi possível publicar o catálogo. Execute o SQL novo no Supabase.', 'danger');
