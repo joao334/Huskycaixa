@@ -57,6 +57,34 @@
       frequency: 'manual',
       location: 'local',
       lastBackupAt: null
+    },
+    business: {
+      pixKey: '',
+      documentLabel: 'Recibo de venda',
+      legalFooter: 'Documento gerado pelo sistema. Não substitui NF-e/NFC-e oficial.',
+      defaultSalesChannel: 'Loja',
+      defaultDeliveryType: 'Retirada'
+    },
+    fiscal: {
+      ie: '',
+      im: '',
+      regime: 'MEI',
+      series: '1',
+      nextInvoiceNumber: '1',
+      issueInvoiceNotice: true
+    },
+    integrations: {
+      ifood: {
+        enabled: false,
+        environment: 'sandbox',
+        merchantId: '',
+        clientId: '',
+        token: '',
+        storeName: '',
+        webhookSecret: '',
+        pollingMinutes: 5,
+        lastImportAt: null
+      }
     }
   };
 
@@ -99,7 +127,19 @@
         companyEmail: document.getElementById('company-email'),
         companyInstagram: document.getElementById('company-instagram'),
         companyAddress: document.getElementById('company-address'),
+        companyPixKey: document.getElementById('company-pix-key'),
+        fiscalIe: document.getElementById('fiscal-ie'),
+        fiscalIm: document.getElementById('fiscal-im'),
+        fiscalRegime: document.getElementById('fiscal-regime'),
+        fiscalSeries: document.getElementById('fiscal-series'),
+        fiscalNextInvoiceNumber: document.getElementById('fiscal-next-invoice-number'),
+        businessDocumentLabel: document.getElementById('business-document-label'),
+        businessLegalFooter: document.getElementById('business-legal-footer'),
+        defaultSalesChannel: document.getElementById('default-sales-channel'),
+        defaultDeliveryType: document.getElementById('default-delivery-type'),
+        issueInvoiceNotice: document.getElementById('issue-invoice-notice'),
         btnSaveCompanySettings: document.getElementById('btn-save-company-settings'),
+        btnSaveFiscalSettings: document.getElementById('btn-save-fiscal-settings'),
 
         themeMode: document.getElementById('theme-mode'),
         accentStyle: document.getElementById('accent-style'),
@@ -126,6 +166,16 @@
         cloudOfflineCache: document.getElementById('cloud-offline-cache'),
         btnTestCloudConnection: document.getElementById('btn-test-cloud-connection'),
         btnSaveCloudSettings: document.getElementById('btn-save-cloud-settings'),
+
+        ifoodEnabled: document.getElementById('ifood-enabled'),
+        ifoodEnvironment: document.getElementById('ifood-environment'),
+        ifoodStoreName: document.getElementById('ifood-store-name'),
+        ifoodMerchantId: document.getElementById('ifood-merchant-id'),
+        ifoodClientId: document.getElementById('ifood-client-id'),
+        ifoodToken: document.getElementById('ifood-token'),
+        ifoodWebhookSecret: document.getElementById('ifood-webhook-secret'),
+        ifoodPollingMinutes: document.getElementById('ifood-polling-minutes'),
+        btnSaveIfoodSettings: document.getElementById('btn-save-ifood-settings'),
 
         sessionTimeout: document.getElementById('session-timeout'),
         passwordPolicy: document.getElementById('password-policy'),
@@ -193,9 +243,11 @@
 
     bindEvents() {
       this.refs.btnSaveCompanySettings?.addEventListener('click', () => this.saveCompanySettings());
+      this.refs.btnSaveFiscalSettings?.addEventListener('click', () => this.saveFiscalSettings());
       this.refs.btnSaveVisualSettings?.addEventListener('click', () => this.saveVisualSettings());
       this.refs.btnSavePrintSettings?.addEventListener('click', () => this.savePrintSettings());
       this.refs.btnSaveCloudSettings?.addEventListener('click', () => this.saveCloudSettings());
+      this.refs.btnSaveIfoodSettings?.addEventListener('click', () => this.saveIfoodSettings());
       this.refs.btnSaveSecuritySettings?.addEventListener('click', () => this.saveSecuritySettings());
       this.refs.btnSaveBackupSettings?.addEventListener('click', () => this.saveBackupSettings());
 
@@ -457,7 +509,7 @@
 
     loadAllForms() {
       const settings = this.deepMerge(this.deepClone(DEFAULT_CONFIG), this.getSettings());
-      const { company, visual, print, cloud, security, backup } = settings;
+      const { company, visual, print, cloud, security, backup, business, fiscal, integrations } = settings;
 
       if (this.refs.companyName) this.refs.companyName.value = company.name || '';
       if (this.refs.companyTradeName) this.refs.companyTradeName.value = company.tradeName || '';
@@ -466,6 +518,17 @@
       if (this.refs.companyEmail) this.refs.companyEmail.value = company.email || '';
       if (this.refs.companyInstagram) this.refs.companyInstagram.value = company.instagram || '';
       if (this.refs.companyAddress) this.refs.companyAddress.value = company.address || '';
+      if (this.refs.companyPixKey) this.refs.companyPixKey.value = business.pixKey || '';
+      if (this.refs.fiscalIe) this.refs.fiscalIe.value = fiscal.ie || '';
+      if (this.refs.fiscalIm) this.refs.fiscalIm.value = fiscal.im || '';
+      if (this.refs.fiscalRegime) this.refs.fiscalRegime.value = fiscal.regime || 'MEI';
+      if (this.refs.fiscalSeries) this.refs.fiscalSeries.value = fiscal.series || '1';
+      if (this.refs.fiscalNextInvoiceNumber) this.refs.fiscalNextInvoiceNumber.value = fiscal.nextInvoiceNumber || '1';
+      if (this.refs.businessDocumentLabel) this.refs.businessDocumentLabel.value = business.documentLabel || 'Recibo de venda';
+      if (this.refs.businessLegalFooter) this.refs.businessLegalFooter.value = business.legalFooter || '';
+      if (this.refs.defaultSalesChannel) this.refs.defaultSalesChannel.value = business.defaultSalesChannel || 'Loja';
+      if (this.refs.defaultDeliveryType) this.refs.defaultDeliveryType.value = business.defaultDeliveryType || 'Retirada';
+      if (this.refs.issueInvoiceNotice) this.refs.issueInvoiceNotice.checked = fiscal.issueInvoiceNotice !== false;
 
       if (this.refs.themeMode) this.refs.themeMode.value = visual.themeMode || 'husky-default';
       if (this.refs.accentStyle) this.refs.accentStyle.value = visual.accentStyle || 'original';
@@ -488,6 +551,14 @@
       if (this.refs.cloudUrl) this.refs.cloudUrl.value = cloud.url || '';
       if (this.refs.cloudAutoSync) this.refs.cloudAutoSync.checked = Boolean(cloud.autoSync);
       if (this.refs.cloudOfflineCache) this.refs.cloudOfflineCache.checked = Boolean(cloud.offlineCache);
+      if (this.refs.ifoodEnabled) this.refs.ifoodEnabled.checked = Boolean(integrations?.ifood?.enabled);
+      if (this.refs.ifoodEnvironment) this.refs.ifoodEnvironment.value = integrations?.ifood?.environment || 'sandbox';
+      if (this.refs.ifoodStoreName) this.refs.ifoodStoreName.value = integrations?.ifood?.storeName || '';
+      if (this.refs.ifoodMerchantId) this.refs.ifoodMerchantId.value = integrations?.ifood?.merchantId || '';
+      if (this.refs.ifoodClientId) this.refs.ifoodClientId.value = integrations?.ifood?.clientId || '';
+      if (this.refs.ifoodToken) this.refs.ifoodToken.value = integrations?.ifood?.token || '';
+      if (this.refs.ifoodWebhookSecret) this.refs.ifoodWebhookSecret.value = integrations?.ifood?.webhookSecret || '';
+      if (this.refs.ifoodPollingMinutes) this.refs.ifoodPollingMinutes.value = String(integrations?.ifood?.pollingMinutes || 5);
 
       if (this.refs.sessionTimeout) this.refs.sessionTimeout.value = String(security.sessionTimeout || 60);
       if (this.refs.passwordPolicy) this.refs.passwordPolicy.value = security.passwordPolicy || 'basic';
@@ -550,6 +621,52 @@
           email: this.refs.companyEmail?.value.trim() || '',
           instagram: this.refs.companyInstagram?.value.trim() || '',
           address: this.refs.companyAddress?.value.trim() || ''
+        },
+        business: {
+          ...this.getSettings().business,
+          pixKey: this.refs.companyPixKey?.value.trim() || ''
+        }
+      };
+    },
+
+    collectFiscalSettings() {
+      return {
+        business: {
+          ...this.getSettings().business,
+          pixKey: this.refs.companyPixKey?.value.trim() || '',
+          documentLabel: this.refs.businessDocumentLabel?.value.trim() || 'Recibo de venda',
+          legalFooter: this.refs.businessLegalFooter?.value.trim() || '',
+          defaultSalesChannel: this.refs.defaultSalesChannel?.value || 'Loja',
+          defaultDeliveryType: this.refs.defaultDeliveryType?.value || 'Retirada'
+        },
+        fiscal: {
+          ...this.getSettings().fiscal,
+          ie: this.refs.fiscalIe?.value.trim() || '',
+          im: this.refs.fiscalIm?.value.trim() || '',
+          regime: this.refs.fiscalRegime?.value || 'MEI',
+          series: this.refs.fiscalSeries?.value.trim() || '1',
+          nextInvoiceNumber: this.refs.fiscalNextInvoiceNumber?.value.trim() || '1',
+          issueInvoiceNotice: Boolean(this.refs.issueInvoiceNotice?.checked)
+        }
+      };
+    },
+
+    collectIfoodSettings() {
+      return {
+        integrations: {
+          ...this.getSettings().integrations,
+          ifood: {
+            ...(this.getSettings().integrations?.ifood || {}),
+            enabled: Boolean(this.refs.ifoodEnabled?.checked),
+            environment: this.refs.ifoodEnvironment?.value || 'sandbox',
+            storeName: this.refs.ifoodStoreName?.value.trim() || '',
+            merchantId: this.refs.ifoodMerchantId?.value.trim() || '',
+            clientId: this.refs.ifoodClientId?.value.trim() || '',
+            token: this.refs.ifoodToken?.value.trim() || '',
+            webhookSecret: this.refs.ifoodWebhookSecret?.value.trim() || '',
+            pollingMinutes: Number(this.refs.ifoodPollingMinutes?.value || 5),
+            lastImportAt: this.getSettings().integrations?.ifood?.lastImportAt || null
+          }
         }
       };
     },
@@ -631,6 +748,22 @@
       app.log('Configurações da empresa atualizadas.');
     },
 
+    saveFiscalSettings(showToast = true) {
+      app.updateSettings(this.collectFiscalSettings());
+      this.renderCards();
+      this.renderStatusBlocks();
+      if (showToast) app.showToast('Configurações fiscais e do recibo salvas com sucesso.', 'success');
+      app.log('Configurações fiscais atualizadas.');
+    },
+
+    saveIfoodSettings(showToast = true) {
+      app.updateSettings(this.collectIfoodSettings());
+      this.renderCards();
+      this.renderStatusBlocks();
+      if (showToast) app.showToast('Integração do iFood preparada e salva.', 'success');
+      app.log('Configurações do iFood atualizadas.');
+    },
+
     saveVisualSettings(showToast = true) {
       app.updateSettings(this.collectVisualSettings());
       app.applySettingsToUI();
@@ -687,9 +820,11 @@
 
     saveAllSettings() {
       this.saveCompanySettings(false);
+      this.saveFiscalSettings(false);
       this.saveVisualSettings(false);
       this.savePrintSettings(false);
       this.saveCloudSettings(false);
+      this.saveIfoodSettings(false);
       this.saveSecuritySettings(false);
       this.saveBackupSettings(false);
       app.showToast('Todas as configurações foram salvas.', 'success');
@@ -1320,7 +1455,10 @@
       }
 
       if (this.refs.systemLogsStatus) {
-        this.refs.systemLogsStatus.textContent = settings.security?.logUserActions ? 'Ativos' : 'Desativados';
+        const ifoodStatus = settings.integrations?.ifood?.enabled
+          ? `Ativos • iFood ${settings.integrations?.ifood?.environment === 'production' ? 'produção' : 'sandbox'}`
+          : 'Ativos';
+        this.refs.systemLogsStatus.textContent = settings.security?.logUserActions ? ifoodStatus : 'Desativados';
       }
     },
 

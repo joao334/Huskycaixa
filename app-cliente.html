@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="cliente-manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/img/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Husky Pedidos" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#2f61a5" />
+  <meta name="description" content="Faça seu pedido na Husky Confeitaria pelo celular." />
+  <title>Husky Confeitaria | Pedidos</title>
+  <link rel="icon" type="image/png" href="assets/img/logo-husky.png" />
+  <link rel="stylesheet" href="css/app-cliente.css" />
+</head>
+<body>
+  <div class="client-app" id="client-app">
+    <header class="client-header">
+      <div class="client-header-inner">
+        <a href="#topo" class="brand-client">
+          <img src="assets/img/logo-husky.png" alt="Logo Husky" />
+          <div>
+            <strong>Husky Confeitaria</strong>
+            <span>Pedidos no celular • rápido e bonito</span>
+          </div>
+        </a>
+
+        <div class="client-actions">
+          <button type="button" id="btn-refresh-catalog" class="client-btn secondary">Atualizar</button>
+          <button type="button" id="btn-open-cart" class="client-icon-btn" aria-label="Abrir carrinho">
+            🛒
+            <span class="cart-badge" id="cart-count-badge">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="client-main" id="topo">
+      <section class="hero-client">
+        <div class="hero-client-inner">
+          <div>
+            <h1>Peça pelo celular</h1>
+            <p>Escolha seus produtos, monte o carrinho e envie seu pedido direto para a equipe da Husky. O pedido entra no sistema para acompanhamento.</p>
+          </div>
+          <img src="assets/img/mascote-3d.png" alt="Mascote Husky" />
+        </div>
+      </section>
+
+      <div id="client-status-banner" class="status-banner">Carregando catálogo...</div>
+
+      <section class="toolbar-client">
+        <input type="search" id="catalog-search" class="search-client" placeholder="Buscar produto" />
+        <div class="categories-client" id="catalog-categories"></div>
+      </section>
+
+      <section class="catalog-grid" id="client-catalog-grid"></section>
+      <section id="client-order-success"></section>
+    </main>
+
+    <footer class="client-footer">
+      <p>Husky Confeitaria • pedidos online com envio direto para o sistema interno.</p>
+    </footer>
+  </div>
+
+  <div class="drawer-backdrop" id="cart-backdrop"></div>
+  <aside class="cart-drawer" id="cart-drawer" aria-label="Carrinho e pedido">
+    <div class="cart-header">
+      <div>
+        <strong>Seu pedido</strong>
+        <div class="text-muted-client">Confira os itens e finalize.</div>
+      </div>
+      <button type="button" id="btn-close-cart" class="client-icon-btn" aria-label="Fechar carrinho">✕</button>
+    </div>
+
+    <div class="cart-body">
+      <section id="cart-items-container"></section>
+
+      <section class="form-card-client">
+        <h3>Seus dados</h3>
+        <div class="field-grid-client">
+          <div class="field-client">
+            <label for="customer-name">Nome</label>
+            <input type="text" id="customer-name" placeholder="Seu nome" />
+          </div>
+          <div class="field-client">
+            <label for="customer-phone">WhatsApp</label>
+            <input type="tel" id="customer-phone" placeholder="(11) 99999-9999" />
+          </div>
+          <div class="field-client">
+            <label for="customer-email">E-mail</label>
+            <input type="email" id="customer-email" placeholder="voce@email.com" />
+          </div>
+          <div class="field-client">
+            <label for="customer-document">CPF (opcional)</label>
+            <input type="text" id="customer-document" placeholder="000.000.000-00" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-card-client">
+        <h3>Entrega e pagamento</h3>
+        <div class="field-grid-client">
+          <div class="field-client">
+            <label for="delivery-type">Como prefere receber?</label>
+            <select id="delivery-type">
+              <option value="Entrega">Entrega</option>
+              <option value="Retirada">Retirada</option>
+            </select>
+          </div>
+          <div class="field-client">
+            <label for="payment-method">Forma de pagamento</label>
+            <select id="payment-method">
+              <option value="Pix">Pix</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Débito">Débito</option>
+              <option value="Crédito">Crédito</option>
+            </select>
+          </div>
+          <div class="field-client full">
+            <label for="delivery-address">Endereço</label>
+            <input type="text" id="delivery-address" placeholder="Rua, número e complemento" />
+          </div>
+          <div class="field-client">
+            <label for="delivery-neighborhood">Bairro</label>
+            <input type="text" id="delivery-neighborhood" placeholder="Seu bairro" />
+          </div>
+          <div class="field-client">
+            <label for="delivery-reference">Referência</label>
+            <input type="text" id="delivery-reference" placeholder="Ponto de referência" />
+          </div>
+          <div class="field-client full">
+            <label for="order-notes">Observações</label>
+            <textarea id="order-notes" placeholder="Ex.: sem granulado, entregar após as 18h..."></textarea>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="cart-footer">
+      <div class="cart-total-row"><span>Subtotal</span><strong id="cart-subtotal">R$ 0,00</strong></div>
+      <div class="cart-total-row"><span>Entrega</span><strong id="cart-delivery-fee">R$ 0,00</strong></div>
+      <div class="cart-total-row"><span>Total</span><strong id="cart-total">R$ 0,00</strong></div>
+      <button type="button" id="btn-submit-order" class="client-btn">Enviar pedido</button>
+    </div>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
+  <script src="js/app-cliente.js"></script>
+</body>
+</html>

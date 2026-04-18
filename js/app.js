@@ -57,6 +57,34 @@
       frequency: 'manual',
       location: 'local',
       lastBackupAt: null
+    },
+    business: {
+      pixKey: '',
+      documentLabel: 'Recibo de venda',
+      legalFooter: 'Documento gerado pelo sistema. Não substitui NF-e/NFC-e oficial.',
+      defaultSalesChannel: 'Loja',
+      defaultDeliveryType: 'Retirada'
+    },
+    fiscal: {
+      ie: '',
+      im: '',
+      regime: 'MEI',
+      series: '1',
+      nextInvoiceNumber: '1',
+      issueInvoiceNotice: true
+    },
+    integrations: {
+      ifood: {
+        enabled: false,
+        environment: 'sandbox',
+        merchantId: '',
+        clientId: '',
+        token: '',
+        storeName: '',
+        webhookSecret: '',
+        pollingMinutes: 5,
+        lastImportAt: null
+      }
     }
   };
 
@@ -276,7 +304,28 @@ if (themeTrigger) {
       document.body.style.overflow = '';
     },
 
+    ensureOnlineOrdersNavLink() {
+      const sidebarNav = document.querySelector('.sidebar-nav');
+      if (!sidebarNav) return;
+
+      const exists = sidebarNav.querySelector('a[href="pedidos-online.html"]');
+      if (exists) return;
+
+      const referenceNode = sidebarNav.querySelector('a[href="comprovantes.html"]') || sidebarNav.lastElementChild;
+      const link = document.createElement('a');
+      link.href = 'pedidos-online.html';
+      link.className = 'nav-item';
+      link.textContent = 'Pedidos online';
+
+      if (referenceNode && referenceNode.parentNode === sidebarNav) {
+        sidebarNav.insertBefore(link, referenceNode);
+      } else {
+        sidebarNav.appendChild(link);
+      }
+    },
+
     markActiveLinksByPath() {
+      this.ensureOnlineOrdersNavLink();
       const currentFile = window.location.pathname.split('/').pop() || 'index.html';
       const navLinks = document.querySelectorAll('.nav-item[href]');
 
@@ -372,6 +421,7 @@ if (themeTrigger) {
       this.applySettingsToUI();
       this.setPageUser();
       this.setCloudStatus();
+      this.ensureOnlineOrdersNavLink();
       this.markActiveLinksByPath();
     },
 

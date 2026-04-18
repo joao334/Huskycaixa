@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/img/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Husky Caixa" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="description" content="Catálogo do app do cliente e pedidos online da Husky Confeitaria" />
+  <meta name="theme-color" content="#2f61a5" />
+  <link rel="icon" type="image/png" href="assets/img/logo-husky.png" />
+  <title>Husky Confeitaria | Pedidos online</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/husky-premium.css" />
+  <link rel="stylesheet" href="css/pedidos-online.css" />
+</head>
+<body class="app-page-body">
+  <div class="app-pattern" aria-hidden="true"><img src="assets/img/pattern-husky.svg" alt="" /></div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <a href="home.html" class="brand-box">
+          <img src="assets/img/logo-husky.png" alt="Logo da Husky Confeitaria" class="brand-logo" />
+          <div class="brand-text">
+            <strong>Husky Confeitaria</strong>
+            <span>Sistema Empresarial</span>
+          </div>
+        </a>
+
+        <div class="operator-box">
+          <img src="assets/img/avatar-user.png" alt="Usuário logado" class="operator-avatar" />
+          <div class="operator-info">
+            <strong id="logged-user-name">Administrador</strong>
+            <span id="logged-user-role">Gestão / Caixa</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a href="home.html" class="nav-item">Início</a>
+        <a href="vendas.html" class="nav-item">Vendas</a>
+        <a href="produtos.html" class="nav-item">Produtos</a>
+        <a href="estoque.html" class="nav-item">Estoque</a>
+        <a href="despesas.html" class="nav-item">Despesas</a>
+        <a href="relatorios.html" class="nav-item">Relatórios</a>
+        <a href="clientes.html" class="nav-item">Clientes</a>
+        <a href="pedidos-online.html" class="nav-item active">Pedidos online</a>
+        <a href="comprovantes.html" class="nav-item">Comprovantes</a>
+        <a href="configuracoes.html" class="nav-item">Configurações</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="cloud-box">
+          <span class="cloud-dot"></span>
+          <div>
+            <strong>Nuvem</strong>
+            <small id="sidebar-cloud-status">Pronto para sincronização</small>
+          </div>
+        </div>
+        <button type="button" class="btn btn-danger btn-full" id="btn-logout" data-action="logout">Sair</button>
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu">☰</button>
+          <div class="page-heading">
+            <span class="eyebrow">Vendas pelo celular</span>
+            <h1>Pedidos online</h1>
+            <p>Publique seu catálogo, compartilhe o app do cliente e importe pedidos para vendas.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-badge">
+            <span class="status-indicator"></span>
+            <span id="topbar-sync-status">Sincronização online preparada</span>
+          </div>
+          <div class="topbar-actions">
+            <button type="button" class="btn btn-secondary" id="btn-toggle-theme" data-action="toggle-theme">Tema</button>
+            <button type="button" class="btn btn-secondary" id="btn-refresh-online-orders">Atualizar</button>
+            <button type="button" class="btn btn-primary" id="btn-publish-catalog">Publicar catálogo</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content online-page-grid" id="online-orders-page">
+        <section class="online-top-grid">
+          <article class="online-metric"><span>Pedidos pendentes</span><strong id="metric-online-pending">0</strong></article>
+          <article class="online-metric"><span>Pedidos de hoje</span><strong id="metric-online-today">0</strong></article>
+          <article class="online-metric"><span>Importados</span><strong id="metric-online-imported">0</strong></article>
+          <article class="online-metric"><span>Itens no catálogo</span><strong id="metric-online-catalog">0</strong></article>
+        </section>
+
+        <section class="online-layout">
+          <div class="online-stack">
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>App do cliente</h3>
+                  <p>Compartilhe este link para o cliente pedir pelo celular.</p>
+                </div>
+              </div>
+              <div class="panel-body online-share-box">
+                <div class="online-share-link">
+                  <input type="text" id="client-app-link" readonly />
+                  <button type="button" class="btn btn-secondary" id="btn-copy-client-link">Copiar link</button>
+                  <a href="app-cliente.html" class="btn btn-primary" target="_blank" rel="noopener">Abrir app</a>
+                </div>
+                <p class="online-note">Quando o catálogo for publicado, o cliente vê os produtos ativos e pode enviar o pedido. O pedido chega aqui e pode virar uma venda com um clique.</p>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Catálogo público</h3>
+                  <p>Os produtos ativos e liberados para venda entram no app do cliente.</p>
+                </div>
+              </div>
+              <div class="panel-body online-stack">
+                <div class="online-inline-tags">
+                  <span class="tag-soft">Somente produtos ativos</span>
+                  <span class="tag-soft">Respeita “Permitir venda”</span>
+                  <span class="tag-soft">Usa o mesmo banco Supabase</span>
+                </div>
+                <p class="online-note" id="catalog-publish-summary">Ainda não publicado.</p>
+                <div class="catalog-preview-list" id="catalog-preview-list"></div>
+              </div>
+            </article>
+          </div>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Pedidos recebidos</h3>
+                <p>Importe o pedido para vendas e acompanhe no fluxo normal do sistema.</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="online-orders-list" id="online-orders-list"></div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/app.js"></script>
+  <script src="js/husky-premium.js"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabase-init.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cloud-sync.js"></script>
+  <script src="js/pedidos-online.js"></script>
+</body>
+</html>

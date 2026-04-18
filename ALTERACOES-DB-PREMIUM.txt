@@ -1,0 +1,29 @@
+HUSKY CAIXA - ALTERAÇÕES PREMIUM COM BASE DE DADOS
+
+Esta versão foi editada em cima da base enviada, mantendo a estrutura com Supabase/nuvem.
+
+MELHORIAS APLICADAS
+- Mantida a base de dados em nuvem e a lógica do projeto original.
+- Nova configuração fiscal e de documentos em Configurações.
+- Nova preparação de integração com iFood em Configurações.
+- Vendas agora possuem canal da venda (Loja, WhatsApp, Instagram, iFood, etc).
+- Campo de pedido externo / referência externa na venda.
+- Campo de CPF/CNPJ do cliente na venda.
+- Filtro por canal nas vendas.
+- Filtro por canal nos relatórios.
+- Dashboard Home com bloco de base de dados, iFood e documento.
+- Dashboard Home com bloco de canais de venda.
+- Recibo/nota simplificada mais bonito e mais completo, com:
+  * canal da venda
+  * entrega
+  * documento do cliente (se informado)
+  * referência externa
+  * dados fiscais da empresa
+  * chave Pix (se configurada)
+  * rodapé legal configurável
+- Exportação CSV de relatórios incluindo canal nas vendas.
+- Correção de HTML inválido encontrado na tela de configurações.
+
+IMPORTANTE
+- A conexão real com iFood continua dependendo de credenciais oficiais e backend/API homologada.
+- O documento gerado pelo sistema é um recibo / nota simplificada. Para emissão fiscal oficial NF-e/NFC-e, ainda é necessária integração fiscal apropriada.

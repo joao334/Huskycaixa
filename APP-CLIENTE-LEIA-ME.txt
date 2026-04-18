@@ -1,0 +1,26 @@
+APP DO CLIENTE + PEDIDOS ONLINE
+=================================
+
+ARQUIVOS NOVOS:
+- app-cliente.html
+- pedidos-online.html
+- js/app-cliente.js
+- js/pedidos-online.js
+- css/app-cliente.css
+- css/pedidos-online.css
+- SUPABASE-PEDIDOS-CLIENTE.sql
+- cliente-manifest.webmanifest
+- sw-cliente.js
+
+COMO ATIVAR:
+1) Execute o arquivo SUPABASE-SETUP.sql (caso ainda não tenha feito).
+2) Execute o arquivo SUPABASE-PEDIDOS-CLIENTE.sql no SQL Editor do Supabase.
+3) Entre no sistema normal e abra a página "Pedidos online".
+4) Clique em "Publicar catálogo" para enviar os produtos ativos para o app do cliente.
+5) Compartilhe o link do app-cliente.html com o cliente.
+6) Quando o pedido chegar, abra "Pedidos online" e clique em "Importar para vendas".
+
+OBSERVAÇÃO:
+- O app do cliente é uma PWA / web app com visual de aplicativo para celular.
+- O pedido entra em customer_orders e, ao importar, vira uma venda no sistema principal.
+- A emissão fiscal oficial continua dependendo da sua integração fiscal.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'husky-caixa-v9';
+const CACHE_NAME = 'husky-caixa-v10';
 const APP_SHELL = [
   './',
   'index.html',
@@ -11,6 +11,8 @@ const APP_SHELL = [
   'comprovantes.html',
   'relatorios.html',
   'configuracoes.html',
+  'pedidos-online.html',
+  'app-cliente.html',
   'manifest.webmanifest',
   'css/style.css',
   'css/responsive.css',
@@ -30,6 +32,12 @@ const APP_SHELL = [
   'js/env.js',
   'js/supabase-init.js',
   'js/husky-premium.js',
+  'js/pedidos-online.js',
+  'js/app-cliente.js',
+  'css/pedidos-online.css',
+  'css/app-cliente.css',
+  'cliente-manifest.webmanifest',
+  'sw-cliente.js',
   'assets/img/logo-husky.png',
   'assets/img/avatar-user.png',
   'assets/img/pattern-husky.svg',

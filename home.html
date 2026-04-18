@@ -328,6 +328,42 @@
       white-space: nowrap;
     }
 
+
+    .husky-home-ops-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .husky-home-ops-card {
+      min-height: 92px;
+      border-radius: 18px;
+      background: rgba(245, 240, 230, 0.9);
+      border: 1px solid rgba(111, 81, 54, 0.12);
+      padding: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .husky-home-ops-card span {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #6f5136;
+    }
+
+    .husky-home-ops-card strong {
+      font-size: 18px;
+      color: #2f211b;
+      line-height: 1.1;
+    }
+
+    .husky-home-ops-card small {
+      color: #5f4a39;
+      line-height: 1.4;
+    }
+
     .husky-home-hidden {
       display: none !important;
     }
@@ -344,6 +380,10 @@
     @media (max-width: 1200px) {
       .husky-home-actions {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .husky-home-ops-grid {
+        grid-template-columns: 1fr;
       }
 
       .husky-home-content {
@@ -612,6 +652,11 @@
                 <h3>Relatórios</h3>
                 <p>Ver resultados do período.</p>
               </a>
+
+              <a href="pedidos-online.html" class="husky-home-action">
+                <h3>Pedidos online</h3>
+                <p>Publicar catálogo do app e receber pedidos do cliente.</p>
+              </a>
             </section>
           </section>
 
@@ -664,6 +709,33 @@
                     <div class="husky-home-status-row">
                       <span>Produtos com estoque baixo</span>
                       <strong id="status-low-stock">0</strong>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="husky-home-card">
+                <header class="husky-home-card-header">
+                  <h2>Base de dados e integrações</h2>
+                  <a href="configuracoes.html#panel-integracoes" class="btn btn-secondary btn-small">Configurar</a>
+                </header>
+
+                <div class="husky-home-card-body">
+                  <div class="husky-home-ops-grid">
+                    <div class="husky-home-ops-card">
+                      <span>Nuvem</span>
+                      <strong id="home-cloud-status">Desconectada</strong>
+                      <small id="home-cloud-detail">Base online pronta para sincronização.</small>
+                    </div>
+                    <div class="husky-home-ops-card">
+                      <span>iFood</span>
+                      <strong id="home-ifood-status">Não preparado</strong>
+                      <small id="home-ifood-detail">Ative a estrutura para pedidos externos.</small>
+                    </div>
+                    <div class="husky-home-ops-card">
+                      <span>Documento</span>
+                      <strong id="home-fiscal-status">Recibo padrão</strong>
+                      <small id="home-fiscal-detail">Rodapé e dados fiscais configuráveis.</small>
                     </div>
                   </div>
                 </div>
@@ -729,6 +801,25 @@
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              </article>
+
+              <article class="husky-home-card">
+                <header class="husky-home-card-header">
+                  <h2>Canais de venda</h2>
+                  <a href="relatorios.html" class="btn btn-secondary btn-small">Relatórios</a>
+                </header>
+
+                <div class="husky-home-card-body">
+                  <div class="husky-home-proof-list" id="home-top-channels-list">
+                    <div class="husky-home-proof-item">
+                      <div>
+                        <strong>Loja</strong>
+                        <p>Sem dados ainda</p>
+                      </div>
+                      <span class="husky-home-soft-tag">0 pedidos</span>
+                    </div>
                   </div>
                 </div>
               </article>

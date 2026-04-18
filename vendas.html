@@ -160,6 +160,21 @@
             </div>
 
             <div class="form-group">
+              <label for="sales-filter-source">Canal</label>
+              <select id="sales-filter-source">
+                <option value="">Todos</option>
+                <option value="Loja">Loja</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Instagram">Instagram</option>
+                <option value="App Cliente">App Cliente</option>
+                <option value="iFood">iFood</option>
+                <option value="Balcão">Balcão</option>
+                <option value="Encomenda">Encomenda</option>
+                <option value="Parceiro">Parceiro</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label for="sales-filter-order-status">Status do pedido</label>
               <select id="sales-filter-order-status">
                 <option value="">Todos</option>
@@ -234,6 +249,30 @@
                 <div class="form-group">
                   <label for="sale-client-email">E-mail</label>
                   <input type="email" id="sale-client-email" placeholder="cliente@email.com" />
+                </div>
+
+                <div class="form-group">
+                  <label for="sale-client-document">CPF/CNPJ</label>
+                  <input type="text" id="sale-client-document" placeholder="Opcional" />
+                </div>
+
+                <div class="form-group">
+                  <label for="sale-channel">Canal da venda</label>
+                  <select id="sale-channel">
+                    <option value="Loja">Loja</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Instagram">Instagram</option>
+                <option value="App Cliente">App Cliente</option>
+                    <option value="iFood">iFood</option>
+                    <option value="Balcão">Balcão</option>
+                    <option value="Encomenda">Encomenda</option>
+                    <option value="Parceiro">Parceiro</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="sale-external-reference">Pedido externo</label>
+                  <input type="text" id="sale-external-reference" placeholder="Ex.: iFood #12345" />
                 </div>
 
                 <div class="form-group">
@@ -429,6 +468,10 @@
                   <strong id="summary-order-status">Pendente</strong>
                 </div>
                 <div class="status-row">
+                  <span>Canal</span>
+                  <strong id="summary-sale-channel">Loja</strong>
+                </div>
+                <div class="status-row">
                   <span>Comprovante Pix</span>
                   <strong id="summary-pix-proof-status">Não enviado</strong>
                 </div>
@@ -567,6 +610,7 @@
           <th>Data</th>
           <th>Cliente</th>
           <th>Pagamento</th>
+          <th>Canal</th>
           <th>Status</th>
           <th>Total</th>
           <th>Ação</th>
@@ -574,7 +618,7 @@
       </thead>
       <tbody id="sales-history-table-body">
         <tr>
-          <td colspan="7">Nenhuma venda encontrada.</td>
+          <td colspan="8">Nenhuma venda encontrada.</td>
         </tr>
       </tbody>
     </table>

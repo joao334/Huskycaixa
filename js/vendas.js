@@ -156,6 +156,7 @@
       if (this.refs.salesFilterStart) this.refs.salesFilterStart.value = this.filters.start || '';
       if (this.refs.salesFilterEnd) this.refs.salesFilterEnd.value = this.filters.end || '';
       if (this.refs.salesFilterPayment) this.refs.salesFilterPayment.value = this.filters.payment || '';
+      if (this.refs.salesFilterSource) this.refs.salesFilterSource.value = this.filters.source || '';
       if (this.refs.salesFilterOrderStatus) this.refs.salesFilterOrderStatus.value = this.filters.orderStatus || '';
       if (this.refs.salesFilterPaymentStatus) this.refs.salesFilterPaymentStatus.value = this.filters.paymentStatus || '';
     },
@@ -167,6 +168,7 @@
         start: defaults.start,
         end: defaults.end,
         payment: '',
+        source: '',
         orderStatus: '',
         paymentStatus: ''
       };
@@ -186,6 +188,9 @@
         saleClientName: document.getElementById('sale-client-name'),
         saleClientPhone: document.getElementById('sale-client-phone'),
         saleClientEmail: document.getElementById('sale-client-email'),
+        saleClientDocument: document.getElementById('sale-client-document'),
+        saleChannel: document.getElementById('sale-channel'),
+        saleExternalReference: document.getElementById('sale-external-reference'),
         saleDeliveryType: document.getElementById('sale-delivery-type'),
         saleDeliveryAddress: document.getElementById('sale-delivery-address'),
         salePaymentMethod: document.getElementById('sale-payment-method'),
@@ -221,6 +226,7 @@
         summaryPaymentMethod: document.getElementById('summary-payment-method'),
         summaryPaymentStatus: document.getElementById('summary-payment-status'),
         summaryOrderStatus: document.getElementById('summary-order-status'),
+        summarySaleChannel: document.getElementById('summary-sale-channel'),
         summaryPixProofStatus: document.getElementById('summary-pix-proof-status'),
 
         receiptNumber: document.getElementById('receipt-number'),
@@ -256,6 +262,7 @@
         salesFilterStart: document.getElementById('sales-filter-start'),
         salesFilterEnd: document.getElementById('sales-filter-end'),
         salesFilterPayment: document.getElementById('sales-filter-payment'),
+        salesFilterSource: document.getElementById('sales-filter-source'),
         salesFilterOrderStatus: document.getElementById('sales-filter-order-status'),
         salesFilterPaymentStatus: document.getElementById('sales-filter-payment-status'),
         btnFilterSales: document.getElementById('btn-filter-sales'),
@@ -292,6 +299,7 @@
         this.refs.salePaymentStatus,
         this.refs.saleOrderStatus,
         this.refs.saleClientName,
+        this.refs.saleChannel,
         this.refs.saleDate,
         this.refs.salePixProofNote
       ].forEach((field) => {
@@ -318,6 +326,11 @@
 
       this.refs.salesFilterPayment?.addEventListener('change', () => {
         this.filters.payment = this.refs.salesFilterPayment.value || '';
+        this.renderAll();
+      });
+
+      this.refs.salesFilterSource?.addEventListener('change', () => {
+        this.filters.source = this.refs.salesFilterSource.value || '';
         this.renderAll();
       });
 
@@ -429,6 +442,11 @@
       if (this.refs.saleShippingFee) this.refs.saleShippingFee.value = '';
       if (this.refs.salePixProofNote) this.refs.salePixProofNote.value = '';
       if (this.refs.salePixProof) this.refs.salePixProof.value = '';
+      const settings = app.getSettings?.() || {};
+      if (this.refs.saleClientDocument) this.refs.saleClientDocument.value = '';
+      if (this.refs.saleChannel) this.refs.saleChannel.value = settings.business?.defaultSalesChannel || 'Loja';
+      if (this.refs.saleExternalReference) this.refs.saleExternalReference.value = '';
+      if (this.refs.saleDeliveryType) this.refs.saleDeliveryType.value = settings.business?.defaultDeliveryType || 'Retirada';
 
       if (this.refs.saleItemsContainer) {
         this.refs.saleItemsContainer.innerHTML = '';
@@ -632,6 +650,7 @@
       if (this.refs.summaryPaymentMethod) this.refs.summaryPaymentMethod.textContent = this.refs.salePaymentMethod?.value || '-';
       if (this.refs.summaryPaymentStatus) this.refs.summaryPaymentStatus.textContent = this.refs.salePaymentStatus?.value || '-';
       if (this.refs.summaryOrderStatus) this.refs.summaryOrderStatus.textContent = this.refs.saleOrderStatus?.value || '-';
+      if (this.refs.summarySaleChannel) this.refs.summarySaleChannel.textContent = this.refs.saleChannel?.value || 'Loja';
       if (this.refs.summaryPixProofStatus) {
         this.refs.summaryPixProofStatus.textContent =
           this.refs.salePaymentMethod?.value === 'Pix' ? pixProofText : 'Não obrigatório';
@@ -730,8 +749,11 @@
         client: {
           name: this.refs.saleClientName?.value.trim() || '',
           phone: this.refs.saleClientPhone?.value.trim() || '',
-          email: this.refs.saleClientEmail?.value.trim() || ''
+          email: this.refs.saleClientEmail?.value.trim() || '',
+          document: this.refs.saleClientDocument?.value.trim() || ''
         },
+        channel: this.refs.saleChannel?.value || (app.getSettings?.().business?.defaultSalesChannel || 'Loja'),
+        externalReference: this.refs.saleExternalReference?.value.trim() || '',
         delivery: {
           type: this.refs.saleDeliveryType?.value || 'Retirada',
           address: this.refs.saleDeliveryAddress?.value.trim() || ''
@@ -1088,6 +1110,7 @@
       this.filters.start = this.normalizeDate(this.refs.salesFilterStart?.value || '');
       this.filters.end = this.normalizeDate(this.refs.salesFilterEnd?.value || '');
       this.filters.payment = this.refs.salesFilterPayment?.value || '';
+      this.filters.source = this.refs.salesFilterSource?.value || '';
       this.filters.orderStatus = this.refs.salesFilterOrderStatus?.value || '';
       this.filters.paymentStatus = this.refs.salesFilterPaymentStatus?.value || '';
 
@@ -1108,6 +1131,9 @@
             sale.client?.name,
             sale.client?.phone,
             sale.client?.email,
+            sale.client?.document,
+            sale.channel,
+            sale.externalReference,
             sale.code,
             sale.notes
           ].join(' ');
@@ -1117,10 +1143,11 @@
           const matchesStart = !this.filters.start || (saleDate && saleDate >= this.filters.start);
           const matchesEnd = !this.filters.end || (saleDate && saleDate <= this.filters.end);
           const matchesPayment = !this.filters.payment || sale.paymentMethod === this.filters.payment;
+          const matchesSource = !this.filters.source || (sale.channel || 'Loja') === this.filters.source;
           const matchesOrderStatus = !this.filters.orderStatus || sale.orderStatus === this.filters.orderStatus;
           const matchesPaymentStatus = !this.filters.paymentStatus || sale.paymentStatus === this.filters.paymentStatus;
 
-          return matchesSearch && matchesStart && matchesEnd && matchesPayment && matchesOrderStatus && matchesPaymentStatus;
+          return matchesSearch && matchesStart && matchesEnd && matchesPayment && matchesSource && matchesOrderStatus && matchesPaymentStatus;
         })
         .sort((a, b) => {
           const dateA = new Date(`${this.getSaleDateValue(a)}T${a.time || '00:00'}`).getTime();
@@ -1186,7 +1213,7 @@
           </td>
           <td>
             <strong>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</strong><br>
-            <small>${this.escapeHtml(sale.paymentMethod || '-')} • ${this.escapeHtml(sale.orderStatus || '-')}</small>
+            <small>${this.escapeHtml(sale.paymentMethod || '-')} • ${this.escapeHtml(sale.channel || 'Loja')} • ${this.escapeHtml(sale.orderStatus || '-')}</small>
           </td>
           <td>${app.formatCurrency(sale.total || 0)}</td>
           <td>
@@ -1213,7 +1240,7 @@
       if (!sales.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7">Nenhuma venda encontrada.</td>
+            <td colspan="8">Nenhuma venda encontrada.</td>
           </tr>
         `;
         return;
@@ -1225,6 +1252,7 @@
           <td>${this.escapeHtml(app.formatDate(this.getSaleDateValue(sale)))}</td>
           <td>${this.escapeHtml(sale.client?.name || 'Consumidor final')}</td>
           <td>${this.escapeHtml(sale.paymentMethod || '-')}</td>
+          <td>${this.escapeHtml(sale.channel || 'Loja')}</td>
           <td>${this.escapeHtml(sale.orderStatus || '-')}</td>
           <td>${app.formatCurrency(sale.total || 0)}</td>
           <td>
@@ -1370,6 +1398,9 @@
       if (this.refs.saleClientName) this.refs.saleClientName.value = sale.client?.name || '';
       if (this.refs.saleClientPhone) this.refs.saleClientPhone.value = sale.client?.phone || '';
       if (this.refs.saleClientEmail) this.refs.saleClientEmail.value = sale.client?.email || '';
+      if (this.refs.saleClientDocument) this.refs.saleClientDocument.value = sale.client?.document || '';
+      if (this.refs.saleChannel) this.refs.saleChannel.value = sale.channel || (app.getSettings?.().business?.defaultSalesChannel || 'Loja');
+      if (this.refs.saleExternalReference) this.refs.saleExternalReference.value = sale.externalReference || '';
       if (this.refs.saleDeliveryType) this.refs.saleDeliveryType.value = sale.delivery?.type || 'Retirada';
       if (this.refs.saleDeliveryAddress) this.refs.saleDeliveryAddress.value = sale.delivery?.address || '';
       if (this.refs.salePaymentMethod) this.refs.salePaymentMethod.value = sale.paymentMethod || 'Pix';
@@ -1402,15 +1433,25 @@
       const totals = this.calculateSaleTotals(items);
       const orderNumber = this.refs.saleOrderNumber?.value || 'PED-0000';
       const clientName = this.refs.saleClientName?.value.trim() || 'Consumidor final';
+      const customerDocument = this.refs.saleClientDocument?.value.trim() || '';
+      const channel = this.refs.saleChannel?.value || (app.getSettings?.().business?.defaultSalesChannel || 'Loja');
+      const externalReference = this.refs.saleExternalReference?.value.trim() || '';
+      const deliveryType = this.refs.saleDeliveryType?.value || 'Retirada';
       const saleDate = this.refs.saleDate?.value
         ? app.formatDate(this.refs.saleDate.value)
         : app.formatDate(this.todayISO());
       const paymentMethod = this.refs.salePaymentMethod?.value || 'Pix';
       const orderStatus = this.refs.saleOrderStatus?.value || 'Pendente';
-      const company = app.getSettings?.().company || {};
-      const printSettings = app.getSettings?.().print || {};
-      const visualSettings = app.getSettings?.().visual || {};
+      const settings = app.getSettings?.() || {};
+      const company = settings.company || {};
+      const business = settings.business || {};
+      const fiscal = settings.fiscal || {};
+      const printSettings = settings.print || {};
+      const visualSettings = settings.visual || {};
       const contactLine = [company.phone, company.instagram, company.address]
+        .filter(Boolean)
+        .join(' • ');
+      const companyDocumentLine = [company.cnpj ? `CNPJ ${company.cnpj}` : '', fiscal.ie ? `IE ${fiscal.ie}` : '', company.address || '']
         .filter(Boolean)
         .join(' • ');
 
@@ -1422,12 +1463,21 @@
         saleDate,
         paymentMethod,
         orderStatus,
+        channel,
+        externalReference,
+        deliveryType,
+        customerDocument,
         companyName: company.tradeName || company.name || 'Husky Confeitaria',
+        documentLabel: business.documentLabel || 'Recibo de venda',
+        legalFooter: business.legalFooter || 'Documento gerado pelo sistema. Não substitui NF-e/NFC-e oficial.',
+        pixKey: business.pixKey || '',
+        companyDocumentLine,
         footerMessage: printSettings.receiptFooterMessage || 'Obrigada pela preferência.',
         contactLine,
         showLogo: printSettings.printLogo !== false,
         showCompanyData: printSettings.printCompanyData !== false,
-        mascotEnabled: visualSettings.showMascotDashboard !== false
+        mascotEnabled: visualSettings.showMascotDashboard !== false,
+        issueInvoiceNotice: fiscal.issueInvoiceNotice !== false
       };
     },
 
@@ -1511,7 +1561,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comprovante ${this.escapeHtml(receipt.orderNumber)}</title>
+  <title>${this.escapeHtml(receipt.documentLabel)} ${this.escapeHtml(receipt.orderNumber)}</title>
   <style>
     :root {
       color-scheme: light;
@@ -1759,9 +1809,9 @@
         <div class="receipt-brand-main">
           ${logoHtml}
           <div>
-            <span class="receipt-eyebrow">Comprovante de compra</span>
+            <span class="receipt-eyebrow">${this.escapeHtml(receipt.documentLabel)}</span>
             <h1 class="receipt-title">${this.escapeHtml(receipt.companyName)}</h1>
-            <p class="receipt-subtitle">Resumo da compra do cliente</p>
+            <p class="receipt-subtitle">Pedido ${this.escapeHtml(receipt.orderNumber)} • ${this.escapeHtml(receipt.channel)}</p>
           </div>
         </div>
         ${mascotHtml}
@@ -1777,6 +1827,9 @@
       <div class="receipt-client">
         <span>Cliente</span>
         <strong>${this.escapeHtml(receipt.clientName)}</strong>
+        ${receipt.customerDocument ? `<small style="display:block;margin-top:4px;color:#5b6d7a;">Documento: ${this.escapeHtml(receipt.customerDocument)}</small>` : ''}
+        <small style="display:block;margin-top:4px;color:#5b6d7a;">Entrega: ${this.escapeHtml(receipt.deliveryType)}</small>
+        ${receipt.externalReference ? `<small style="display:block;margin-top:4px;color:#5b6d7a;">Ref. externa: ${this.escapeHtml(receipt.externalReference)}</small>` : ''}
       </div>
 
       <span class="receipt-items-label">Itens</span>
@@ -1795,6 +1848,16 @@
             <strong>${this.escapeHtml(receipt.orderStatus)}</strong>
           </div>
         </div>
+        <div class="receipt-pill-row">
+          <div class="receipt-pill">
+            <span>Canal</span>
+            <strong>${this.escapeHtml(receipt.channel)}</strong>
+          </div>
+          <div class="receipt-pill">
+            <span>Subtotal</span>
+            <strong>${app.formatCurrency(receipt.totals.subtotal)}</strong>
+          </div>
+        </div>
         <div class="receipt-total">
           <span>Total</span>
           <strong>${app.formatCurrency(receipt.totals.total)}</strong>
@@ -1803,7 +1866,10 @@
 
       <footer class="receipt-footer">
         <p class="receipt-thanks">${this.escapeHtml(receipt.footerMessage)}</p>
+        ${receipt.showCompanyData && receipt.companyDocumentLine ? `<p class="receipt-contact">${this.escapeHtml(receipt.companyDocumentLine)}</p>` : ''}
         ${contactHtml}
+        ${receipt.pixKey ? `<p class="receipt-contact">Pix: ${this.escapeHtml(receipt.pixKey)}</p>` : ''}
+        ${receipt.issueInvoiceNotice && receipt.legalFooter ? `<p class="receipt-contact">${this.escapeHtml(receipt.legalFooter)}</p>` : ''}
       </footer>
     </section>
   </main>
@@ -1867,11 +1933,15 @@
 
       return [
         `🐾 *${receipt.companyName}*`,
-        '*Comprovante de compra*',
+        `*${receipt.documentLabel}*`,
         '',
         `Pedido: ${receipt.orderNumber}`,
         `Data: ${receipt.saleDate}`,
         `Cliente: ${receipt.clientName}`,
+        receipt.customerDocument ? `Documento: ${receipt.customerDocument}` : '',
+        `Canal: ${receipt.channel}`,
+        `Entrega: ${receipt.deliveryType}`,
+        receipt.externalReference ? `Ref. externa: ${receipt.externalReference}` : '',
         '',
         '*Itens:*',
         items.length ? items.join('\n') : '• Nenhum item informado',
@@ -1881,7 +1951,9 @@
         `Total: ${app.formatCurrency(receipt.totals.total)}`,
         '',
         receipt.footerMessage,
-        receipt.showCompanyData && receipt.contactLine ? receipt.contactLine : ''
+        receipt.showCompanyData && receipt.companyDocumentLine ? receipt.companyDocumentLine : '',
+        receipt.showCompanyData && receipt.contactLine ? receipt.contactLine : '',
+        receipt.pixKey ? `Pix: ${receipt.pixKey}` : ''
       ].filter(Boolean).join('\n');
     },
 

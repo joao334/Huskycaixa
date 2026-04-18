@@ -16,6 +16,7 @@
       reportType: 'geral',
       periodPreset: '',
       paymentMethod: '',
+      source: '',
       category: ''
     },
 
@@ -39,6 +40,7 @@
         reportPeriodPreset: document.getElementById('report-period-preset'),
         reportPaymentFilter: document.getElementById('report-payment-filter'),
         reportCategoryFilter: document.getElementById('report-category-filter'),
+        reportSourceFilter: document.getElementById('report-source-filter'),
         btnGenerateReport: document.getElementById('btn-generate-report'),
         btnGenerateReportHero: document.getElementById('btn-generate-report-hero'),
         btnClearReportFilter: document.getElementById('btn-clear-report-filter'),
@@ -85,6 +87,7 @@
       this.refs.reportType?.addEventListener('change', () => this.captureFilters());
       this.refs.reportPaymentFilter?.addEventListener('change', () => this.captureFilters());
       this.refs.reportCategoryFilter?.addEventListener('change', () => this.captureFilters());
+      this.refs.reportSourceFilter?.addEventListener('change', () => this.captureFilters());
       this.refs.reportStartDate?.addEventListener('change', () => this.captureFilters());
       this.refs.reportEndDate?.addEventListener('change', () => this.captureFilters());
       this.refs.btnExportReportPdfTop?.addEventListener('click', () => this.exportAsPrint());
@@ -217,6 +220,7 @@
         reportType: 'geral',
         periodPreset: 'currentMonth',
         paymentMethod: '',
+        source: '',
         category: ''
       };
 
@@ -229,6 +233,7 @@
       if (this.refs.reportType) this.refs.reportType.value = this.filters.reportType || 'geral';
       if (this.refs.reportPeriodPreset) this.refs.reportPeriodPreset.value = this.filters.periodPreset || '';
       if (this.refs.reportPaymentFilter) this.refs.reportPaymentFilter.value = this.filters.paymentMethod || '';
+      if (this.refs.reportSourceFilter) this.refs.reportSourceFilter.value = this.filters.source || '';
       if (this.refs.reportCategoryFilter) this.refs.reportCategoryFilter.value = this.filters.category || '';
     },
 
@@ -238,6 +243,7 @@
       this.filters.reportType = this.refs.reportType?.value || 'geral';
       this.filters.periodPreset = this.refs.reportPeriodPreset?.value || '';
       this.filters.paymentMethod = this.refs.reportPaymentFilter?.value || '';
+      this.filters.source = this.refs.reportSourceFilter?.value || '';
       this.filters.category = this.refs.reportCategoryFilter?.value || '';
     },
 
@@ -387,9 +393,10 @@
       return this.getSales().filter((sale) => {
         const inRange = this.matchesDateRange(sale.date);
         const paymentOk = !this.filters.paymentMethod || sale.paymentMethod === this.filters.paymentMethod;
+        const sourceOk = !this.filters.source || (sale.channel || 'Loja') === this.filters.source;
         const categoryOk = !this.filters.category || (sale.items || []).some((item) => this.findProductById(item.productId)?.category === this.filters.category);
 
-        if (!inRange || !paymentOk || !categoryOk) return false;
+        if (!inRange || !paymentOk || !sourceOk || !categoryOk) return false;
 
         return true;
       });
@@ -941,7 +948,7 @@
       const expenses = this.filterExpenses().filter((expense) => expense.status !== 'Cancelado');
 
       const lines = [
-        ['Tipo', 'Data', 'Descrição', 'Categoria/Pagamento', 'Valor']
+        ['Tipo', 'Data', 'Descrição', 'Categoria/Pagamento', 'Canal', 'Valor']
       ];
 
       sales.forEach((sale) => {
@@ -950,6 +957,7 @@
           sale.date || '',
           sale.orderNumber || '',
           sale.paymentMethod || '',
+          sale.channel || 'Loja',
           this.toNumber(sale.total || 0)
         ]);
       });
@@ -960,6 +968,7 @@
           expense.date || '',
           expense.description || '',
           expense.category || '',
+          '',
           this.toNumber(expense.value || 0)
         ]);
       });

@@ -52,7 +52,14 @@
 
         dashboardAlertsList: document.getElementById('dashboard-alerts-list'),
         cashflowChartArea: document.getElementById('cashflow-chart-area'),
-        monthlyPerformanceChart: document.getElementById('monthly-performance-chart')
+        monthlyPerformanceChart: document.getElementById('monthly-performance-chart'),
+        homeCloudStatus: document.getElementById('home-cloud-status'),
+        homeCloudDetail: document.getElementById('home-cloud-detail'),
+        homeIfoodStatus: document.getElementById('home-ifood-status'),
+        homeIfoodDetail: document.getElementById('home-ifood-detail'),
+        homeFiscalStatus: document.getElementById('home-fiscal-status'),
+        homeFiscalDetail: document.getElementById('home-fiscal-detail'),
+        homeTopChannelsList: document.getElementById('home-top-channels-list')
       };
     },
 
@@ -229,6 +236,8 @@
       this.renderPendingOrders();
       this.renderPixProofPreview();
       this.renderAlerts();
+      this.renderOperationsHub();
+      this.renderTopChannels();
       this.renderChartPlaceholders();
     },
 
@@ -455,6 +464,82 @@
       }
 
       container.innerHTML = alerts.map((alert) => `<li>${this.escapeHtml(alert)}</li>`).join('');
+    },
+
+    renderOperationsHub() {
+      const settings = this.getState().settings || {};
+      const ifood = settings.integrations?.ifood || {};
+      const cloud = settings.cloud || {};
+      const business = settings.business || {};
+      const fiscal = settings.fiscal || {};
+
+      if (this.refs.homeCloudStatus) {
+        this.refs.homeCloudStatus.textContent = cloud.connected ? 'Conectada' : 'Preparada';
+      }
+      if (this.refs.homeCloudDetail) {
+        this.refs.homeCloudDetail.textContent = cloud.connected
+          ? `Última sync: ${cloud.lastSyncAt ? app.formatDateTime(cloud.lastSyncAt) : 'agora há pouco'}`
+          : 'Supabase e cache local prontos para uso.';
+      }
+      if (this.refs.homeIfoodStatus) {
+        this.refs.homeIfoodStatus.textContent = ifood.enabled
+          ? `Pronto • ${ifood.environment === 'production' ? 'produção' : 'sandbox'}`
+          : 'Não preparado';
+      }
+      if (this.refs.homeIfoodDetail) {
+        this.refs.homeIfoodDetail.textContent = ifood.enabled
+          ? `${ifood.storeName || 'Loja sem nome'} • consulta a cada ${ifood.pollingMinutes || 5} min`
+          : 'Ative a estrutura para futura conexão com pedidos do iFood.';
+      }
+      if (this.refs.homeFiscalStatus) {
+        this.refs.homeFiscalStatus.textContent = business.documentLabel || 'Recibo padrão';
+      }
+      if (this.refs.homeFiscalDetail) {
+        this.refs.homeFiscalDetail.textContent = [fiscal.regime || '', settings.company?.cnpj ? 'CNPJ ok' : 'CNPJ pendente', business.pixKey ? 'Pix configurado' : 'Pix pendente']
+          .filter(Boolean)
+          .join(' • ');
+      }
+    },
+
+    renderTopChannels() {
+      const container = this.refs.homeTopChannelsList;
+      if (!container) return;
+
+      const grouped = new Map();
+      this.getFilteredSales().forEach((sale) => {
+        const key = sale.channel || 'Loja';
+        const bucket = grouped.get(key) || { count: 0, total: 0 };
+        bucket.count += 1;
+        bucket.total += this.toNumber(sale.total || 0);
+        grouped.set(key, bucket);
+      });
+
+      const rows = [...grouped.entries()]
+        .sort((a, b) => b[1].count - a[1].count || b[1].total - a[1].total)
+        .slice(0, 4);
+
+      if (!rows.length) {
+        container.innerHTML = `
+          <div class="husky-home-proof-item">
+            <div>
+              <strong>Sem canais ainda</strong>
+              <p>As vendas aparecerão aqui conforme forem registradas.</p>
+            </div>
+            <span class="husky-home-soft-tag">0 pedidos</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = rows.map(([channel, data]) => `
+        <div class="husky-home-proof-item">
+          <div>
+            <strong>${this.escapeHtml(channel)}</strong>
+            <p>${this.formatCurrency(data.total)} no período</p>
+          </div>
+          <span class="husky-home-soft-tag">${data.count} pedido(s)</span>
+        </div>
+      `).join('');
     },
 
     renderChartPlaceholders() {
