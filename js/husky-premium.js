@@ -5,7 +5,10 @@
     return `<img src="assets/img/icons/${name}.svg" alt="${alt}" class="husky-ui-icon" />`;
   }
 
+  const MENU_ORDER_KEY = 'husky_sidebar_menu_order';
+
   const NAV_META = {
+    'pedidos-online.html': { icon: icon('sales', 'Pedidos online'), label: 'Pedidos online', sub: 'App do cliente', group: 'principal' },
     'home.html': { icon: icon('home', 'Início'), label: 'Início', sub: 'Visão geral', group: 'principal' },
     'vendas.html': { icon: icon('sales', 'Vendas'), label: 'Vendas', sub: 'Caixa rápido', group: 'operacao' },
     'produtos.html': { icon: icon('cupcake', 'Produtos'), label: 'Produtos', sub: 'Catálogo', group: 'operacao' },
@@ -17,85 +20,64 @@
     'configuracoes.html': { icon: icon('settings', 'Configurações'), label: 'Configurações', sub: 'Ajustes', group: 'sistema' }
   };
 
+  const DEFAULT_MENU_ORDER = [
+    'pedidos-online.html',
+    'home.html',
+    'vendas.html',
+    'produtos.html',
+    'estoque.html',
+    'despesas.html',
+    'relatorios.html',
+    'clientes.html',
+    'comprovantes.html',
+    'configuracoes.html'
+  ];
+
   const WORKSPACE_ITEMS = [
+    { href: 'pedidos-online.html', icon: icon('sales', 'Pedidos online'), title: 'Pedidos online', sub: 'Tempo real' },
     { href: 'home.html', icon: icon('home', 'Início'), title: 'Painel', sub: 'Hoje' },
     { href: 'vendas.html', icon: icon('sales', 'Vendas'), title: 'Vendas', sub: 'Pedidos' },
     { href: 'produtos.html', icon: icon('cupcake', 'Produtos'), title: 'Produtos', sub: 'Cardápio' },
     { href: 'estoque.html', icon: icon('box', 'Estoque'), title: 'Estoque', sub: 'Controle' },
-    { href: 'relatorios.html', icon: icon('chart', 'Relatórios'), title: 'Relatórios', sub: 'Análises' },
-    { href: 'clientes.html', icon: icon('users', 'Clientes'), title: 'Clientes', sub: 'Contato' }
+    { href: 'relatorios.html', icon: icon('chart', 'Relatórios'), title: 'Relatórios', sub: 'Análises' }
   ];
 
-  function onReady(fn) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn, { once: true });
-    } else {
-      fn();
+  function getMenuOrder() {
+    try {
+      const raw = localStorage.getItem(MENU_ORDER_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return Array.isArray(parsed) && parsed.length ? parsed : [...DEFAULT_MENU_ORDER];
+    } catch (_error) {
+      return [...DEFAULT_MENU_ORDER];
     }
   }
 
-  function currentPage() {
-    return (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  function saveMenuOrder(order = []) {
+    localStorage.setItem(MENU_ORDER_KEY, JSON.stringify(order));
   }
 
-  function isAppPage() {
-    return document.body?.classList.contains('app-page-body');
-  }
-
-  function isLoginPage() {
-    return /index\.html$/i.test(currentPage());
-  }
-
-  function isCompact() {
-    return window.innerWidth <= 768;
-  }
-
-  function normalizeTopbar() {
-    if (!isAppPage()) return;
-    const topbar = document.querySelector('.topbar');
-    if (!topbar) return;
-
-    let left = topbar.querySelector('.topbar-left');
-    let right = topbar.querySelector('.topbar-right');
-
-    if (!left) {
-      left = document.createElement('div');
-      left.className = 'topbar-left';
-      topbar.prepend(left);
-    }
-
-    if (!right) {
-      right = document.createElement('div');
-      right.className = 'topbar-right';
-      topbar.appendChild(right);
-    }
-
-    let actions = right.querySelector('.topbar-actions');
-    if (!actions) {
-      actions = document.createElement('div');
-      actions.className = 'topbar-actions';
-      right.appendChild(actions);
-    }
-
-    let themeButton = topbar.querySelector('#btn-toggle-theme');
-    if (!themeButton) {
-      themeButton = document.createElement('button');
-      themeButton.type = 'button';
-      themeButton.id = 'btn-toggle-theme';
-      themeButton.className = 'btn btn-secondary';
-      themeButton.setAttribute('data-action', 'toggle-theme');
-      themeButton.textContent = 'Tema escuro';
-      actions.prepend(themeButton);
-    } else if (themeButton.parentElement !== actions) {
-      actions.prepend(themeButton);
-    }
+  function sortMenuLinks(links = []) {
+    const order = getMenuOrder();
+    return [...links].sort((a, b) => {
+      const aHref = a.getAttribute('href') || '';
+      const bHref = b.getAttribute('href') || '';
+      const aIndex = order.indexOf(aHref);
+      const bIndex = order.indexOf(bHref);
+      const safeA = aIndex === -1 ? 999 : aIndex;
+      const safeB = bIndex === -1 ? 999 : bIndex;
+      return safeA - safeB;
+    });
   }
 
   function enhanceSidebar() {
     const nav = document.querySelector('.sidebar-nav');
-    if (!nav || nav.dataset.premiumReady === 'true') return;
+    if (!nav) return;
+
+    const existingLabels = nav.querySelectorAll('.nav-group-label');
+    existingLabels.forEach((entry) => entry.remove());
 
     const links = Array.from(nav.querySelectorAll('a.nav-item'));
+    const sortedLinks = sortMenuLinks(links);
     const groups = {
       principal: 'Painel',
       operacao: 'Operação',
@@ -103,21 +85,11 @@
       sistema: 'Sistema'
     };
 
-    let lastGroup = null;
-
-    links.forEach((link) => {
+    sortedLinks.forEach((link) => {
       const href = link.getAttribute('href') || '';
       const meta = NAV_META[href] || { icon: '•', label: link.textContent.trim(), sub: '', group: 'principal' };
-
-      if (meta.group !== lastGroup) {
-        const label = document.createElement('div');
-        label.className = 'nav-group-label';
-        label.textContent = groups[meta.group] || 'Menu';
-        nav.insertBefore(label, link);
-        lastGroup = meta.group;
-      }
-
       link.dataset.navKey = href.replace('.html', '');
+      link.dataset.navHref = href;
       link.innerHTML = `
         <span class="nav-item-icon" aria-hidden="true">${meta.icon}</span>
         <span class="nav-item-copy">
@@ -125,6 +97,65 @@
           <small>${meta.sub}</small>
         </span>
       `;
+      nav.appendChild(link);
+    });
+
+    let lastGroup = null;
+    Array.from(nav.querySelectorAll('a.nav-item')).forEach((link) => {
+      const href = link.getAttribute('href') || '';
+      const meta = NAV_META[href] || { group: 'principal' };
+      if (meta.group !== lastGroup) {
+        const label = document.createElement('div');
+        label.className = 'nav-group-label';
+        label.textContent = groups[meta.group] || 'Menu';
+        nav.insertBefore(label, link);
+        lastGroup = meta.group;
+      }
+    });
+
+    let organizer = document.getElementById('husky-menu-organizer');
+    if (!organizer) {
+      organizer = document.createElement('button');
+      organizer.type = 'button';
+      organizer.id = 'husky-menu-organizer';
+      organizer.className = 'btn btn-secondary btn-full husky-menu-organizer';
+      organizer.textContent = 'Organizar menu';
+      document.querySelector('.sidebar-bottom')?.prepend(organizer);
+      organizer.addEventListener('click', () => {
+        const editing = nav.classList.toggle('is-reordering');
+        organizer.textContent = editing ? 'Concluir organização' : 'Organizar menu';
+        nav.querySelectorAll('a.nav-item').forEach((link) => {
+          link.draggable = editing;
+        });
+      });
+    }
+
+    let draggedHref = '';
+    nav.querySelectorAll('a.nav-item').forEach((link) => {
+      link.addEventListener('dragstart', (event) => {
+        draggedHref = link.getAttribute('href') || '';
+        event.dataTransfer?.setData('text/plain', draggedHref);
+        link.classList.add('is-dragging');
+      });
+      link.addEventListener('dragend', () => {
+        link.classList.remove('is-dragging');
+      });
+      link.addEventListener('dragover', (event) => {
+        if (!nav.classList.contains('is-reordering')) return;
+        event.preventDefault();
+      });
+      link.addEventListener('drop', (event) => {
+        if (!nav.classList.contains('is-reordering')) return;
+        event.preventDefault();
+        const targetHref = link.getAttribute('href') || '';
+        const order = getMenuOrder().filter(Boolean);
+        const from = order.indexOf(draggedHref);
+        const to = order.indexOf(targetHref);
+        if (from === -1 || to === -1 || from === to) return;
+        order.splice(to, 0, order.splice(from, 1)[0]);
+        saveMenuOrder(order);
+        enhanceSidebar();
+      });
     });
 
     nav.dataset.premiumReady = 'true';

@@ -75,7 +75,9 @@ before update on public.app_state_shared
 for each row execute function public.husky_touch_updated_at();
 
 -- Realtime opcional: se falhar, o sistema continua sincronizando por polling.
-alter publication supabase_realtime add table public.app_state_shared;
+do $$ begin
+  alter publication supabase_realtime add table public.app_state_shared;
+exception when duplicate_object then null; end $$;
 
 
 -- STORAGE PARA COMPROVANTES PIX (BUCKET PÚBLICO PARA PRÉ-VISUALIZAÇÃO ENTRE APARELHOS)

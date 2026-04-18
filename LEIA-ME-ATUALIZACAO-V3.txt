@@ -1,0 +1,31 @@
+HUSKY CAIXA | ATUALIZAÇÃO V3
+
+O que mudou:
+1. App do cliente agora pode navegar sem login e só faz login no checkout.
+2. Área “Meus pedidos” no app do cliente para acompanhar etapas do pedido.
+3. Checkout com QR Code Pix, chave Pix e Pix copia e cola.
+4. Pedidos Online no caixa com separação por dia e por etapas:
+   - Aguardando aceitar
+   - Aceito
+   - Confeitando
+   - Pronto
+   - Saiu para entrega
+   - Finalizado
+5. Alertas em tempo real com som quando entra pedido novo.
+6. Botão para automação de WhatsApp por webhook/Edge Function.
+7. Menu lateral agora pode ser reorganizado por arrastar e soltar.
+   - Pedidos Online ficou no topo por padrão.
+
+SQL:
+- Execute o SUPABASE-SETUP.sql base primeiro.
+- Depois execute o novo SUPABASE-PEDIDOS-CLIENTE.sql desta pasta.
+
+Importante sobre WhatsApp:
+- Para enviar sem abrir o WhatsApp, preencha a URL do seu webhook/Edge Function na tela Pedidos Online.
+- O botão “WhatsApp” envia um POST para essa URL com os dados do pedido.
+- A automação do envio em si deve ficar no backend/Edge Function.
+
+Importante sobre QR Pix:
+- Na tela Pedidos Online, envie a imagem do QR Code e preencha também a chave Pix e o Pix copia e cola.
+- Depois clique em “Salvar checkout e automações”.
+- O app do cliente passa a mostrar esses dados quando o pagamento for Pix.

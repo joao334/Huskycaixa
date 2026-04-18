@@ -73,17 +73,17 @@
           <div class="page-heading">
             <span class="eyebrow">Vendas pelo celular</span>
             <h1>Pedidos online</h1>
-            <p>Publique seu catálogo, compartilhe o app do cliente e importe pedidos para vendas.</p>
+            <p>Catálogo, checkout com login, QR Pix, alertas em tempo real e fluxo por etapas.</p>
           </div>
         </div>
 
         <div class="topbar-right">
           <div class="sync-badge">
             <span class="status-indicator"></span>
-            <span id="topbar-sync-status">Sincronização online preparada</span>
+            <span id="topbar-sync-status">Realtime ativo</span>
           </div>
           <div class="topbar-actions">
-            <button type="button" class="btn btn-secondary" id="btn-toggle-theme" data-action="toggle-theme">Tema</button>
+            <button type="button" class="btn btn-secondary" id="btn-enable-order-alerts">Ativar alertas</button>
             <button type="button" class="btn btn-secondary" id="btn-refresh-online-orders">Atualizar</button>
             <button type="button" class="btn btn-primary" id="btn-publish-catalog">Publicar catálogo</button>
           </div>
@@ -92,9 +92,9 @@
 
       <main class="main-content online-page-grid" id="online-orders-page">
         <section class="online-top-grid">
-          <article class="online-metric"><span>Pedidos pendentes</span><strong id="metric-online-pending">0</strong></article>
+          <article class="online-metric"><span>Aguardando aceitar</span><strong id="metric-online-pending">0</strong></article>
           <article class="online-metric"><span>Pedidos de hoje</span><strong id="metric-online-today">0</strong></article>
-          <article class="online-metric"><span>Importados</span><strong id="metric-online-imported">0</strong></article>
+          <article class="online-metric"><span>Em produção</span><strong id="metric-online-production">0</strong></article>
           <article class="online-metric"><span>Itens no catálogo</span><strong id="metric-online-catalog">0</strong></article>
         </section>
 
@@ -113,7 +113,53 @@
                   <button type="button" class="btn btn-secondary" id="btn-copy-client-link">Copiar link</button>
                   <a href="app-cliente.html" class="btn btn-primary" target="_blank" rel="noopener">Abrir app</a>
                 </div>
-                <p class="online-note">Quando o catálogo for publicado, o cliente vê os produtos ativos e pode enviar o pedido. O pedido chega aqui e pode virar uma venda com um clique.</p>
+                <p class="online-note">Agora o cliente pode ver o catálogo sem login, mas faz login na etapa de pagar para conseguir acompanhar os pedidos depois.</p>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Checkout e automações</h3>
+                  <p>QR Pix público no app e webhook privado para mensagens automáticas.</p>
+                </div>
+              </div>
+              <div class="panel-body online-stack">
+                <div class="form-grid cols-1 online-settings-grid">
+                  <div class="form-group">
+                    <label for="store-hero-title">Título do app do cliente</label>
+                    <input type="text" id="store-hero-title" placeholder="Peça seus doces favoritos." />
+                  </div>
+                  <div class="form-group">
+                    <label for="store-hero-text">Texto do topo</label>
+                    <textarea id="store-hero-text" rows="3" placeholder="Texto principal do aplicativo do cliente"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="store-pix-key">Chave Pix pública</label>
+                    <input type="text" id="store-pix-key" placeholder="Sua chave Pix" />
+                  </div>
+                  <div class="form-group">
+                    <label for="store-pix-copy-paste">Pix copia e cola</label>
+                    <textarea id="store-pix-copy-paste" rows="4" placeholder="Cole aqui o código Pix copia e cola"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="store-pix-qr-file">QR Code Pix</label>
+                    <input type="file" id="store-pix-qr-file" accept="image/*" />
+                    <div class="online-image-preview" id="store-pix-qr-preview"><span>Prévia do QR Code</span></div>
+                  </div>
+                  <div class="form-group">
+                    <label for="whatsapp-webhook-url">Webhook / Edge Function do WhatsApp</label>
+                    <input type="url" id="whatsapp-webhook-url" placeholder="https://..." />
+                    <small>Esse link é privado do sistema. Use aqui a URL da sua automação para enviar WhatsApp sem abrir o app.</small>
+                  </div>
+                  <div class="online-inline-checks">
+                    <label class="checkbox-inline"><input type="checkbox" id="whatsapp-auto-status" /> Enviar WhatsApp automático ao mudar status</label>
+                    <label class="checkbox-inline"><input type="checkbox" id="checkout-requires-login" checked /> Exigir login no checkout</label>
+                  </div>
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-primary" id="btn-save-storefront-settings">Salvar checkout e automações</button>
+                  </div>
+                </div>
               </div>
             </article>
 
@@ -127,7 +173,7 @@
               <div class="panel-body online-stack">
                 <div class="online-inline-tags">
                   <span class="tag-soft">Somente produtos ativos</span>
-                  <span class="tag-soft">Respeita “Permitir venda”</span>
+                  <span class="tag-soft">Login no checkout</span>
                   <span class="tag-soft">Usa o mesmo banco Supabase</span>
                 </div>
                 <p class="online-note" id="catalog-publish-summary">Ainda não publicado.</p>
@@ -136,15 +182,18 @@
             </article>
           </div>
 
-          <article class="panel">
-            <div class="panel-header">
+          <article class="panel orders-board-panel">
+            <div class="panel-header board-header">
               <div>
                 <h3>Pedidos recebidos</h3>
-                <p>Importe o pedido para vendas e acompanhe no fluxo normal do sistema.</p>
+                <p>Separados por dia e por etapa. Quando chegar pedido novo, toca alerta e atualiza sozinho.</p>
+              </div>
+              <div class="online-order-meta">
+                <span class="tag-soft is-muted" id="board-connection-pill">Realtime conectado</span>
               </div>
             </div>
             <div class="panel-body">
-              <div class="online-orders-list" id="online-orders-list"></div>
+              <div class="orders-board" id="online-orders-list"></div>
             </div>
           </article>
         </section>

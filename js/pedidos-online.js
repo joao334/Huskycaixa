@@ -8,18 +8,33 @@
     return;
   }
 
+  const STAGES = [
+    { key: 'aguardando_aceite', label: 'Aguardando aceitar' },
+    { key: 'aceito', label: 'Aceito' },
+    { key: 'confeitando', label: 'Confeitando' },
+    { key: 'pronto', label: 'Pronto' },
+    { key: 'saiu_entrega', label: 'Saiu para entrega' },
+    { key: 'finalizado', label: 'Finalizado' }
+  ];
+
   const ONLINE_ORDERS_PAGE = {
     refs: {},
     supabase: null,
     workspaceId: window.HUSKY_WORKSPACE_ID || 'husky-principal',
     orders: [],
     catalog: [],
+    storefront: null,
+    seenOrderIds: new Set(),
+    orderChannel: null,
+    pollTimer: null,
+    pixQrDraft: null,
 
     async init() {
       if (!document.getElementById('online-orders-page')) return;
       this.cacheRefs();
       this.bindEvents();
       this.setShareLink();
+      this.loadPrivateSettings();
       this.supabase = await this.waitForSupabase();
 
       if (!this.supabase) {
@@ -28,6 +43,9 @@
       }
 
       await this.refreshAll();
+      this.markSeenOrders();
+      this.subscribeToOrders();
+      this.startPollingFallback();
       app.log('Tela de pedidos online carregada.');
     },
 
@@ -35,15 +53,27 @@
       this.refs = {
         metricPending: document.getElementById('metric-online-pending'),
         metricToday: document.getElementById('metric-online-today'),
-        metricImported: document.getElementById('metric-online-imported'),
+        metricProduction: document.getElementById('metric-online-production'),
         metricCatalog: document.getElementById('metric-online-catalog'),
         clientAppLink: document.getElementById('client-app-link'),
         btnCopyClientLink: document.getElementById('btn-copy-client-link'),
         btnPublishCatalog: document.getElementById('btn-publish-catalog'),
         btnRefreshOnlineOrders: document.getElementById('btn-refresh-online-orders'),
+        btnEnableOrderAlerts: document.getElementById('btn-enable-order-alerts'),
+        btnSaveStorefrontSettings: document.getElementById('btn-save-storefront-settings'),
         catalogPublishSummary: document.getElementById('catalog-publish-summary'),
         catalogPreviewList: document.getElementById('catalog-preview-list'),
-        onlineOrdersList: document.getElementById('online-orders-list')
+        onlineOrdersList: document.getElementById('online-orders-list'),
+        boardConnectionPill: document.getElementById('board-connection-pill'),
+        storeHeroTitle: document.getElementById('store-hero-title'),
+        storeHeroText: document.getElementById('store-hero-text'),
+        storePixKey: document.getElementById('store-pix-key'),
+        storePixCopyPaste: document.getElementById('store-pix-copy-paste'),
+        storePixQrFile: document.getElementById('store-pix-qr-file'),
+        storePixQrPreview: document.getElementById('store-pix-qr-preview'),
+        whatsappWebhookUrl: document.getElementById('whatsapp-webhook-url'),
+        whatsappAutoStatus: document.getElementById('whatsapp-auto-status'),
+        checkoutRequiresLogin: document.getElementById('checkout-requires-login')
       };
     },
 
@@ -54,24 +84,26 @@
           .then(() => app.showToast('Link do app copiado.', 'success'))
           .catch(() => app.showToast('Não foi possível copiar o link.', 'warning'));
       });
-
       this.refs.btnPublishCatalog?.addEventListener('click', () => this.publishCatalog());
       this.refs.btnRefreshOnlineOrders?.addEventListener('click', () => this.refreshAll(true));
+      this.refs.btnEnableOrderAlerts?.addEventListener('click', () => this.enableBrowserAlerts());
+      this.refs.btnSaveStorefrontSettings?.addEventListener('click', () => this.saveStorefrontSettings());
+      this.refs.storePixQrFile?.addEventListener('change', (event) => this.handlePixQrUpload(event));
 
       this.refs.onlineOrdersList?.addEventListener('click', async (event) => {
-        const importBtn = event.target.closest('[data-action="import-order"]');
-        if (importBtn) {
-          const orderId = importBtn.getAttribute('data-order-id');
-          await this.importOrder(orderId);
-          return;
-        }
+        const actionBtn = event.target.closest('[data-action]');
+        if (!actionBtn) return;
+        const action = actionBtn.getAttribute('data-action');
+        const orderId = actionBtn.getAttribute('data-order-id');
+        if (!orderId) return;
 
-        const markBtn = event.target.closest('[data-action="mark-production"]');
-        if (markBtn) {
-          const orderId = markBtn.getAttribute('data-order-id');
-          await this.updateOrderStatus(orderId, 'Em produção');
-          return;
-        }
+        if (action === 'import-order') return this.importOrder(orderId);
+        if (action === 'send-whatsapp') return this.sendOrderToWhatsapp(orderId, 'manual_click');
+        if (action === 'accept-order') return this.advanceStage(orderId, 'aceito');
+        if (action === 'start-production') return this.advanceStage(orderId, 'confeitando');
+        if (action === 'ready-order') return this.advanceStage(orderId, 'pronto');
+        if (action === 'delivery-order') return this.advanceStage(orderId, 'saiu_entrega');
+        if (action === 'finish-order') return this.advanceStage(orderId, 'finalizado');
       });
     },
 
@@ -89,16 +121,107 @@
       if (this.refs.clientAppLink) this.refs.clientAppLink.value = url.href;
     },
 
+    loadPrivateSettings() {
+      const settings = app.getSettings();
+      const whatsapp = settings.integrations?.whatsappAutomation || {};
+      if (this.refs.whatsappWebhookUrl) this.refs.whatsappWebhookUrl.value = whatsapp.webhookUrl || '';
+      if (this.refs.whatsappAutoStatus) this.refs.whatsappAutoStatus.checked = Boolean(whatsapp.autoOnStatus);
+    },
+
+    persistPrivateSettings() {
+      const current = app.getSettings();
+      app.updateSettings({
+        integrations: {
+          ...current.integrations,
+          whatsappAutomation: {
+            ...(current.integrations?.whatsappAutomation || {}),
+            webhookUrl: this.refs.whatsappWebhookUrl?.value.trim() || '',
+            autoOnStatus: Boolean(this.refs.whatsappAutoStatus?.checked)
+          }
+        }
+      });
+    },
+
     async refreshAll(showToast = false) {
       try {
-        await Promise.all([this.loadCatalog(), this.loadOrders()]);
+        await Promise.all([this.loadCatalog(), this.loadOrders(), this.loadStorefrontSettings()]);
         this.renderCatalog();
         this.renderOrders();
         this.renderMetrics();
+        this.fillStorefrontForm();
         if (showToast) app.showToast('Pedidos online atualizados.', 'success');
       } catch (error) {
         console.error('[Pedidos Online] erro ao atualizar', error);
         app.showToast('Não foi possível atualizar os pedidos online.', 'danger');
+      }
+    },
+
+    async loadStorefrontSettings() {
+      try {
+        const { data, error } = await this.supabase
+          .from('public_storefront_settings')
+          .select('*')
+          .eq('workspace_id', this.workspaceId)
+          .maybeSingle();
+        if (error) throw error;
+        this.storefront = data || null;
+      } catch (error) {
+        console.warn('[Pedidos Online] storefront público ainda não configurado.', error);
+        this.storefront = null;
+      }
+    },
+
+    fillStorefrontForm() {
+      const storefront = this.storefront || {};
+      if (this.refs.storeHeroTitle) this.refs.storeHeroTitle.value = storefront.hero_title || 'Peça seus doces favoritos.';
+      if (this.refs.storeHeroText) this.refs.storeHeroText.value = storefront.hero_text || 'Escolha os produtos, monte o carrinho e finalize com login somente no pagamento.';
+      if (this.refs.storePixKey) this.refs.storePixKey.value = storefront.pix_key || app.getSettings().business?.pixKey || '';
+      if (this.refs.storePixCopyPaste) this.refs.storePixCopyPaste.value = storefront.pix_copy_paste || '';
+      if (this.refs.checkoutRequiresLogin) this.refs.checkoutRequiresLogin.checked = storefront.checkout_requires_login !== false;
+      this.renderPixPreview(storefront.pix_qr_image || this.pixQrDraft || '');
+    },
+
+    renderPixPreview(dataUrl = '') {
+      if (!this.refs.storePixQrPreview) return;
+      if (!dataUrl) {
+        this.refs.storePixQrPreview.innerHTML = '<span>Prévia do QR Code</span>';
+        return;
+      }
+      this.refs.storePixQrPreview.innerHTML = `<img src="${this.escapeAttribute(dataUrl)}" alt="QR Code Pix" />`;
+    },
+
+    async handlePixQrUpload(event) {
+      const file = event.target?.files?.[0];
+      if (!file) return;
+      this.pixQrDraft = await this.readFileAsDataUrl(file);
+      this.renderPixPreview(this.pixQrDraft);
+    },
+
+    async saveStorefrontSettings() {
+      try {
+        this.persistPrivateSettings();
+        const payload = {
+          workspace_id: this.workspaceId,
+          store_name: app.getSettings().company?.tradeName || app.getSettings().company?.name || 'Husky Confeitaria',
+          store_subtitle: 'Pedidos online no celular',
+          hero_title: this.refs.storeHeroTitle?.value.trim() || 'Peça seus doces favoritos.',
+          hero_text: this.refs.storeHeroText?.value.trim() || 'Escolha os produtos, monte o carrinho e finalize com login somente no pagamento.',
+          pix_key: this.refs.storePixKey?.value.trim() || '',
+          pix_copy_paste: this.refs.storePixCopyPaste?.value.trim() || '',
+          pix_qr_image: this.pixQrDraft || this.storefront?.pix_qr_image || '',
+          catalog_layout: 'compact',
+          checkout_requires_login: Boolean(this.refs.checkoutRequiresLogin?.checked)
+        };
+
+        const { error } = await this.supabase
+          .from('public_storefront_settings')
+          .upsert(payload, { onConflict: 'workspace_id' });
+        if (error) throw error;
+        this.storefront = payload;
+        app.showToast('Checkout do cliente atualizado.', 'success');
+      } catch (error) {
+        console.error('[Pedidos Online] erro ao salvar checkout/automação', error);
+        app.showToast('Não foi possível salvar as configurações do checkout.', 'danger');
       }
     },
 
@@ -125,7 +248,6 @@
         }));
     },
 
-
     getCatalogStorageBucket() {
       return 'husky-files';
     },
@@ -141,19 +263,15 @@
         publishedAt: new Date().toISOString(),
         items: payload
       });
-
       const file = new Blob([fileBody], { type: 'application/json' });
       const bucket = this.getCatalogStorageBucket();
       const path = this.getCatalogStoragePath();
-
       const { error } = await this.supabase.storage.from(bucket).upload(path, file, {
         upsert: true,
         cacheControl: '60',
         contentType: 'application/json'
       });
-
       if (error) throw error;
-
       const { data } = this.supabase.storage.from(bucket).getPublicUrl(path);
       return data?.publicUrl || '';
     },
@@ -182,78 +300,43 @@
           featured: Boolean(product.featured),
           active: true,
           sort_order: Number(product.sortOrder || 0),
-          metadata: {
-            stock: product.stock,
-            minStock: product.minStock
-          }
+          metadata: { stock: product.stock, minStock: product.minStock }
         }));
 
-        let dbPublished = false;
-        let publicCatalogUrl = '';
+        const deactivate = await this.supabase
+          .from('customer_catalog_items')
+          .update({ active: false })
+          .eq('workspace_id', this.workspaceId);
+        if (deactivate.error && deactivate.error.code !== 'PGRST116') throw deactivate.error;
 
-        try {
-          const deactivate = await this.supabase
-            .from('customer_catalog_items')
-            .update({ active: false })
-            .eq('workspace_id', this.workspaceId);
+        const { error } = await this.supabase
+          .from('customer_catalog_items')
+          .upsert(payload, { onConflict: 'workspace_id,product_id' });
+        if (error) throw error;
 
-          if (deactivate.error && deactivate.error.code !== 'PGRST116') throw deactivate.error;
+        await this.publishCatalogJson(payload.map((item) => ({
+          id: item.product_id,
+          product_id: item.product_id,
+          name: item.name,
+          short_name: item.short_name,
+          category: item.category,
+          description: item.description,
+          unit: item.unit,
+          price: item.price,
+          image_url: item.image_url,
+          featured: item.featured,
+          active: item.active,
+          sort_order: item.sort_order,
+          metadata: item.metadata || {}
+        })));
 
-          const { error } = await this.supabase
-            .from('customer_catalog_items')
-            .upsert(payload, { onConflict: 'workspace_id,product_id' });
-
-          if (error) throw error;
-          dbPublished = true;
-        } catch (dbError) {
-          console.error('[Pedidos Online] erro ao publicar catálogo em tabela', dbError);
-        }
-
-        try {
-          publicCatalogUrl = await this.publishCatalogJson(payload.map((item) => ({
-            id: item.product_id,
-            product_id: item.product_id,
-            name: item.name,
-            short_name: item.short_name,
-            category: item.category,
-            description: item.description,
-            unit: item.unit,
-            price: item.price,
-            image_url: item.image_url,
-            featured: item.featured,
-            active: item.active,
-            sort_order: item.sort_order,
-            metadata: item.metadata || {}
-          })));
-        } catch (storageError) {
-          console.error('[Pedidos Online] erro ao publicar catálogo em storage', storageError);
-        }
-
-        if (!dbPublished && !publicCatalogUrl) {
-          throw new Error('catalog_publish_failed');
-        }
-
-        await this.loadCatalog().catch(() => {
-          this.catalog = payload;
-        });
-        this.renderCatalog();
-        this.renderMetrics();
-
-        if (this.refs.catalogPublishSummary) {
-          const suffix = publicCatalogUrl
-            ? ' Versão pública do catálogo atualizada com sucesso.'
-            : ' O catálogo visual depende do SQL novo no Supabase.';
-          this.refs.catalogPublishSummary.textContent = `Catálogo publicado com ${payload.length} item(ns).${suffix}`;
-        }
-
-        if (dbPublished) {
-          app.showToast('Catálogo publicado no app do cliente.', 'success');
-        } else {
-          app.showToast('Catálogo visual publicado, mas execute o SQL novo para ativar a leitura completa e os pedidos.', 'warning');
-        }
+        await this.saveStorefrontSettings();
+        await this.refreshAll();
+        this.markSeenOrders();
+        app.showToast('Catálogo publicado no app do cliente.', 'success');
       } catch (error) {
         console.error('[Pedidos Online] erro ao publicar catálogo', error);
-        app.showToast('Não foi possível publicar o catálogo. Execute o SQL novo no Supabase.', 'danger');
+        app.showToast('Não foi possível publicar o catálogo. Execute o SQL atualizado no Supabase.', 'danger');
       } finally {
         this.refs.btnPublishCatalog.disabled = false;
         this.refs.btnPublishCatalog.textContent = 'Publicar catálogo';
@@ -268,7 +351,6 @@
         .eq('active', true)
         .order('sort_order', { ascending: true })
         .order('name', { ascending: true });
-
       if (error) throw error;
       this.catalog = Array.isArray(data) ? data : [];
     },
@@ -279,21 +361,19 @@
         .select('*')
         .eq('workspace_id', this.workspaceId)
         .order('created_at', { ascending: false })
-        .limit(100);
-
+        .limit(200);
       if (error) throw error;
       this.orders = Array.isArray(data) ? data : [];
     },
 
     renderMetrics() {
       const today = new Date().toISOString().slice(0, 10);
-      const pending = this.orders.filter((order) => !order.imported_sale_id && String(order.order_status || '').toLowerCase() !== 'importado').length;
+      const pending = this.orders.filter((order) => this.normalizeStage(order.status_stage || order.order_status) === 'aguardando_aceite').length;
+      const production = this.orders.filter((order) => this.normalizeStage(order.status_stage || order.order_status) === 'confeitando').length;
       const todayCount = this.orders.filter((order) => String(order.created_at || '').slice(0, 10) === today).length;
-      const imported = this.orders.filter((order) => Boolean(order.imported_sale_id)).length;
-
       if (this.refs.metricPending) this.refs.metricPending.textContent = String(pending);
       if (this.refs.metricToday) this.refs.metricToday.textContent = String(todayCount);
-      if (this.refs.metricImported) this.refs.metricImported.textContent = String(imported);
+      if (this.refs.metricProduction) this.refs.metricProduction.textContent = String(production);
       if (this.refs.metricCatalog) this.refs.metricCatalog.textContent = String(this.catalog.length);
     },
 
@@ -303,9 +383,7 @@
         this.refs.catalogPublishSummary.textContent = 'Catálogo ainda não publicado para o app do cliente.';
         return;
       }
-
       this.refs.catalogPublishSummary.textContent = `Catálogo publicado com ${this.catalog.length} item(ns). Os itens ativos do seu cadastro agora aparecem no app do cliente.`;
-
       this.refs.catalogPreviewList.innerHTML = this.catalog.slice(0, 8).map((item) => `
         <article class="catalog-preview-card">
           <img src="${this.escapeAttribute(item.image_url || 'assets/img/logo-husky.png')}" alt="${this.escapeAttribute(item.name || 'Produto')}" />
@@ -320,63 +398,123 @@
       `).join('');
     },
 
+    groupOrdersByDay() {
+      const groups = new Map();
+      this.orders.forEach((order) => {
+        const day = String(order.created_at || new Date().toISOString()).slice(0, 10);
+        if (!groups.has(day)) groups.set(day, []);
+        groups.get(day).push(order);
+      });
+      return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+    },
+
     renderOrders() {
       if (!this.orders.length) {
         this.refs.onlineOrdersList.innerHTML = '<div class="orders-empty">Ainda não há pedidos recebidos pelo app do cliente.</div>';
         return;
       }
+      const dayGroups = this.groupOrdersByDay();
+      this.refs.onlineOrdersList.innerHTML = dayGroups.map(([day, orders]) => `
+        <section class="orders-day-group">
+          <div class="orders-day-header">
+            <h4>${this.escapeHtml(this.formatDate(day))}</h4>
+            <span class="tag-soft is-muted">${orders.length} pedido(s)</span>
+          </div>
+          <div class="orders-stage-board">
+            ${STAGES.map((stage) => this.renderStageColumn(stage, orders)).join('')}
+          </div>
+        </section>
+      `).join('');
+    },
 
-      this.refs.onlineOrdersList.innerHTML = this.orders.map((order) => {
-        const imported = Boolean(order.imported_sale_id);
-        const items = Array.isArray(order.items) ? order.items : [];
-        const statusClass = imported ? 'is-success' : (String(order.order_status || '').toLowerCase().includes('produção') ? 'is-warning' : '');
-        const statusLabel = imported ? 'Importado para vendas' : (order.order_status || 'Recebido');
-        const deliveryLine = [order.delivery_type || '', order.delivery_address || '', order.delivery_neighborhood || '']
-          .filter(Boolean)
-          .join(' • ');
+    renderStageColumn(stage, orders) {
+      const stageOrders = orders.filter((order) => this.normalizeStage(order.status_stage || order.order_status) === stage.key);
+      return `
+        <article class="stage-column">
+          <div class="stage-column-header">
+            <strong>${stage.label}</strong>
+            <span>${stageOrders.length}</span>
+          </div>
+          <div class="stage-column-list">
+            ${stageOrders.length ? stageOrders.map((order) => this.renderOrderCard(order)).join('') : '<div class="stage-empty">Nenhum pedido nesta etapa.</div>'}
+          </div>
+        </article>
+      `;
+    },
 
-        return `
-          <article class="online-order-card">
-            <div class="online-order-header">
-              <div>
-                <h4>${this.escapeHtml(order.customer_name || 'Cliente')}</h4>
-                <p>${this.escapeHtml(order.order_number || order.id || '')} • ${this.escapeHtml(this.formatDateTime(order.created_at))}</p>
+    renderOrderCard(order) {
+      const imported = Boolean(order.imported_sale_id);
+      const items = Array.isArray(order.items) ? order.items : [];
+      const stageKey = this.normalizeStage(order.status_stage || order.order_status || 'aguardando_aceite');
+      const deliveryLine = [order.delivery_type || '', order.delivery_address || '', order.delivery_neighborhood || '']
+        .filter(Boolean)
+        .join(' • ');
+      return `
+        <article class="online-order-card">
+          <div class="online-order-header">
+            <div>
+              <h4>${this.escapeHtml(order.customer_name || 'Cliente')}</h4>
+              <p>${this.escapeHtml(order.order_number || order.id || '')} • ${this.escapeHtml(this.formatDateTime(order.created_at))}</p>
+            </div>
+            <span class="tag-soft is-muted">${this.escapeHtml(order.payment_method || 'Pix')}</span>
+          </div>
+
+          <div class="online-order-meta compact">
+            <span class="tag-soft is-muted">${this.escapeHtml(order.customer_phone || 'Sem telefone')}</span>
+            <span class="tag-soft is-muted">${this.escapeHtml(order.delivery_type || 'Entrega')}</span>
+          </div>
+
+          <div class="online-order-items">
+            ${items.slice(0, 4).map((item) => `
+              <div class="online-order-item">
+                <span>${this.escapeHtml(item.name || 'Item')} • ${this.escapeHtml(String(item.quantity || 0))}x</span>
+                <strong>${this.formatCurrency(item.total || (Number(item.unitPrice || 0) * Number(item.quantity || 0)))}</strong>
               </div>
-              <span class="tag-soft ${statusClass}">${this.escapeHtml(statusLabel)}</span>
-            </div>
+            `).join('')}
+          </div>
 
-            <div class="online-order-meta" style="margin-top: 12px;">
-              <span class="tag-soft is-muted">${this.escapeHtml(order.source || 'App Cliente')}</span>
-              <span class="tag-soft is-muted">${this.escapeHtml(order.payment_method || 'Pix')}</span>
-              <span class="tag-soft is-muted">${this.escapeHtml(order.customer_phone || 'Sem telefone')}</span>
+          <p><strong>Entrega:</strong> ${this.escapeHtml(deliveryLine || 'Retirada')}</p>
+          ${order.notes ? `<p><strong>Observações:</strong> ${this.escapeHtml(order.notes)}</p>` : ''}
+          <div class="online-order-footer">
+            <div>
+              <strong>Total: ${this.formatCurrency(order.total)}</strong>
             </div>
-
-            <div class="online-order-items">
-              ${items.map((item) => `
-                <div class="online-order-item">
-                  <span>${this.escapeHtml(item.name || 'Item')} • ${this.escapeHtml(String(item.quantity || 0))}x</span>
-                  <strong>${this.formatCurrency(item.total || (Number(item.unitPrice || 0) * Number(item.quantity || 0)))}</strong>
-                </div>
-              `).join('')}
+            <div class="online-order-actions">
+              ${this.renderStageActions(order, stageKey, imported)}
             </div>
+          </div>
+        </article>
+      `;
+    },
 
-            <p><strong>Entrega:</strong> ${this.escapeHtml(deliveryLine || 'Retirada')}</p>
-            ${order.notes ? `<p><strong>Observações:</strong> ${this.escapeHtml(order.notes)}</p>` : ''}
+    renderStageActions(order, stageKey, imported) {
+      if (imported) {
+        return `<a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>`;
+      }
+      const buttons = [];
+      if (stageKey === 'aguardando_aceite') buttons.push(`<button type="button" class="btn btn-secondary" data-action="accept-order" data-order-id="${this.escapeAttribute(order.id)}">Aceitar</button>`);
+      if (stageKey === 'aceito') buttons.push(`<button type="button" class="btn btn-secondary" data-action="start-production" data-order-id="${this.escapeAttribute(order.id)}">Confeitando</button>`);
+      if (stageKey === 'confeitando') {
+        buttons.push(`<button type="button" class="btn btn-secondary" data-action="ready-order" data-order-id="${this.escapeAttribute(order.id)}">Pronto</button>`);
+        buttons.push(`<button type="button" class="btn btn-secondary" data-action="delivery-order" data-order-id="${this.escapeAttribute(order.id)}">Saiu</button>`);
+      }
+      if (stageKey === 'pronto' || stageKey === 'saiu_entrega') buttons.push(`<button type="button" class="btn btn-secondary" data-action="finish-order" data-order-id="${this.escapeAttribute(order.id)}">Finalizar</button>`);
+      buttons.push(`<button type="button" class="btn btn-secondary" data-action="send-whatsapp" data-order-id="${this.escapeAttribute(order.id)}">WhatsApp</button>`);
+      if (stageKey !== 'finalizado') buttons.push(`<button type="button" class="btn btn-primary" data-action="import-order" data-order-id="${this.escapeAttribute(order.id)}">Importar</button>`);
+      return buttons.join('');
+    },
 
-            <div class="online-order-footer" style="margin-top: 14px; justify-content: space-between;">
-              <div>
-                <strong>Total: ${this.formatCurrency(order.total)}</strong>
-              </div>
-              <div class="online-order-actions">
-                ${imported ? `<a href="vendas.html" class="btn btn-secondary">Abrir vendas</a>` : `
-                  <button type="button" class="btn btn-secondary" data-action="mark-production" data-order-id="${this.escapeAttribute(order.id)}">Em produção</button>
-                  <button type="button" class="btn btn-primary" data-action="import-order" data-order-id="${this.escapeAttribute(order.id)}">Importar para vendas</button>
-                `}
-              </div>
-            </div>
-          </article>
-        `;
-      }).join('');
+    normalizeStage(value) {
+      const raw = String(value || '').toLowerCase();
+      if (raw.includes('aguard')) return 'aguardando_aceite';
+      if (raw.includes('aceit')) return 'aceito';
+      if (raw.includes('confeit') || raw.includes('produ')) return 'confeitando';
+      if (raw.includes('pronto')) return 'pronto';
+      if (raw.includes('saiu')) return 'saiu_entrega';
+      if (raw.includes('final')) return 'finalizado';
+      if (raw.includes('cancel')) return 'cancelado';
+      if (raw.includes('import')) return 'importado';
+      return 'aguardando_aceite';
     },
 
     findOrderById(orderId) {
@@ -387,20 +525,67 @@
       return String(value || '').replace(/\D+/g, '');
     },
 
-    async updateOrderStatus(orderId, status) {
+    async advanceStage(orderId, stageKey) {
+      const statusLabel = this.stageLabel(stageKey);
       try {
+        const payload = {
+          order_status: statusLabel,
+          status_stage: stageKey,
+          payment_status: stageKey === 'finalizado' ? 'Pago / concluído' : undefined
+        };
+        Object.keys(payload).forEach((key) => payload[key] === undefined && delete payload[key]);
+
         const { error } = await this.supabase
           .from('customer_orders')
-          .update({ order_status: status })
+          .update(payload)
           .eq('id', orderId)
           .eq('workspace_id', this.workspaceId);
-
         if (error) throw error;
+
         await this.refreshAll();
-        app.showToast('Status do pedido atualizado.', 'success');
+        app.showToast(`Pedido atualizado para ${statusLabel}.`, 'success');
+        this.persistPrivateSettings();
+        if (this.refs.whatsappAutoStatus?.checked) await this.sendOrderToWhatsapp(orderId, 'status_changed');
       } catch (error) {
         console.error('[Pedidos Online] erro ao atualizar status', error);
         app.showToast('Não foi possível atualizar o status do pedido.', 'danger');
+      }
+    },
+
+    stageLabel(stageKey) {
+      const stage = STAGES.find((item) => item.key === stageKey);
+      return stage?.label || 'Aguardando aceitar';
+    },
+
+    async sendOrderToWhatsapp(orderId, reason = 'manual_click') {
+      const order = this.findOrderById(orderId);
+      if (!order) {
+        app.showToast('Pedido não encontrado.', 'warning');
+        return;
+      }
+      this.persistPrivateSettings();
+      const webhookUrl = this.refs.whatsappWebhookUrl?.value.trim() || '';
+      if (!webhookUrl) {
+        app.showToast('Cadastre a URL da sua automação do WhatsApp para enviar sem abrir o app.', 'warning');
+        return;
+      }
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            workspaceId: this.workspaceId,
+            event: reason,
+            order,
+            company: app.getSettings().company || {},
+            stageLabel: this.stageLabel(this.normalizeStage(order.status_stage || order.order_status))
+          })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        app.showToast('Mensagem enviada para a automação do WhatsApp.', 'success');
+      } catch (error) {
+        console.error('[Pedidos Online] erro ao enviar para automação do WhatsApp', error);
+        app.showToast('A automação do WhatsApp não respondeu. Verifique a URL configurada.', 'danger');
       }
     },
 
@@ -410,7 +595,6 @@
         app.showToast('Pedido não encontrado.', 'warning');
         return;
       }
-
       if (order.imported_sale_id) {
         app.showToast('Este pedido já foi importado para vendas.', 'warning');
         return;
@@ -426,18 +610,12 @@
         for (const entry of items) {
           const productId = entry.productId || entry.product_id;
           const product = products.find((item) => item.id === productId);
-          if (!product) {
-            throw new Error(`Produto não encontrado na base: ${entry.name || productId}.`);
-          }
-
+          if (!product) throw new Error(`Produto não encontrado na base: ${entry.name || productId}.`);
           const quantity = Number(entry.quantity || 0);
           const available = Number(product.stock || 0);
-          if (available < quantity) {
-            throw new Error(`Estoque insuficiente para ${product.name}. Disponível: ${available}.`);
-          }
+          if (available < quantity) throw new Error(`Estoque insuficiente para ${product.name}. Disponível: ${available}.`);
 
           product.stock = Math.max(0, available - quantity);
-
           importedItems.push({
             productId: product.id,
             productCode: product.code || '',
@@ -504,10 +682,7 @@
           discount: 0,
           extraFee: 0,
           shippingFee,
-          notes: [
-            'Pedido importado do app do cliente.',
-            order.notes || ''
-          ].filter(Boolean).join(' '),
+          notes: ['Pedido importado do app do cliente.', order.notes || ''].filter(Boolean).join(' '),
           items: importedItems,
           subtotal,
           cost,
@@ -532,11 +707,11 @@
             imported_sale_id: sale.id,
             imported_at: new Date().toISOString(),
             order_status: 'Importado',
+            status_stage: 'finalizado',
             payment_status: sale.paymentStatus
           })
           .eq('id', orderId)
           .eq('workspace_id', this.workspaceId);
-
         if (error) throw error;
 
         await this.refreshAll();
@@ -555,7 +730,6 @@
         const samePhone = phone && this.normalizePhone(customer.phone || '') === phone;
         return sameEmail || samePhone;
       });
-
       if (existing) {
         return list.map((customer) => customer.id === existing.id ? {
           ...customer,
@@ -569,7 +743,6 @@
           updatedBy: (app.getCurrentUser?.() || {}).email || 'admin@husky.com'
         } : customer);
       }
-
       const now = new Date().toISOString();
       return [{
         id: crypto.randomUUID(),
@@ -598,11 +771,101 @@
       }, ...list];
     },
 
-    formatCurrency(value) {
-      return Number(value || 0).toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
+    subscribeToOrders() {
+      if (this.orderChannel) this.supabase.removeChannel(this.orderChannel);
+      this.orderChannel = this.supabase
+        .channel(`orders-board-${this.workspaceId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'customer_orders',
+          filter: `workspace_id=eq.${this.workspaceId}`
+        }, async (payload) => {
+          this.updateConnectionPill('Realtime conectado');
+          const isInsert = payload.eventType === 'INSERT';
+          const incoming = payload.new || {};
+          await this.refreshAll();
+          if (isInsert && incoming.id && !this.seenOrderIds.has(incoming.id)) {
+            this.seenOrderIds.add(incoming.id);
+            this.playOrderSound();
+            this.fireBrowserNotification(incoming);
+          }
+        })
+        .subscribe((status) => {
+          this.updateConnectionPill(status === 'SUBSCRIBED' ? 'Realtime conectado' : 'Realtime sincronizando');
+        });
+    },
+
+    updateConnectionPill(text) {
+      if (this.refs.boardConnectionPill) this.refs.boardConnectionPill.textContent = text;
+    },
+
+    startPollingFallback() {
+      clearInterval(this.pollTimer);
+      this.pollTimer = setInterval(() => {
+        this.refreshAll();
+      }, Number(window.HUSKY_CLOUD_POLL_MS || 2500) * 3);
+    },
+
+    markSeenOrders() {
+      this.orders.forEach((order) => this.seenOrderIds.add(order.id));
+    },
+
+    playOrderSound() {
+      try {
+        const AudioContextRef = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextRef) return;
+        const ctx = new AudioContextRef();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 880;
+        gainNode.gain.value = 0.0001;
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45);
+        oscillator.stop(ctx.currentTime + 0.48);
+      } catch (_error) {
+        return null;
+      }
+    },
+
+    async enableBrowserAlerts() {
+      if (!('Notification' in window)) {
+        app.showToast('Este navegador não suporta notificações.', 'warning');
+        return;
+      }
+      const result = await Notification.requestPermission();
+      if (result === 'granted') {
+        app.showToast('Alertas do navegador ativados.', 'success');
+        return;
+      }
+      app.showToast('As notificações não foram liberadas.', 'warning');
+    },
+
+    fireBrowserNotification(order) {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const body = `${order.customer_name || 'Cliente'} • ${this.formatCurrency(order.total || 0)}`;
+      new Notification('Novo pedido na Husky', {
+        body,
+        icon: 'assets/img/logo-husky.png',
+        badge: 'assets/img/logo-husky.png'
       });
+    },
+
+    readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('file_read_error'));
+        reader.readAsDataURL(file);
+      });
+    },
+
+    formatCurrency(value) {
+      return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     },
 
     formatDateTime(value) {
@@ -610,6 +873,13 @@
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return String(value);
       return `${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    },
+
+    formatDate(value) {
+      if (!value) return '-';
+      const date = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
     },
 
     escapeHtml(value) {

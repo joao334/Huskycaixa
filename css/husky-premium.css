@@ -1254,3 +1254,24 @@ body[data-theme-mode="dark"] .husky-preview-chip {
 .husky-ingredient-icon {
   display: none !important;
 }
+
+.husky-menu-organizer {
+  margin-bottom: 10px;
+}
+
+.sidebar-nav.is-reordering .nav-item {
+  cursor: grab;
+  position: relative;
+}
+
+.sidebar-nav.is-reordering .nav-item::after {
+  content: '↕';
+  margin-left: auto;
+  opacity: .7;
+  font-weight: 900;
+}
+
+.sidebar-nav .nav-item.is-dragging {
+  opacity: .45;
+  transform: scale(.98);
+}

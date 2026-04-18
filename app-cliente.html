@@ -23,12 +23,13 @@
           <img src="assets/img/logo-husky.png" alt="Logo Husky" />
           <div>
             <strong>Husky Confeitaria</strong>
-            <span>Pedidos online no celular</span>
+            <span id="store-subtitle-header">Pedidos online no celular</span>
           </div>
         </a>
 
         <div class="client-actions">
-          <button type="button" id="btn-refresh-catalog" class="client-btn secondary">Atualizar</button>
+          <button type="button" id="btn-account" class="client-btn secondary small">Entrar</button>
+          <button type="button" id="btn-refresh-catalog" class="client-btn secondary icon-only" aria-label="Atualizar catálogo">↻</button>
           <button type="button" id="btn-open-cart" class="client-icon-btn" aria-label="Abrir carrinho">
             🛒
             <span class="cart-badge" id="cart-count-badge">0</span>
@@ -38,17 +39,17 @@
     </header>
 
     <main class="client-main" id="topo">
-      <section class="hero-client">
-        <div class="hero-client-inner">
+      <section class="hero-client compact-hero">
+        <div class="hero-client-inner compact-grid">
           <div class="hero-copy-client">
-            <div class="eyebrow-client">Confeitaria com cara premium</div>
-            <h1>Peça seus doces favoritos sem sair do celular.</h1>
-            <p>Escolha seus produtos, monte o carrinho e envie seu pedido direto para a equipe da Husky. O pedido entra no sistema para acompanhamento.</p>
+            <div class="eyebrow-client">Catálogo premium Husky</div>
+            <h1 id="storefront-title">Peça seus doces favoritos.</h1>
+            <p id="storefront-copy">Escolha os produtos, monte o carrinho e finalize com login somente no pagamento.</p>
 
             <div class="hero-badges-client">
-              <span class="hero-badge-client">Feito na hora com carinho</span>
-              <span class="hero-badge-client">Pedido fácil e rápido</span>
-              <span class="hero-badge-client">Entrega ou retirada</span>
+              <span class="hero-badge-client">Catálogo rápido</span>
+              <span class="hero-badge-client">Login só no checkout</span>
+              <span class="hero-badge-client">Pix com QR Code</span>
             </div>
 
             <div class="hero-cta-client">
@@ -57,18 +58,18 @@
             </div>
           </div>
 
-          <div class="hero-side-card-client">
+          <div class="hero-side-card-client compact-side">
             <img src="assets/img/mascote-3d.png" alt="Mascote Husky" />
             <div class="hero-side-content">
-              <strong>Husky no seu bolso</strong>
-              <p>Escolha, personalize e envie o pedido com poucos toques.</p>
+              <strong>Pedido no seu ritmo</strong>
+              <p>Você navega sem login. Só entra na conta quando for fechar o pedido.</p>
               <div class="hero-mini-stats">
                 <div>
                   <span>Produtos</span>
                   <strong id="catalog-products-count">0</strong>
                 </div>
                 <div>
-                  <span>Itens no carrinho</span>
+                  <span>Itens</span>
                   <strong id="catalog-cart-items-count">0</strong>
                 </div>
               </div>
@@ -86,8 +87,8 @@
         <div class="catalog-shell-header">
           <div>
             <span class="section-kicker-client">Catálogo</span>
-            <h2>Escolha seus queridinhos da Husky</h2>
-            <p>Filtre por categoria, pesquise e adicione ao carrinho.</p>
+            <h2>Escolha seus queridinhos</h2>
+            <p>Agora com cards menores para ficar melhor no celular.</p>
           </div>
           <div class="catalog-shell-meta">
             <span class="soft-pill-client" id="catalog-source-pill">Fonte: carregando...</span>
@@ -95,7 +96,7 @@
           </div>
         </div>
 
-        <section class="toolbar-client">
+        <section class="toolbar-client compact-toolbar">
           <div class="search-wrap-client">
             <span class="search-icon-client">⌕</span>
             <input type="search" id="catalog-search" class="search-client" placeholder="Buscar produto, sabor ou categoria" />
@@ -103,7 +104,23 @@
           <div class="categories-client" id="catalog-categories"></div>
         </section>
 
-        <section class="catalog-grid" id="client-catalog-grid"></section>
+        <section class="catalog-grid compact" id="client-catalog-grid"></section>
+      </section>
+
+      <section class="customer-orders-shell" id="customer-orders-shell">
+        <div class="catalog-shell-header">
+          <div>
+            <span class="section-kicker-client">Acompanhar</span>
+            <h2>Meus pedidos</h2>
+            <p id="customer-orders-copy">Faça login para acompanhar as etapas do seu pedido em tempo real.</p>
+          </div>
+          <div class="catalog-shell-meta">
+            <span class="soft-pill-client" id="customer-login-pill">Sem login</span>
+          </div>
+        </div>
+        <div class="customer-orders-list" id="customer-orders-list">
+          <article class="catalog-empty-client">Faça login para acompanhar seus pedidos por aqui.</article>
+        </div>
       </section>
 
       <section id="client-order-success"></section>
@@ -117,7 +134,7 @@
     <footer class="client-footer">
       <div class="client-footer-card">
         <strong>Husky Confeitaria</strong>
-        <p>Pedidos online com envio para o sistema interno. Caso algum item não apareça, atualize a página ou tente novamente em instantes.</p>
+        <p>Seu pedido entra direto no sistema interno e pode ser acompanhado por etapas quando você estiver logado.</p>
       </div>
     </footer>
   </div>
@@ -135,6 +152,17 @@
     <div class="cart-body">
       <section id="cart-items-container"></section>
 
+      <section class="form-card-client auth-checkout-box" id="checkout-auth-box">
+        <div class="form-card-heading-client">
+          <div>
+            <span class="section-kicker-client">Entrar para pagar</span>
+            <h3 id="checkout-auth-title">Você pode navegar sem login</h3>
+          </div>
+          <button type="button" id="btn-open-auth-from-cart" class="client-btn secondary small">Entrar / cadastrar</button>
+        </div>
+        <p class="checkout-auth-copy" id="checkout-auth-copy">Na hora de finalizar, você entra na sua conta para acompanhar o pedido depois.</p>
+      </section>
+
       <section class="form-card-client">
         <div class="form-card-heading-client">
           <div>
@@ -142,7 +170,7 @@
             <h3>Seus dados</h3>
           </div>
         </div>
-        <div class="field-grid-client">
+        <div class="field-grid-client compact-fields">
           <div class="field-client">
             <label for="customer-name">Nome</label>
             <input type="text" id="customer-name" placeholder="Seu nome" />
@@ -169,7 +197,7 @@
             <h3>Entrega e pagamento</h3>
           </div>
         </div>
-        <div class="field-grid-client">
+        <div class="field-grid-client compact-fields">
           <div class="field-client">
             <label for="delivery-type">Como prefere receber?</label>
             <select id="delivery-type">
@@ -203,6 +231,29 @@
             <textarea id="order-notes" placeholder="Ex.: sem granulado, entregar após as 18h..."></textarea>
           </div>
         </div>
+
+        <div class="pix-payment-box" id="pix-payment-box" hidden>
+          <div class="pix-payment-header">
+            <div>
+              <span class="section-kicker-client">Pagamento Pix</span>
+              <h4>Pague com o QR Code da Husky</h4>
+            </div>
+            <span class="soft-pill-client" id="pix-status-pill">Pix ativo</span>
+          </div>
+          <div class="pix-payment-grid">
+            <div class="pix-qr-wrap">
+              <img id="pix-qr-image" alt="QR Code Pix" />
+            </div>
+            <div class="pix-copy-wrap">
+              <p id="pix-payment-description">Ao escolher Pix, você já vê o QR Code e os dados para pagamento.</p>
+              <div class="pix-data-line"><strong>Chave Pix:</strong> <span id="pix-key-text">Não configurada</span></div>
+              <div class="pix-copy-box">
+                <textarea id="pix-copy-code" readonly placeholder="Pix copia e cola"></textarea>
+                <button type="button" id="btn-copy-pix-code" class="client-btn secondary small">Copiar Pix</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -210,9 +261,72 @@
       <div class="cart-total-row"><span>Subtotal</span><strong id="cart-subtotal">R$ 0,00</strong></div>
       <div class="cart-total-row"><span>Entrega</span><strong id="cart-delivery-fee">R$ 0,00</strong></div>
       <div class="cart-total-row total"><span>Total</span><strong id="cart-total">R$ 0,00</strong></div>
-      <button type="button" id="btn-submit-order" class="client-btn">Enviar pedido</button>
+      <button type="button" id="btn-submit-order" class="client-btn">Entrar para pagar</button>
     </div>
   </aside>
+
+  <div class="modal-backdrop" id="auth-modal-backdrop"></div>
+  <section class="auth-modal" id="auth-modal" aria-label="Login do cliente">
+    <div class="auth-modal-card">
+      <div class="auth-modal-header">
+        <div>
+          <span class="section-kicker-client">Sua conta</span>
+          <h3>Entrar para finalizar</h3>
+          <p>Você monta o carrinho sem login. Para fechar o pedido e acompanhar o andamento, entre na sua conta.</p>
+        </div>
+        <button type="button" class="client-icon-btn" id="btn-close-auth-modal" aria-label="Fechar login">✕</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-auth-tab="login">Entrar</button>
+        <button type="button" class="auth-tab" data-auth-tab="register">Cadastrar</button>
+      </div>
+
+      <form class="auth-form active" id="client-login-form">
+        <div class="field-grid-client compact-fields">
+          <div class="field-client full">
+            <label for="auth-login-email">E-mail</label>
+            <input type="email" id="auth-login-email" placeholder="voce@email.com" />
+          </div>
+          <div class="field-client full">
+            <label for="auth-login-password">Senha</label>
+            <input type="password" id="auth-login-password" placeholder="Sua senha" />
+          </div>
+        </div>
+        <div class="auth-modal-actions">
+          <button type="button" class="client-btn secondary small" id="btn-forgot-client-password">Esqueci a senha</button>
+          <button type="submit" class="client-btn">Entrar e continuar</button>
+        </div>
+      </form>
+
+      <form class="auth-form" id="client-register-form">
+        <div class="field-grid-client compact-fields">
+          <div class="field-client full">
+            <label for="auth-register-name">Nome</label>
+            <input type="text" id="auth-register-name" placeholder="Seu nome" />
+          </div>
+          <div class="field-client full">
+            <label for="auth-register-email">E-mail</label>
+            <input type="email" id="auth-register-email" placeholder="voce@email.com" />
+          </div>
+          <div class="field-client">
+            <label for="auth-register-password">Senha</label>
+            <input type="password" id="auth-register-password" placeholder="Mínimo 6 caracteres" />
+          </div>
+          <div class="field-client">
+            <label for="auth-register-password-confirm">Confirmar senha</label>
+            <input type="password" id="auth-register-password-confirm" placeholder="Repita a senha" />
+          </div>
+        </div>
+        <div class="auth-modal-actions">
+          <span class="text-muted-client">Seu cadastro serve para acompanhar pedidos depois.</span>
+          <button type="submit" class="client-btn">Criar conta</button>
+        </div>
+      </form>
+
+      <div class="auth-feedback" id="auth-feedback-box"></div>
+    </div>
+  </section>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/env.js"></script>
