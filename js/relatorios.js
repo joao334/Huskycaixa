@@ -27,7 +27,7 @@
       this.ensureStateCollections();
       this.setDefaultFilters();
       this.populateDynamicFilters();
-      this.scheduleRender(true);
+      this.renderAll();
       this.log('Tela de relatórios carregada.');
     },
 
@@ -83,26 +83,26 @@
       this.refs.btnGenerateReport?.addEventListener('click', () => this.generateReport());
       this.refs.btnGenerateReportHero?.addEventListener('click', () => this.generateReport());
       this.refs.btnClearReportFilter?.addEventListener('click', () => this.resetFilters());
-      this.refs.reportPeriodPreset?.addEventListener('change', () => { this.applyPreset(); this.scheduleRender(); });
-      this.refs.reportType?.addEventListener('change', () => { this.captureFilters(); this.scheduleRender(); });
-      this.refs.reportPaymentFilter?.addEventListener('change', () => { this.captureFilters(); this.scheduleRender(); });
-      this.refs.reportCategoryFilter?.addEventListener('change', () => { this.captureFilters(); this.scheduleRender(); });
-      this.refs.reportSourceFilter?.addEventListener('change', () => { this.captureFilters(); this.scheduleRender(); });
-      this.refs.reportStartDate?.addEventListener('change', () => { this.captureFilters(); this.scheduleRender(); });
-      this.refs.reportEndDate?.addEventListener('change', () => { this.captureFilters(); this.scheduleRender(); });
+      this.refs.reportPeriodPreset?.addEventListener('change', () => this.applyPreset());
+      this.refs.reportType?.addEventListener('change', () => this.captureFilters());
+      this.refs.reportPaymentFilter?.addEventListener('change', () => this.captureFilters());
+      this.refs.reportCategoryFilter?.addEventListener('change', () => this.captureFilters());
+      this.refs.reportSourceFilter?.addEventListener('change', () => this.captureFilters());
+      this.refs.reportStartDate?.addEventListener('change', () => this.captureFilters());
+      this.refs.reportEndDate?.addEventListener('change', () => this.captureFilters());
       this.refs.btnExportReportPdfTop?.addEventListener('click', () => this.exportAsPrint());
       this.refs.btnExportReportExcelTop?.addEventListener('click', () => this.exportAsCsv());
 
       window.addEventListener('husky:state-changed', () => {
         this.ensureStateCollections();
         this.populateDynamicFilters();
-        this.scheduleRender();
+        this.renderAll();
       });
 
       window.addEventListener('storage', () => {
         this.ensureStateCollections();
         this.populateDynamicFilters();
-        this.scheduleRender();
+        this.renderAll();
       });
     },
 
@@ -372,7 +372,7 @@
     resetFilters() {
       this.setDefaultFilters();
       this.populateDynamicFilters();
-      this.scheduleRender(true);
+      this.renderAll();
       this.showToast('Filtros de relatório redefinidos.', 'success');
     },
 
@@ -384,13 +384,13 @@
         return;
       }
 
-      this.scheduleRender(true);
+      this.renderAll();
       this.showToast('Relatório atualizado com sucesso.', 'success');
       this.log('Relatório gerado.', { ...this.filters });
     },
 
-    filterSales(sales = this.getSales()) {
-      return sales.filter((sale) => {
+    filterSales() {
+      return this.getSales().filter((sale) => {
         const inRange = this.matchesDateRange(sale.date);
         const paymentOk = !this.filters.paymentMethod || sale.paymentMethod === this.filters.paymentMethod;
         const sourceOk = !this.filters.source || (sale.channel || 'Loja') === this.filters.source;
@@ -402,8 +402,8 @@
       });
     },
 
-    filterExpenses(expenses = this.getExpenses()) {
-      return expenses.filter((expense) => {
+    filterExpenses() {
+      return this.getExpenses().filter((expense) => {
         const inRange = this.matchesDateRange(expense.date);
         const paymentOk = !this.filters.paymentMethod || expense.paymentMethod === this.filters.paymentMethod;
         const categoryOk = !this.filters.category || expense.category === this.filters.category;
@@ -414,8 +414,8 @@
       });
     },
 
-    filterMovements(movements = this.getStockMovements()) {
-      return movements.filter((movement) => {
+    filterMovements() {
+      return this.getStockMovements().filter((movement) => {
         const inRange = this.matchesDateRange(movement.date);
         const categoryOk = !this.filters.category || this.findProductById(movement.productId)?.category === this.filters.category;
 
@@ -432,35 +432,10 @@
       return true;
     },
 
-
-    scheduleRender(immediate = false) {
-      window.clearTimeout(this.renderTimer);
-      const delay = immediate ? 0 : 120;
-      this.renderTimer = window.setTimeout(() => this.renderAll(), delay);
-    },
-
-    getStateSnapshot() {
-      const state = this.getState();
-      return {
-        sales: Array.isArray(state.sales) ? state.sales : [],
-        expenses: Array.isArray(state.expenses) ? state.expenses : [],
-        products: Array.isArray(state.products) ? state.products : [],
-        stockMovements: Array.isArray(state.stockMovements) ? state.stockMovements : [],
-        proofs: Array.isArray(state.proofs) ? state.proofs : []
-      };
-    },
-
-    prepareIndexes(snapshot) {
-      this._productMap = new Map((snapshot.products || []).map((product) => [product.id, product]));
-    },
-
     renderAll() {
-      const snapshot = this.getStateSnapshot();
-      this._snapshot = snapshot;
-      this.prepareIndexes(snapshot);
-      const sales = this.filterSales(snapshot.sales);
-      const expenses = this.filterExpenses(snapshot.expenses);
-      const movements = this.filterMovements(snapshot.stockMovements);
+      const sales = this.filterSales();
+      const expenses = this.filterExpenses();
+      const movements = this.filterMovements();
       const analytics = this.buildAnalytics(sales, expenses, movements);
 
       this.renderMetrics(analytics);
@@ -1024,7 +999,8 @@
     },
 
     findProductById(id) {
-      return this._productMap?.get(id) || this.getProducts().find((product) => product.id === id) || null;
+      if (!id) return null;
+      return this.getProducts().find((product) => product.id === id) || null;
     },
 
     escapeHtml(value) {

@@ -73,7 +73,19 @@
       nextInvoiceNumber: '1',
       issueInvoiceNotice: true
     },
-    integrations: {}
+    integrations: {
+      ifood: {
+        enabled: false,
+        environment: 'sandbox',
+        merchantId: '',
+        clientId: '',
+        token: '',
+        storeName: '',
+        webhookSecret: '',
+        pollingMinutes: 5,
+        lastImportAt: null
+      }
+    }
   };
 
   const DEFAULT_PASSWORD = '123456';
@@ -154,6 +166,17 @@
         cloudOfflineCache: document.getElementById('cloud-offline-cache'),
         btnTestCloudConnection: document.getElementById('btn-test-cloud-connection'),
         btnSaveCloudSettings: document.getElementById('btn-save-cloud-settings'),
+
+        ifoodEnabled: document.getElementById('ifood-enabled'),
+        ifoodEnvironment: document.getElementById('ifood-environment'),
+        ifoodStoreName: document.getElementById('ifood-store-name'),
+        ifoodMerchantId: document.getElementById('ifood-merchant-id'),
+        ifoodClientId: document.getElementById('ifood-client-id'),
+        ifoodToken: document.getElementById('ifood-token'),
+        ifoodWebhookSecret: document.getElementById('ifood-webhook-secret'),
+        ifoodPollingMinutes: document.getElementById('ifood-polling-minutes'),
+        btnSaveIfoodSettings: document.getElementById('btn-save-ifood-settings'),
+
         sessionTimeout: document.getElementById('session-timeout'),
         passwordPolicy: document.getElementById('password-policy'),
         enableLoginProtection: document.getElementById('enable-login-protection'),
@@ -223,7 +246,9 @@
       this.refs.btnSaveFiscalSettings?.addEventListener('click', () => this.saveFiscalSettings());
       this.refs.btnSaveVisualSettings?.addEventListener('click', () => this.saveVisualSettings());
       this.refs.btnSavePrintSettings?.addEventListener('click', () => this.savePrintSettings());
-      this.refs.btnSaveCloudSettings?.addEventListener('click', () => this.saveCloudSettings());      this.refs.btnSaveSecuritySettings?.addEventListener('click', () => this.saveSecuritySettings());
+      this.refs.btnSaveCloudSettings?.addEventListener('click', () => this.saveCloudSettings());
+      this.refs.btnSaveIfoodSettings?.addEventListener('click', () => this.saveIfoodSettings());
+      this.refs.btnSaveSecuritySettings?.addEventListener('click', () => this.saveSecuritySettings());
       this.refs.btnSaveBackupSettings?.addEventListener('click', () => this.saveBackupSettings());
 
       this.refs.btnSaveAllSettingsTop?.addEventListener('click', () => this.saveAllSettings());
@@ -526,6 +551,14 @@
       if (this.refs.cloudUrl) this.refs.cloudUrl.value = cloud.url || '';
       if (this.refs.cloudAutoSync) this.refs.cloudAutoSync.checked = Boolean(cloud.autoSync);
       if (this.refs.cloudOfflineCache) this.refs.cloudOfflineCache.checked = Boolean(cloud.offlineCache);
+      if (this.refs.ifoodEnabled) this.refs.ifoodEnabled.checked = Boolean(integrations?.ifood?.enabled);
+      if (this.refs.ifoodEnvironment) this.refs.ifoodEnvironment.value = integrations?.ifood?.environment || 'sandbox';
+      if (this.refs.ifoodStoreName) this.refs.ifoodStoreName.value = integrations?.ifood?.storeName || '';
+      if (this.refs.ifoodMerchantId) this.refs.ifoodMerchantId.value = integrations?.ifood?.merchantId || '';
+      if (this.refs.ifoodClientId) this.refs.ifoodClientId.value = integrations?.ifood?.clientId || '';
+      if (this.refs.ifoodToken) this.refs.ifoodToken.value = integrations?.ifood?.token || '';
+      if (this.refs.ifoodWebhookSecret) this.refs.ifoodWebhookSecret.value = integrations?.ifood?.webhookSecret || '';
+      if (this.refs.ifoodPollingMinutes) this.refs.ifoodPollingMinutes.value = String(integrations?.ifood?.pollingMinutes || 5);
 
       if (this.refs.sessionTimeout) this.refs.sessionTimeout.value = String(security.sessionTimeout || 60);
       if (this.refs.passwordPolicy) this.refs.passwordPolicy.value = security.passwordPolicy || 'basic';
@@ -618,6 +651,26 @@
       };
     },
 
+    collectIfoodSettings() {
+      return {
+        integrations: {
+          ...this.getSettings().integrations,
+          ifood: {
+            ...(this.getSettings().integrations?.ifood || {}),
+            enabled: Boolean(this.refs.ifoodEnabled?.checked),
+            environment: this.refs.ifoodEnvironment?.value || 'sandbox',
+            storeName: this.refs.ifoodStoreName?.value.trim() || '',
+            merchantId: this.refs.ifoodMerchantId?.value.trim() || '',
+            clientId: this.refs.ifoodClientId?.value.trim() || '',
+            token: this.refs.ifoodToken?.value.trim() || '',
+            webhookSecret: this.refs.ifoodWebhookSecret?.value.trim() || '',
+            pollingMinutes: Number(this.refs.ifoodPollingMinutes?.value || 5),
+            lastImportAt: this.getSettings().integrations?.ifood?.lastImportAt || null
+          }
+        }
+      };
+    },
+
     collectVisualSettings() {
       return {
         visual: {
@@ -703,6 +756,14 @@
       app.log('Configurações fiscais atualizadas.');
     },
 
+    saveIfoodSettings(showToast = true) {
+      app.updateSettings(this.collectIfoodSettings());
+      this.renderCards();
+      this.renderStatusBlocks();
+      if (showToast) app.showToast('Integração do iFood preparada e salva.', 'success');
+      app.log('Configurações do iFood atualizadas.');
+    },
+
     saveVisualSettings(showToast = true) {
       app.updateSettings(this.collectVisualSettings());
       app.applySettingsToUI();
@@ -763,6 +824,7 @@
       this.saveVisualSettings(false);
       this.savePrintSettings(false);
       this.saveCloudSettings(false);
+      this.saveIfoodSettings(false);
       this.saveSecuritySettings(false);
       this.saveBackupSettings(false);
       app.showToast('Todas as configurações foram salvas.', 'success');
@@ -1393,7 +1455,10 @@
       }
 
       if (this.refs.systemLogsStatus) {
-        this.refs.systemLogsStatus.textContent = settings.security?.logUserActions ? 'Ativos' : 'Desativados';
+        const ifoodStatus = settings.integrations?.ifood?.enabled
+          ? `Ativos • iFood ${settings.integrations?.ifood?.environment === 'production' ? 'produção' : 'sandbox'}`
+          : 'Ativos';
+        this.refs.systemLogsStatus.textContent = settings.security?.logUserActions ? ifoodStatus : 'Desativados';
       }
     },
 
