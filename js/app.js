@@ -184,10 +184,7 @@
       });
 
       window.addEventListener('resize', () => {
-        if (window.innerWidth > 992) {
-          this.closeSidebar();
-        }
-      });
+        });
 
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
@@ -218,7 +215,7 @@ if (themeTrigger) {
   return;
 }
 
-        if (target.closest('.sidebar .nav-item') && window.innerWidth <= 992) {
+        if (target.closest('.sidebar .nav-item')) {
           this.closeSidebar();
         }
       });
@@ -228,7 +225,7 @@ if (themeTrigger) {
           const target = event.target.closest('a, button');
           if (!target) return;
 
-          if (window.innerWidth <= 992 && target.classList.contains('nav-item')) {
+          if (target.classList.contains('nav-item')) {
             setTimeout(() => this.closeSidebar(), 180);
           }
         });
@@ -237,7 +234,7 @@ if (themeTrigger) {
           const target = event.target.closest('a, button');
           if (!target) return;
 
-          if (window.innerWidth <= 992 && target.classList.contains('nav-item')) {
+          if (target.classList.contains('nav-item')) {
             setTimeout(() => this.closeSidebar(), 180);
           }
         });
@@ -285,8 +282,6 @@ if (themeTrigger) {
 
     openSidebar() {
       if (!this.dom.sidebar) return;
-      if (window.innerWidth > 992) return;
-
       this.dom.sidebar.classList.add('is-open');
       this.dom.sidebar.style.pointerEvents = 'auto';
       this.dom.sidebar.style.zIndex = '9999';
@@ -302,12 +297,6 @@ if (themeTrigger) {
       }
 
       document.body.style.overflow = '';
-    },
-
-    ensureOnlineOrdersNavLink() {
-      const sidebarNav = document.querySelector('.sidebar-nav');
-      if (!sidebarNav) return;
-      sidebarNav.querySelectorAll('a[href="pedidos-online.html"]').forEach((link) => link.remove());
     },
 
     markActiveLinksByPath() {
@@ -1729,100 +1718,27 @@ if (themeTrigger) {
     return /iphone|ipad|ipod/i.test(window.navigator.userAgent || '');
   };
 
-  HuskyApp.showInstallHelp = function () {
-    if (this.isIosDevice()) {
-      window.alert('No iPhone, abra no Safari e toque em Compartilhar > Adicionar à Tela de Início.');
-      return;
-    }
+  HuskyApp.showInstallHelp = function () {};
 
-    window.alert('No celular, abra no Chrome ou Edge e toque em Instalar app ou Adicionar à Tela inicial.');
-  };
+  HuskyApp.ensureInstallShortcut = function () { const button = document.getElementById('husky-install-shortcut'); if (button) button.remove(); };
 
-  HuskyApp.ensureInstallShortcut = function () {
-    if (!document.body) return;
-
-    const isMobile = window.innerWidth <= 992;
-    const isStandalone = this.isStandaloneApp();
-    let button = document.getElementById('husky-install-shortcut');
-
-    if (!isMobile || isStandalone) {
-      button?.remove();
-      return;
-    }
-
-    if (!button) {
-      button = document.createElement('button');
-      button.type = 'button';
-      button.id = 'husky-install-shortcut';
-      button.className = 'husky-install-shortcut';
-      document.body.appendChild(button);
-    }
-
-    button.innerHTML = '<span>📲</span><span>Adicionar à tela inicial</span>';
-    button.onclick = async (event) => {
-      event.preventDefault();
-
-      if (this.deferredInstallPrompt) {
-        const promptEvent = this.deferredInstallPrompt;
-        this.deferredInstallPrompt = null;
-        await promptEvent.prompt();
-        await promptEvent.userChoice.catch(() => null);
-        this.ensureInstallShortcut();
-        return;
-      }
-
-      this.showInstallHelp();
-    };
-  };
-
-  HuskyApp.registerPWA = function () {
-    if (this.__pwaReady) {
-      this.ensureInstallShortcut();
-      return;
-    }
-
-    this.__pwaReady = true;
-
-    if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
-      navigator.serviceWorker.register('sw.js?v=9').catch((error) => {
-        console.error('[HuskyApp] erro ao registrar service worker', error);
-      });
-    }
-
-    window.addEventListener('beforeinstallprompt', (event) => {
-      event.preventDefault();
-      this.deferredInstallPrompt = event;
-      this.ensureInstallShortcut();
-    });
-
-    window.addEventListener('appinstalled', () => {
-      this.deferredInstallPrompt = null;
-      this.ensureInstallShortcut();
-      this.showToast('Atalho instalado na tela inicial.', 'success');
-    });
-
-    this.ensureInstallShortcut();
-  };
+  HuskyApp.registerPWA = function () { this.__pwaReady = true; this.deferredInstallPrompt = null; this.ensureInstallShortcut(); };
 
   const __huskyOriginalInitPWA = HuskyApp.init.bind(HuskyApp);
   HuskyApp.init = function () {
     __huskyOriginalInitPWA();
-    this.registerPWA();
-    this.ensureInstallShortcut();
   };
 
   const __huskyOriginalRefreshShellInstall = HuskyApp.refreshShell.bind(HuskyApp);
   HuskyApp.refreshShell = function () {
     __huskyOriginalRefreshShellInstall();
-    this.ensureInstallShortcut();
   };
 
   const __huskyOriginalSyncAdaptiveInstall = HuskyApp.syncAdaptiveLayout?.bind(HuskyApp);
   if (__huskyOriginalSyncAdaptiveInstall) {
     HuskyApp.syncAdaptiveLayout = function () {
       __huskyOriginalSyncAdaptiveInstall();
-      this.ensureInstallShortcut();
-    };
+      };
   }
 
   window.HuskyApp = HuskyApp;

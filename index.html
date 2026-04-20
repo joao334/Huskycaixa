@@ -3,127 +3,1117 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="assets/img/icon-192.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Husky Caixa" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="description" content="Login do sistema da Husky Confeitaria" />
-  <meta name="theme-color" content="#2f61a5" />
+<meta name="description" content="Login do sistema da Husky Confeitaria" />
+    <meta name="theme-color" content="#2f61a5" />
   <meta name="color-scheme" content="light dark" />
   <link rel="icon" type="image/png" href="assets/img/logo-husky.png" />
+
   <title>Husky Confeitaria | Login</title>
+
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/responsive.css" />
   <link rel="stylesheet" href="css/husky-premium.css" />
+
+  <style>
+    #register-form[hidden],
+    #login-form[hidden] {
+      display: none !important;
+    }
+
+    :root {
+      --login-blue-1: #1f4f8e;
+      --login-blue-2: #2f67ad;
+      --login-blue-3: #4f88c6;
+      --login-cream: #f5ead7;
+      --login-cream-2: #ead9bc;
+      --login-beige-deep: #c9af85;
+      --login-ink: #183253;
+      --login-ink-soft: #35557c;
+      --login-white: #fffdf8;
+      --login-shadow: 0 28px 70px rgba(10, 31, 61, 0.28);
+    }
+
+    body.login-page-body {
+      color: var(--login-white);
+    }
+
+    .husky-login-page {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(130, 183, 255, 0.32), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(245, 228, 194, 0.16), transparent 20%),
+        linear-gradient(160deg, #19427b 0%, #245998 28%, #2f67ad 56%, #4b88c5 100%);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .husky-login-page::before,
+    .husky-login-page::after {
+      content: "";
+      position: absolute;
+      inset: auto;
+      border-radius: 999px;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(10px);
+      opacity: 0.6;
+    }
+
+    .husky-login-page::before {
+      width: 380px;
+      height: 380px;
+      left: -110px;
+      top: -120px;
+      background: radial-gradient(circle, rgba(255,255,255,0.16), rgba(255,255,255,0));
+      animation: loginFloat 14s ease-in-out infinite;
+    }
+
+    .husky-login-page::after {
+      width: 340px;
+      height: 340px;
+      right: -100px;
+      bottom: -120px;
+      background: radial-gradient(circle, rgba(245, 228, 194, 0.18), rgba(245, 228, 194, 0));
+      animation: loginFloat 18s ease-in-out infinite reverse;
+    }
+
+    .app-pattern {
+      opacity: 0.08;
+      mix-blend-mode: screen;
+    }
+
+    .app-pattern img {
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+    }
+
+    .husky-login-wrapper {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .husky-login-shell {
+      width: min(1180px, 100%);
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(390px, 0.92fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .husky-login-brand,
+    .husky-login-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 34px;
+      box-shadow: var(--login-shadow);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(10px);
+    }
+
+    .husky-login-brand {
+      background:
+        linear-gradient(160deg, rgba(18, 53, 98, 0.9), rgba(34, 84, 146, 0.9)),
+        url('assets/img/brand/husky-3d-bg.jpeg') center/cover;
+      color: var(--login-white);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 18px;
+      padding: 28px;
+      min-height: 700px;
+    }
+
+    .husky-login-brand::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.08), transparent 26%),
+        linear-gradient(180deg, rgba(10,27,52,0.08), rgba(10,27,52,0.22));
+      pointer-events: none;
+    }
+
+    .husky-login-palette {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .husky-login-palette span {
+      width: 62px;
+      height: 14px;
+      border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), 0 8px 18px rgba(7, 21, 43, 0.16);
+    }
+
+    .husky-login-palette span:nth-child(1) { background: #72a7df; }
+    .husky-login-palette span:nth-child(2) { background: #3e76b7; }
+    .husky-login-palette span:nth-child(3) { background: #f0dfbf; }
+    .husky-login-palette span:nth-child(4) { background: #d2b48c; }
+
+    .husky-login-titlebox {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 12px;
+      max-width: 520px;
+      margin-top: 8px;
+    }
+
+    .husky-login-brand-logo {
+      width: 210px;
+      max-width: 58%;
+      filter: drop-shadow(0 10px 24px rgba(6, 18, 38, 0.28));
+    }
+
+    .husky-login-titlebox h1 {
+      margin: 0;
+      font-size: clamp(48px, 8vw, 88px);
+      line-height: 0.9;
+      font-weight: 950;
+      letter-spacing: -0.07em;
+      text-transform: uppercase;
+      color: #fffdf8;
+      text-shadow: 0 10px 30px rgba(7, 19, 39, 0.28);
+    }
+
+    .husky-login-titlebox p {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.7;
+      color: rgba(255, 252, 246, 0.9);
+      max-width: 520px;
+    }
+
+    .husky-login-brand-card {
+      position: relative;
+      z-index: 1;
+      align-self: end;
+      border-radius: 28px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(245,234,215,0.98), rgba(232,217,188,0.95));
+      color: var(--login-ink);
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 20px 42px rgba(8, 27, 53, 0.14);
+      max-width: 540px;
+    }
+
+    .husky-login-brand-header {
+      padding: 20px 22px;
+      background: linear-gradient(90deg, rgba(37,84,145,0.98), rgba(58,112,182,0.96));
+      color: var(--login-white);
+    }
+
+    .husky-login-brand-header h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.04;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .husky-login-brand-body {
+      padding: 22px;
+      display: grid;
+      gap: 14px;
+      color: var(--login-ink);
+    }
+
+    .husky-login-mini-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .husky-login-mini-item {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      border-radius: 18px;
+      background: rgba(255, 252, 246, 0.74);
+      border: 1px solid rgba(60, 101, 154, 0.12);
+      font-weight: 900;
+      color: var(--login-ink);
+      box-shadow: 0 12px 24px rgba(29, 60, 103, 0.08);
+    }
+
+    .husky-login-mini-item::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #4f88c6, #285b9a);
+      box-shadow: 0 0 0 5px rgba(79, 136, 198, 0.16);
+      flex: 0 0 auto;
+    }
+
+    .husky-login-brand-sticker,
+    .husky-login-brand-badge {
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(0 20px 40px rgba(7, 19, 39, 0.22));
+      animation: loginFloat 9s ease-in-out infinite;
+    }
+
+    .husky-login-brand-sticker {
+      right: 24px;
+      top: 22px;
+      width: clamp(110px, 16vw, 170px);
+      opacity: 0.98;
+    }
+
+    .husky-login-brand-badge {
+      right: 28px;
+      bottom: 118px;
+      width: clamp(140px, 20vw, 200px);
+      animation-duration: 11s;
+    }
+
+    .husky-login-mascot {
+      position: absolute;
+      left: 18px;
+      bottom: 0;
+      width: clamp(210px, 26vw, 310px);
+      pointer-events: none;
+      z-index: 1;
+      filter: drop-shadow(0 20px 46px rgba(9, 24, 48, 0.34));
+    }
+
+    .husky-login-card {
+      background: linear-gradient(180deg, rgba(245,234,215,0.98), rgba(237,225,202,0.95));
+      color: var(--login-ink);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .husky-login-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.42), transparent 26%),
+        url('assets/img/pattern-husky.svg') center/1200px repeat;
+      opacity: 0.08;
+      pointer-events: none;
+    }
+
+    .husky-login-card-header {
+      position: relative;
+      z-index: 1;
+      padding: 24px 26px;
+      background: linear-gradient(135deg, rgba(27, 67, 119, 1), rgba(61, 114, 183, 0.98));
+      color: var(--login-white);
+      display: grid;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .husky-login-card-header::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      width: 160px;
+      height: 160px;
+      background: radial-gradient(circle, rgba(255,255,255,0.16), rgba(255,255,255,0));
+      pointer-events: none;
+    }
+
+    .husky-login-card-header .eyebrow {
+      position: relative;
+      z-index: 1;
+      justify-self: start;
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      color: #fffdf8;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .husky-login-card-header h2 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(30px, 3.2vw, 40px);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -0.05em;
+      max-width: 400px;
+    }
+
+    .husky-login-card-header p {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: 14px;
+      color: rgba(255, 251, 245, 0.9);
+      max-width: 330px;
+      line-height: 1.6;
+    }
+
+    .husky-login-card-body {
+      position: relative;
+      z-index: 1;
+      padding: 24px 26px 26px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .husky-login-form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .husky-login-form .form-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .husky-login-form label {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      color: var(--login-ink);
+      text-transform: uppercase;
+    }
+
+    .husky-login-form input {
+      min-height: 58px;
+      border-radius: 18px;
+      border: 2px solid rgba(53, 85, 124, 0.12);
+      background: rgba(255, 251, 245, 0.95);
+      color: var(--login-ink);
+      padding: 0 16px;
+      font-size: 15px;
+      font-weight: 800;
+      box-shadow: inset 0 2px 12px rgba(53, 85, 124, 0.06);
+      transition: .18s ease;
+    }
+
+    .husky-login-form input::placeholder {
+      color: rgba(53, 85, 124, 0.58);
+      font-weight: 700;
+    }
+
+    .husky-login-form input:focus {
+      border-color: rgba(47, 103, 173, 0.44);
+      box-shadow: 0 0 0 4px rgba(47, 103, 173, 0.12), inset 0 2px 12px rgba(53, 85, 124, 0.06);
+      outline: none;
+    }
+
+    .husky-login-inline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .husky-login-inline .checkbox-field {
+      min-height: 50px;
+      padding: 0 14px;
+      border-radius: 16px;
+      background: rgba(255, 251, 245, 0.76);
+      border: 1px solid rgba(53, 85, 124, 0.1);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      color: var(--login-ink-soft);
+    }
+
+    .husky-login-inline .checkbox-field input {
+      min-height: auto;
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      box-shadow: none;
+      accent-color: #2f67ad;
+    }
+
+    .husky-login-actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    .husky-login-btn-primary,
+    .husky-login-btn-secondary {
+      min-height: 58px;
+      border-radius: 18px;
+      font-size: 16px;
+      font-weight: 950;
+      letter-spacing: -0.02em;
+      transition: .18s ease;
+      box-shadow: 0 14px 28px rgba(25, 66, 123, 0.14);
+    }
+
+    .husky-login-btn-primary {
+      background: linear-gradient(180deg, #3d77ba, #255895);
+      color: #fffdf8;
+      border: 2px solid rgba(27, 67, 119, 0.08);
+    }
+
+    .husky-login-btn-secondary {
+      background: linear-gradient(180deg, #f0dfbf, #e5cd9d);
+      color: #4e3c27;
+      border: 2px solid rgba(111, 81, 54, 0.1);
+    }
+
+    .husky-login-btn-primary:hover,
+    .husky-login-btn-secondary:hover {
+      transform: translateY(-1px) scale(1.01);
+      filter: saturate(1.03);
+    }
+
+    .husky-login-btn-primary:active,
+    .husky-login-btn-secondary:active {
+      transform: translateY(0) scale(0.995);
+    }
+
+    .husky-login-helper {
+      text-align: center;
+    }
+
+    .husky-login-helper .btn-link {
+      font-size: 13px;
+      font-weight: 900;
+      color: #2f67ad;
+      text-decoration: none;
+    }
+
+    .husky-login-status {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .husky-login-status .status-box {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 251, 245, 0.82);
+      border: 1px solid rgba(53, 85, 124, 0.1);
+      box-shadow: 0 12px 24px rgba(29, 60, 103, 0.08);
+    }
+
+    .husky-login-status .status-title {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #8b6b46;
+      font-weight: 900;
+    }
+
+    .husky-login-status strong {
+      color: var(--login-ink);
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    @keyframes loginFloat {
+      0%, 100% { transform: translateY(0px) translateX(0px); }
+      50% { transform: translateY(-10px) translateX(4px); }
+    }
+
+
+    .husky-login-card-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 4px;
+    }
+
+    .husky-login-theme-btn {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(26,61,102,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(240,223,191,.92));
+      color: var(--login-ink);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .01em;
+      box-shadow: 0 10px 22px rgba(26,61,102,.12);
+    }
+
+    .husky-login-note {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 251, 245, 0.72);
+      border: 1px solid rgba(53, 85, 124, 0.1);
+      color: var(--login-ink-soft);
+      font-size: 13px;
+      line-height: 1.55;
+      box-shadow: 0 12px 24px rgba(29, 60, 103, 0.07);
+    }
+
+    .husky-login-note strong {
+      color: var(--login-ink);
+    }
+
+    body[data-theme-mode="dark"].login-page-body {
+      color: #eef5ff;
+    }
+
+    body[data-theme-mode="dark"] .husky-login-page {
+      background:
+        radial-gradient(circle at top left, rgba(100, 160, 236, 0.18), transparent 22%),
+        radial-gradient(circle at bottom right, rgba(245, 228, 194, 0.08), transparent 20%),
+        linear-gradient(160deg, #08111d 0%, #10263f 36%, #17375b 100%);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-brand {
+      background:
+        linear-gradient(160deg, rgba(7, 17, 29, 0.9), rgba(16, 38, 63, 0.9)),
+        url('assets/img/brand/husky-3d-bg.jpeg') center/cover;
+    }
+
+    body[data-theme-mode="dark"] .husky-login-card {
+      background: linear-gradient(180deg, rgba(12,25,40,0.98), rgba(18,35,56,0.95));
+      color: #eef5ff;
+      border-color: rgba(120,170,227,.14);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-card::before {
+      opacity: .04;
+    }
+
+    body[data-theme-mode="dark"] .husky-login-card-header {
+      background: linear-gradient(135deg, rgba(13, 43, 77, 1), rgba(33, 85, 145, 0.98));
+    }
+
+    body[data-theme-mode="dark"] .husky-login-form label,
+    body[data-theme-mode="dark"] .husky-login-status strong,
+    body[data-theme-mode="dark"] .husky-login-mini-item,
+    body[data-theme-mode="dark"] .husky-login-note strong {
+      color: #f4f8ff;
+    }
+
+    body[data-theme-mode="dark"] .husky-login-note,
+    body[data-theme-mode="dark"] .husky-login-inline .checkbox-field,
+    body[data-theme-mode="dark"] .husky-login-status .status-box,
+    body[data-theme-mode="dark"] .husky-login-mini-item,
+    body[data-theme-mode="dark"] .husky-login-brand-card {
+      background: rgba(10, 24, 39, 0.76);
+      color: rgba(236, 244, 255, 0.86);
+      border-color: rgba(120,170,227,.14);
+      box-shadow: 0 12px 24px rgba(0,0,0,.18);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-form input {
+      background: rgba(7, 20, 34, 0.9);
+      color: #f4f8ff;
+      border-color: rgba(120,170,227,.18);
+      box-shadow: inset 0 2px 12px rgba(0,0,0,.18);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-form input::placeholder {
+      color: rgba(220,232,246,.54);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-btn-secondary,
+    body[data-theme-mode="dark"] .husky-login-theme-btn {
+      background: linear-gradient(180deg, rgba(45,61,84,.96), rgba(23,36,55,.96));
+      color: #f3e2c1;
+      border-color: rgba(120,170,227,.14);
+    }
+
+    @media (max-width: 980px) {
+      .husky-login-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .husky-login-brand {
+        min-height: 440px;
+      }
+
+      .husky-login-mascot {
+        width: 220px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .husky-login-wrapper {
+        padding: 12px;
+      }
+
+      .husky-login-brand {
+        display: none;
+      }
+
+      .husky-login-card {
+        border-radius: 26px;
+      }
+
+      .husky-login-card-header {
+        padding: 18px 18px 16px;
+      }
+
+      .husky-login-card-header h2 {
+        font-size: 28px;
+      }
+
+      .husky-login-card-body {
+        padding: 18px;
+        gap: 14px;
+      }
+
+      .husky-login-form input {
+        min-height: 52px;
+        border-radius: 14px;
+        font-size: 14px;
+      }
+
+      .husky-login-inline {
+        grid-template-columns: 1fr;
+      }
+
+      .husky-login-btn-primary,
+      .husky-login-btn-secondary {
+        min-height: 52px;
+        border-radius: 14px;
+        font-size: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .husky-login-wrapper {
+        padding: 8px;
+      }
+
+      .husky-login-card {
+        border-radius: 22px;
+      }
+
+      .husky-login-card-header p {
+        max-width: none;
+      }
+
+      .husky-login-status {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+
+    .husky-login-card {
+      background: linear-gradient(180deg, rgba(251,246,238,0.96), rgba(244,233,214,0.94));
+      color: var(--login-ink);
+    }
+
+    .husky-login-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 28%);
+      pointer-events: none;
+    }
+
+    .husky-login-card-header,
+    .husky-login-card-body {
+      position: relative;
+      z-index: 1;
+    }
+
+    .husky-login-card-header {
+      padding: 28px 28px 12px;
+      color: var(--login-ink);
+    }
+
+    .husky-login-card-header h2 {
+      margin: 8px 0 8px;
+      font-size: clamp(30px, 4vw, 42px);
+      line-height: 1.02;
+      color: var(--login-blue-1);
+      letter-spacing: -0.04em;
+      font-weight: 950;
+    }
+
+    .husky-login-card-header p,
+    .husky-login-note,
+    .husky-login-helper,
+    .husky-login-inline span,
+    .checkbox-field span {
+      color: var(--login-ink-soft);
+    }
+
+    .husky-login-card-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .husky-login-theme-btn {
+      min-height: 46px;
+      padding: 0 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(26, 72, 124, 0.16);
+      background: rgba(255,255,255,0.56);
+      color: var(--login-blue-1);
+      font-weight: 800;
+      box-shadow: 0 8px 22px rgba(22, 49, 77, 0.08);
+    }
+
+    .husky-login-form .form-group label {
+      color: var(--login-blue-1);
+      font-weight: 800;
+    }
+
+    .husky-login-form input {
+      min-height: 56px;
+      border-radius: 16px;
+      border: 1px solid rgba(27, 78, 133, 0.12);
+      background: rgba(255,255,255,0.8);
+      color: var(--login-ink);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.66);
+    }
+
+    .husky-login-form input::placeholder {
+      color: rgba(53, 85, 124, 0.72);
+    }
+
+    .husky-login-form input:focus {
+      outline: none;
+      border-color: rgba(47, 103, 173, 0.48);
+      box-shadow: 0 0 0 4px rgba(94, 162, 229, 0.14);
+    }
+
+    .husky-login-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .husky-login-btn-primary,
+    .husky-login-btn-secondary {
+      min-height: 54px;
+      border-radius: 16px;
+      font-weight: 900;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    }
+
+    .husky-login-btn-primary:hover,
+    .husky-login-btn-secondary:hover,
+    .husky-login-theme-btn:hover {
+      transform: translateY(-1px);
+      filter: saturate(1.04);
+    }
+
+    .husky-login-btn-primary {
+      background: linear-gradient(135deg, #1f4f8e 0%, #2f67ad 55%, #4f88c6 100%);
+      color: #fffdf8;
+      border: none;
+      box-shadow: 0 18px 32px rgba(31, 79, 142, 0.24);
+    }
+
+    .husky-login-btn-secondary {
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(241,223,193,0.92));
+      color: var(--login-blue-1);
+      border: 1px solid rgba(27, 78, 133, 0.14);
+      box-shadow: 0 10px 22px rgba(15, 37, 64, 0.08);
+    }
+
+    .husky-login-status {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .husky-login-status .status-box {
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255,255,255,0.56);
+      border: 1px solid rgba(26, 72, 124, 0.12);
+      color: var(--login-blue-1);
+    }
+
+    .husky-login-status .status-title {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--login-ink-soft);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    body[data-theme-mode="dark"] .husky-login-page {
+      background:
+        radial-gradient(circle at top left, rgba(130, 183, 255, 0.12), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(245, 228, 194, 0.08), transparent 20%),
+        linear-gradient(160deg, #0f1c2c 0%, #15263a 30%, #1b3552 62%, #244a73 100%);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-card {
+      background: linear-gradient(180deg, rgba(17, 29, 45, 0.96), rgba(23, 38, 58, 0.94));
+      color: #edf4ff;
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-card-header h2,
+    body[data-theme-mode="dark"] .husky-login-form .form-group label,
+    body[data-theme-mode="dark"] .husky-login-status .status-box,
+    body[data-theme-mode="dark"] .husky-login-theme-btn,
+    body[data-theme-mode="dark"] .husky-login-btn-secondary {
+      color: #edf4ff;
+    }
+
+    body[data-theme-mode="dark"] .husky-login-card-header p,
+    body[data-theme-mode="dark"] .husky-login-note,
+    body[data-theme-mode="dark"] .husky-login-helper,
+    body[data-theme-mode="dark"] .checkbox-field span,
+    body[data-theme-mode="dark"] .husky-login-inline span,
+    body[data-theme-mode="dark"] .husky-login-status .status-title {
+      color: rgba(225, 236, 249, 0.76);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-form input {
+      background: rgba(11, 20, 32, 0.78);
+      color: #edf4ff;
+      border-color: rgba(160, 201, 248, 0.12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-form input::placeholder {
+      color: rgba(222, 235, 252, 0.5);
+    }
+
+    body[data-theme-mode="dark"] .husky-login-theme-btn,
+    body[data-theme-mode="dark"] .husky-login-btn-secondary,
+    body[data-theme-mode="dark"] .husky-login-status .status-box {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.08);
+      box-shadow: none;
+    }
+
+    body[data-theme-mode="dark"] .husky-login-btn-primary {
+      box-shadow: 0 18px 34px rgba(0,0,0,0.32);
+    }
+
+    @media (max-width: 980px) {
+      .husky-login-shell {
+        grid-template-columns: 1fr;
+      }
+      .husky-login-brand {
+        min-height: 520px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .husky-login-wrapper {
+        padding: 14px;
+      }
+      .husky-login-brand {
+        padding: 22px;
+        min-height: 460px;
+      }
+      .husky-login-card-header,
+      .husky-login-card-body {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+      .husky-login-status {
+        grid-template-columns: 1fr;
+      }
+      .husky-login-brand-logo {
+        width: 164px;
+        max-width: 70%;
+      }
+      .husky-login-titlebox h1 {
+        font-size: clamp(40px, 15vw, 62px);
+      }
+    }
+
+  </style>
 </head>
-<body class="login-page-body husky-login-page">
+<body class="login-page-body husky-login-page" data-theme-mode="husky-default">
   <div class="app-pattern" aria-hidden="true">
     <img src="assets/img/pattern-husky.svg" alt="" />
   </div>
 
-  <main class="login-screen">
-    <section class="login-hero-panel">
-      <div class="login-hero-top">
-        <img src="assets/img/logo-husky.png" alt="Husky Confeitaria" class="login-brand-logo" />
-        <button type="button" id="login-theme-toggle" class="login-theme-toggle">
-          <span>Tema Claro</span>
-        </button>
-      </div>
+  <main class="husky-login-wrapper">
+    <section class="husky-login-shell">
+      <section class="husky-login-brand">
+        <div class="husky-login-palette">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
 
-      <div class="login-hero-copy">
-        <span class="login-eyebrow">Gestão Husky</span>
-        <h1>Um login bonito, legível e funcional.</h1>
-        <p>Controle vendas, estoque, despesas e relatórios com uma interface mais clara, elegante e confortável para usar no celular e no computador.</p>
-      </div>
+        <div class="husky-login-titlebox">
+          <img src="assets/img/brand/logo-badge.png" alt="Logo Husky Confeiteiro" class="husky-login-brand-logo" />
+          <h1>Bonito de ver.<br>Gostoso de usar.</h1>
+          <p>Entre no sistema da Husky Confeiteiro com um visual mais bonito, divertido e elegante, usando azul predominante no fundo, bege nos detalhes e os mascotes da sua marca.</p>
+        </div>
 
-      <div class="login-hero-chips">
-        <span>Caixa</span>
-        <span>Estoque</span>
-        <span>Relatórios</span>
-        <span>Comprovantes</span>
-      </div>
+        <article class="husky-login-brand-card">
+          <div class="husky-login-brand-header">
+            <h2>Acesse o sistema</h2>
+          </div>
+          <div class="husky-login-brand-body">
+            <div class="husky-login-mini-list">
+              <div class="husky-login-mini-item">Vendas e caixa</div>
+              <div class="husky-login-mini-item">Produtos e estoque</div>
+              <div class="husky-login-mini-item">Relatórios e comprovantes</div>
+            </div>
+          </div>
+        </article>
 
-      <div class="login-hero-mascots" aria-hidden="true">
-        <img src="assets/img/mascote-3d.png" alt="" class="login-mascot login-mascot-main" />
-      </div>
-    </section>
+        <img src="assets/img/brand/husky-arms.jpeg" alt="Sticker do mascote da Husky" class="husky-login-brand-sticker" />
+        <img src="assets/img/brand/husky-nose.jpeg" alt="Badge do mascote da Husky" class="husky-login-brand-badge" />
+        <img src="assets/img/brand/husky-3d-bg.jpeg" alt="Mascote 3D da Husky" class="husky-login-mascot" />
+      </section>
 
-    <section class="login-form-panel">
-      <div class="login-form-card">
-        <div class="login-form-head">
-          <span class="login-form-badge" id="auth-mode-label">Login</span>
+      <section class="husky-login-card">
+        <header class="husky-login-card-header">
+          <span class="eyebrow" id="auth-mode-label">Login</span>
           <h2 id="auth-title">Entrar no sistema</h2>
-          <p id="auth-subtitle">Use seu e-mail e senha para acessar.</p>
+          <p id="auth-subtitle">Use seu e-mail e senha para entrar no caixa da Husky com visual bonito e acesso rápido.</p>
+        </header>
+
+        <div class="husky-login-card-body">
+          <div class="husky-login-card-toolbar">
+            <button type="button" id="btn-toggle-theme" class="theme-toggle-btn husky-login-theme-btn">Tema escuro</button>
+          </div>
+<form id="login-form" class="husky-login-form" action="javascript:void(0)" method="post" novalidate>  
+  <div class="form-group">
+              <label for="login-email">E-mail</label>
+              <input
+                type="email"
+                id="login-email"
+                name="email"
+                placeholder="Digite seu e-mail"
+                autocomplete="email"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="login-password">Senha</label>
+              <input
+                type="password"
+                id="login-password"
+                name="password"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+              />
+            </div>
+
+            <div class="husky-login-inline">
+              <label class="checkbox-field">
+                <input type="checkbox" id="remember-access" />
+                <span>Lembrar acesso</span>
+              </label>
+
+              <div class="husky-login-helper">
+                <button type="button" id="btn-forgot-password" class="btn-link">
+                  Esqueci minha senha
+                </button>
+              </div>
+            </div>
+
+            <div class="husky-login-actions">
+              <button type="submit" id="btn-login" class="husky-login-btn-primary">
+  Entrar
+</button>
+
+              <button type="button" id="btn-show-register" class="husky-login-btn-secondary">
+                Criar novo login
+              </button>
+            </div>
+          </form>
+
+          <form id="register-form" class="husky-login-form" action="javascript:void(0)" method="post" novalidate hidden>
+            <div class="form-group">
+              <label for="register-name">Nome</label>
+              <input
+                type="text"
+                id="register-name"
+                name="register-name"
+                placeholder="Digite seu nome"
+                autocomplete="name"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="register-email">E-mail</label>
+              <input
+                type="email"
+                id="register-email"
+                name="register-email"
+                placeholder="Digite seu e-mail"
+                autocomplete="email"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="register-password">Senha</label>
+              <input
+                type="password"
+                id="register-password"
+                name="register-password"
+                placeholder="Crie uma senha"
+                autocomplete="new-password"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="register-confirm-password">Confirmar senha</label>
+              <input
+                type="password"
+                id="register-confirm-password"
+                name="register-confirm-password"
+                placeholder="Repita a senha"
+                autocomplete="new-password"
+              />
+            </div>
+
+            <div class="husky-login-actions">
+              <button type="submit" id="btn-create-account" class="husky-login-btn-primary">
+                Criar login
+              </button>
+
+              <button type="button" id="btn-show-login" class="husky-login-btn-secondary">
+                Voltar para login
+              </button>
+            </div>
+          </form>
+
+          <div class="husky-login-note">Use <strong>admin@husky.com</strong> e <strong>123456</strong> no primeiro acesso em modo local.</div>
+
+          <div class="husky-login-status">
+            <div class="status-box">
+              <span class="status-title">Acesso</span>
+              <strong>Protegido</strong>
+            </div>
+
+            <div class="status-box">
+              <span class="status-title">Nuvem</span>
+              <strong id="login-cloud-status">Pronta</strong>
+            </div>
+          </div>
         </div>
-
-        <form id="login-form" class="login-form-grid" action="javascript:void(0)" method="post" novalidate>
-          <div class="form-group">
-            <label for="login-email">E-mail</label>
-            <input type="email" id="login-email" name="email" placeholder="Digite seu e-mail" autocomplete="email" />
-          </div>
-
-          <div class="form-group">
-            <label for="login-password">Senha</label>
-            <input type="password" id="login-password" name="password" placeholder="Digite sua senha" autocomplete="current-password" />
-          </div>
-
-          <div class="login-form-row">
-            <label class="checkbox-field login-checkbox-field">
-              <input type="checkbox" id="remember-access" />
-              <span>Lembrar acesso</span>
-            </label>
-
-            <button type="button" id="btn-forgot-password" class="btn-link login-link-btn">
-              Esqueci minha senha
-            </button>
-          </div>
-
-          <div class="login-actions-grid">
-            <button type="submit" id="btn-login" class="btn login-btn-primary">Entrar</button>
-            <button type="button" id="btn-show-register" class="btn login-btn-secondary">Criar novo login</button>
-          </div>
-        </form>
-
-        <form id="register-form" class="login-form-grid" action="javascript:void(0)" method="post" novalidate hidden>
-          <div class="form-group">
-            <label for="register-name">Nome</label>
-            <input type="text" id="register-name" name="register-name" placeholder="Digite seu nome" autocomplete="name" />
-          </div>
-
-          <div class="form-group">
-            <label for="register-email">E-mail</label>
-            <input type="email" id="register-email" name="register-email" placeholder="Digite seu e-mail" autocomplete="email" />
-          </div>
-
-          <div class="form-group">
-            <label for="register-password">Senha</label>
-            <input type="password" id="register-password" name="register-password" placeholder="Crie uma senha" autocomplete="new-password" />
-          </div>
-
-          <div class="form-group">
-            <label for="register-confirm-password">Confirmar senha</label>
-            <input type="password" id="register-confirm-password" name="register-confirm-password" placeholder="Repita a senha" autocomplete="new-password" />
-          </div>
-
-          <div class="login-actions-grid">
-            <button type="submit" id="btn-create-account" class="btn login-btn-primary">Criar login</button>
-            <button type="button" id="btn-show-login" class="btn login-btn-secondary">Voltar para login</button>
-          </div>
-        </form>
-
-        <div class="login-status-grid">
-          <div class="login-status-card">
-            <small>Acesso</small>
-            <strong>Protegido</strong>
-          </div>
-          <div class="login-status-card">
-            <small>Nuvem</small>
-            <strong id="login-cloud-status">Pronta</strong>
-          </div>
-        </div>
-      </div>
+      </section>
     </section>
   </main>
 
@@ -136,13 +1126,21 @@
       const authModeLabel = document.getElementById('auth-mode-label');
       const authTitle = document.getElementById('auth-title');
       const authSubtitle = document.getElementById('auth-subtitle');
+      const themeButton = document.getElementById('btn-toggle-theme');
+
+      function updateThemeButton() {
+        const isDark = document.body.dataset.themeMode === 'dark';
+        if (themeButton) {
+          themeButton.textContent = isDark ? 'Tema claro' : 'Tema escuro';
+        }
+      }
 
       function showLogin() {
         loginForm.hidden = false;
         registerForm.hidden = true;
         authModeLabel.textContent = 'Login';
         authTitle.textContent = 'Entrar no sistema';
-        authSubtitle.textContent = 'Use seu e-mail e senha para acessar.';
+        authSubtitle.textContent = 'Use seu e-mail e senha para entrar no caixa da Husky com visual bonito e acesso rápido.';
       }
 
       function showRegister() {
@@ -150,12 +1148,21 @@
         registerForm.hidden = false;
         authModeLabel.textContent = 'Cadastro';
         authTitle.textContent = 'Criar novo login';
-        authSubtitle.textContent = 'Cadastre um novo acesso para o sistema.';
+        authSubtitle.textContent = 'Cadastre um novo acesso mantendo a mesma identidade do sistema.';
       }
 
       btnShowRegister?.addEventListener('click', showRegister);
       btnShowLogin?.addEventListener('click', showLogin);
+      themeButton?.addEventListener('click', () => {
+        setTimeout(updateThemeButton, 40);
+      });
+
+      window.addEventListener('husky:settings-changed', () => {
+        setTimeout(updateThemeButton, 20);
+      });
+
       showLogin();
+      updateThemeButton();
     });
   </script>
 

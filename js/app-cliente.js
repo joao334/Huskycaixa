@@ -27,7 +27,7 @@
     filters: { category: '', search: '' },
     storefront: {
       store_name: 'Husky Confeitaria',
-      store_subtitle: 'Pedidos online no celular',
+      store_subtitle: 'Cardápio Husky',
       hero_title: 'Peça seus doces favoritos.',
       hero_text: 'Escolha os produtos, monte o carrinho e finalize com login somente no pagamento.',
       pix_key: '',
@@ -246,7 +246,7 @@
     },
 
     applyStorefrontText() {
-      if (this.refs.storeSubtitleHeader) this.refs.storeSubtitleHeader.textContent = this.storefront.store_subtitle || 'Pedidos online no celular';
+      if (this.refs.storeSubtitleHeader) this.refs.storeSubtitleHeader.textContent = this.storefront.store_subtitle || 'Cardápio Husky';
       if (this.refs.storefrontTitle) this.refs.storefrontTitle.textContent = this.storefront.hero_title || 'Peça seus doces favoritos.';
       if (this.refs.storefrontCopy) this.refs.storefrontCopy.textContent = this.storefront.hero_text || 'Escolha os produtos, monte o carrinho e finalize com login somente no pagamento.';
     },
@@ -296,7 +296,7 @@
       this.renderCatalog();
       this.syncCatalogMeta();
       if (!this.catalog.length) {
-        this.setStatus('Catálogo ainda não publicado', 'No painel interno, acesse Pedidos online e clique em “Publicar catálogo”.', 'default');
+        this.setStatus('Catálogo ainda não publicado', 'Publique o catálogo novamente nas configurações internas do sistema.', 'default');
         return;
       }
       const sourceLabel = fromFallback ? 'catálogo público' : 'catálogo sincronizado';
@@ -1022,11 +1022,7 @@
         }, 700);
       }
     },
-
-    registerServiceWorker() {
-      if (!('serviceWorker' in navigator)) return;
-      navigator.serviceWorker.register('sw-cliente.js').catch(() => null);
-    },
+    registerServiceWorker() {},
 
     getCatalogErrorMessage(error) {
       const raw = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
@@ -1036,10 +1032,10 @@
       if (error?.code === '42P01' || raw.includes('customer_catalog_items') || raw.includes('relation') || raw.includes('does not exist')) {
         return {
           title: 'Catálogo ainda não configurado',
-          text: 'No Supabase, execute o arquivo SQL atualizado do app do cliente. Depois, no sistema interno, abra “Pedidos online” e clique em “Publicar catálogo”.'
+          text: 'No Supabase, execute o SQL atualizado do catálogo e publique novamente o cardápio no sistema interno.'
         };
       }
-      return { title: 'Não foi possível carregar o catálogo', text: 'Tente novamente em instantes. Se continuar assim, publique o catálogo de novo em “Pedidos online”.' };
+      return { title: 'Não foi possível carregar o catálogo', text: 'Tente novamente em instantes. Se continuar assim, publique o catálogo novamente no sistema interno.' };
     },
 
     getOrderErrorMessage(error) {
