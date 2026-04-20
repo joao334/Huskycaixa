@@ -7,9 +7,7 @@
 
   const MENU_ORDER_KEY = 'husky_sidebar_menu_order';
 
-  const NAV_META = {
-    'pedidos-online.html': { icon: icon('sales', 'Pedidos online'), label: 'Pedidos online', sub: 'App do cliente', group: 'principal' },
-    'home.html': { icon: icon('home', 'Início'), label: 'Início', sub: 'Visão geral', group: 'principal' },
+  const NAV_META = {    'home.html': { icon: icon('home', 'Início'), label: 'Início', sub: 'Visão geral', group: 'principal' },
     'vendas.html': { icon: icon('sales', 'Vendas'), label: 'Vendas', sub: 'Caixa rápido', group: 'operacao' },
     'produtos.html': { icon: icon('cupcake', 'Produtos'), label: 'Produtos', sub: 'Catálogo', group: 'operacao' },
     'estoque.html': { icon: icon('box', 'Estoque'), label: 'Estoque', sub: 'Entradas e saídas', group: 'operacao' },
@@ -20,9 +18,7 @@
     'configuracoes.html': { icon: icon('settings', 'Configurações'), label: 'Configurações', sub: 'Ajustes', group: 'sistema' }
   };
 
-  const DEFAULT_MENU_ORDER = [
-    'pedidos-online.html',
-    'home.html',
+  const DEFAULT_MENU_ORDER = [    'home.html',
     'vendas.html',
     'produtos.html',
     'estoque.html',
@@ -33,9 +29,7 @@
     'configuracoes.html'
   ];
 
-  const WORKSPACE_ITEMS = [
-    { href: 'pedidos-online.html', icon: icon('sales', 'Pedidos online'), title: 'Pedidos online', sub: 'Tempo real' },
-    { href: 'home.html', icon: icon('home', 'Início'), title: 'Painel', sub: 'Hoje' },
+  const WORKSPACE_ITEMS = [    { href: 'home.html', icon: icon('home', 'Início'), title: 'Painel', sub: 'Hoje' },
     { href: 'vendas.html', icon: icon('sales', 'Vendas'), title: 'Vendas', sub: 'Pedidos' },
     { href: 'produtos.html', icon: icon('cupcake', 'Produtos'), title: 'Produtos', sub: 'Cardápio' },
     { href: 'estoque.html', icon: icon('box', 'Estoque'), title: 'Estoque', sub: 'Controle' },

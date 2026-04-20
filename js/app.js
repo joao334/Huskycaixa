@@ -2,7 +2,7 @@
   'use strict';
 
   const APP_NAME = 'Husky Confeitaria';
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.3.0';
   const STORAGE_PREFIX = 'husky_system';
   const LOCAL_SESSION_KEY = 'husky_local_auth_session';
   const LOCAL_USERS_KEY = 'husky_local_auth_users';
@@ -73,19 +73,7 @@
       nextInvoiceNumber: '1',
       issueInvoiceNotice: true
     },
-    integrations: {
-      ifood: {
-        enabled: false,
-        environment: 'sandbox',
-        merchantId: '',
-        clientId: '',
-        token: '',
-        storeName: '',
-        webhookSecret: '',
-        pollingMinutes: 5,
-        lastImportAt: null
-      }
-    }
+    integrations: {}
   };
 
   const defaultState = {
@@ -126,6 +114,7 @@
     APP_NAME,
     APP_VERSION,
     STORAGE_PREFIX,
+    _storageCache: new Map(),
 
     init() {
       this.cacheDom();
@@ -251,6 +240,7 @@ if (themeTrigger) {
     bindStorageSync() {
       window.addEventListener('storage', (event) => {
         if (event.key === this.getStorageKey('state')) {
+          this._storageCache.delete('state');
           this.refreshShell();
           this.dispatchStateChanged(this.getAppState());
         }
@@ -303,29 +293,11 @@ if (themeTrigger) {
 
       document.body.style.overflow = '';
     },
-
     ensureOnlineOrdersNavLink() {
-      const sidebarNav = document.querySelector('.sidebar-nav');
-      if (!sidebarNav) return;
-
-      const exists = sidebarNav.querySelector('a[href="pedidos-online.html"]');
-      if (exists) return;
-
-      const referenceNode = sidebarNav.querySelector('a[href="comprovantes.html"]') || sidebarNav.lastElementChild;
-      const link = document.createElement('a');
-      link.href = 'pedidos-online.html';
-      link.className = 'nav-item';
-      link.textContent = 'Pedidos online';
-
-      if (referenceNode && referenceNode.parentNode === sidebarNav) {
-        sidebarNav.insertBefore(link, referenceNode);
-      } else {
-        sidebarNav.appendChild(link);
-      }
+      return;
     },
 
     markActiveLinksByPath() {
-      this.ensureOnlineOrdersNavLink();
       const currentFile = window.location.pathname.split('/').pop() || 'index.html';
       const navLinks = document.querySelectorAll('.nav-item[href]');
 
@@ -421,7 +393,6 @@ if (themeTrigger) {
       this.applySettingsToUI();
       this.setPageUser();
       this.setCloudStatus();
-      this.ensureOnlineOrdersNavLink();
       this.markActiveLinksByPath();
     },
 
@@ -820,8 +791,14 @@ if (themeTrigger) {
 
     getStorage(key) {
       try {
+        if (this._storageCache.has(key)) {
+          return this.deepClone(this._storageCache.get(key));
+        }
+
         const raw = localStorage.getItem(this.getStorageKey(key));
-        return raw ? JSON.parse(raw) : null;
+        const parsed = raw ? JSON.parse(raw) : null;
+        this._storageCache.set(key, parsed);
+        return this.deepClone(parsed);
       } catch (error) {
         console.error(`[${APP_NAME}] erro ao ler storage`, error);
         return null;
@@ -830,13 +807,16 @@ if (themeTrigger) {
 
     setStorage(key, value) {
       try {
-        localStorage.setItem(this.getStorageKey(key), JSON.stringify(value));
+        const safeValue = this.deepClone(value);
+        this._storageCache.set(key, safeValue);
+        localStorage.setItem(this.getStorageKey(key), JSON.stringify(safeValue));
       } catch (error) {
         console.error(`[${APP_NAME}] erro ao salvar storage`, error);
       }
     },
 
     removeStorage(key) {
+      this._storageCache.delete(key);
       localStorage.removeItem(this.getStorageKey(key));
     },
 

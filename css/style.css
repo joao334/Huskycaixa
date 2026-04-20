@@ -3612,3 +3612,14 @@ body[data-theme-mode="dark"] .husky-mobile-dock {
   border-color: rgba(37, 211, 102, 0.35);
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
 }
+
+
+/* Otimizações leves */
+.panel, .metric-card, .husky-home-card, .table-wrapper {
+  content-visibility: auto;
+  contain-intrinsic-size: 320px;
+}
+
+select, input[type="date"] {
+  will-change: auto;
+}

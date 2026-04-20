@@ -1,0 +1,6 @@
+Alterações aplicadas:
+- Removida a aba Pedidos online do sistema interno.
+- Removidas referências de iFood no painel, home, relatórios, vendas e configurações.
+- Otimizado app.js com cache de storage em memória.
+- Otimizado relatorios.js com renderização agendada e índices em memória para produtos.
+- Removidos atalhos e cards de pedidos online/iFood.

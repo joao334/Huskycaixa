@@ -311,7 +311,7 @@
                     <option value="WhatsApp">WhatsApp</option>
                     <option value="Instagram">Instagram</option>
                 <option value="App Cliente">App Cliente</option>
-                    <option value="iFood">iFood</option>
+                    
                     <option value="Balcão">Balcão</option>
                     <option value="Encomenda">Encomenda</option>
                     <option value="Parceiro">Parceiro</option>
@@ -347,79 +347,6 @@
           </article>
 
           <article class="panel" id="panel-integracoes">
-            <div class="panel-header">
-              <div>
-                <h3>Integração com iFood</h3>
-                <p>Deixe o sistema preparado para futura conexão real com pedidos externos.</p>
-              </div>
-            </div>
-
-            <form id="ifood-settings-form" class="form">
-              <div class="form-grid cols-2">
-                <label class="checkbox-field checkbox-card">
-                  <input type="checkbox" id="ifood-enabled" />
-                  <span>Preparar integração do iFood</span>
-                </label>
-
-                <div class="form-group">
-                  <label for="ifood-environment">Ambiente</label>
-                  <select id="ifood-environment">
-                    <option value="sandbox">Sandbox</option>
-                    <option value="production">Produção</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="ifood-store-name">Loja no iFood</label>
-                  <input type="text" id="ifood-store-name" placeholder="Nome da loja" />
-                </div>
-
-                <div class="form-group">
-                  <label for="ifood-merchant-id">Merchant ID</label>
-                  <input type="text" id="ifood-merchant-id" placeholder="Identificador da loja" />
-                </div>
-
-                <div class="form-group">
-                  <label for="ifood-client-id">Client ID</label>
-                  <input type="text" id="ifood-client-id" placeholder="Aplicação / client id" />
-                </div>
-
-                <div class="form-group">
-                  <label for="ifood-token">Token</label>
-                  <input type="text" id="ifood-token" placeholder="Token de acesso" />
-                </div>
-
-                <div class="form-group">
-                  <label for="ifood-webhook-secret">Webhook secret</label>
-                  <input type="text" id="ifood-webhook-secret" placeholder="Segredo do webhook" />
-                </div>
-
-                <div class="form-group">
-                  <label for="ifood-polling-minutes">Consulta automática</label>
-                  <select id="ifood-polling-minutes">
-                    <option value="1">A cada 1 minuto</option>
-                    <option value="5">A cada 5 minutos</option>
-                    <option value="10">A cada 10 minutos</option>
-                    <option value="15">A cada 15 minutos</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="status-list" style="margin-top: 6px;">
-                <div class="status-row">
-                  <span>Status da integração</span>
-                  <strong>Preparada para plugar backend/API</strong>
-                </div>
-                <div class="status-row">
-                  <span>Observação</span>
-                  <strong>Conexão real depende de credenciais e backend homologado</strong>
-                </div>
-              </div>
-
-              <div class="form-actions">
-                <button type="button" id="btn-save-ifood-settings" class="btn btn-primary">Salvar iFood</button>
-              </div>
-            </form>
           </article>
         </section>
 

@@ -54,10 +54,7 @@
         cashflowChartArea: document.getElementById('cashflow-chart-area'),
         monthlyPerformanceChart: document.getElementById('monthly-performance-chart'),
         homeCloudStatus: document.getElementById('home-cloud-status'),
-        homeCloudDetail: document.getElementById('home-cloud-detail'),
-        homeIfoodStatus: document.getElementById('home-ifood-status'),
-        homeIfoodDetail: document.getElementById('home-ifood-detail'),
-        homeFiscalStatus: document.getElementById('home-fiscal-status'),
+        homeCloudDetail: document.getElementById('home-cloud-detail'),        homeFiscalStatus: document.getElementById('home-fiscal-status'),
         homeFiscalDetail: document.getElementById('home-fiscal-detail'),
         homeTopChannelsList: document.getElementById('home-top-channels-list')
       };
@@ -468,7 +465,6 @@
 
     renderOperationsHub() {
       const settings = this.getState().settings || {};
-      const ifood = settings.integrations?.ifood || {};
       const cloud = settings.cloud || {};
       const business = settings.business || {};
       const fiscal = settings.fiscal || {};
@@ -480,16 +476,6 @@
         this.refs.homeCloudDetail.textContent = cloud.connected
           ? `Última sync: ${cloud.lastSyncAt ? app.formatDateTime(cloud.lastSyncAt) : 'agora há pouco'}`
           : 'Supabase e cache local prontos para uso.';
-      }
-      if (this.refs.homeIfoodStatus) {
-        this.refs.homeIfoodStatus.textContent = ifood.enabled
-          ? `Pronto • ${ifood.environment === 'production' ? 'produção' : 'sandbox'}`
-          : 'Não preparado';
-      }
-      if (this.refs.homeIfoodDetail) {
-        this.refs.homeIfoodDetail.textContent = ifood.enabled
-          ? `${ifood.storeName || 'Loja sem nome'} • consulta a cada ${ifood.pollingMinutes || 5} min`
-          : 'Ative a estrutura para futura conexão com pedidos do iFood.';
       }
       if (this.refs.homeFiscalStatus) {
         this.refs.homeFiscalStatus.textContent = business.documentLabel || 'Recibo padrão';

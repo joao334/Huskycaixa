@@ -27,7 +27,7 @@
     filters: { category: '', search: '' },
     storefront: {
       store_name: 'Husky Confeitaria',
-      store_subtitle: 'Pedidos online no celular',
+      store_subtitle: 'Faça seu pedido pelo celular',
       hero_title: 'Peça seus doces favoritos.',
       hero_text: 'Escolha os produtos, monte o carrinho e finalize com login somente no pagamento.',
       pix_key: '',
@@ -246,7 +246,7 @@
     },
 
     applyStorefrontText() {
-      if (this.refs.storeSubtitleHeader) this.refs.storeSubtitleHeader.textContent = this.storefront.store_subtitle || 'Pedidos online no celular';
+      if (this.refs.storeSubtitleHeader) this.refs.storeSubtitleHeader.textContent = this.storefront.store_subtitle || 'Faça seu pedido pelo celular';
       if (this.refs.storefrontTitle) this.refs.storefrontTitle.textContent = this.storefront.hero_title || 'Peça seus doces favoritos.';
       if (this.refs.storefrontCopy) this.refs.storefrontCopy.textContent = this.storefront.hero_text || 'Escolha os produtos, monte o carrinho e finalize com login somente no pagamento.';
     },
@@ -296,7 +296,7 @@
       this.renderCatalog();
       this.syncCatalogMeta();
       if (!this.catalog.length) {
-        this.setStatus('Catálogo ainda não publicado', 'No painel interno, acesse Pedidos online e clique em “Publicar catálogo”.', 'default');
+        this.setStatus('Catálogo ainda não publicado', 'Publique o catálogo pelo sistema interno.', 'default');
         return;
       }
       const sourceLabel = fromFallback ? 'catálogo público' : 'catálogo sincronizado';
@@ -1039,7 +1039,7 @@
           text: 'No Supabase, execute o arquivo SQL atualizado do app do cliente. Depois, no sistema interno, abra “Pedidos online” e clique em “Publicar catálogo”.'
         };
       }
-      return { title: 'Não foi possível carregar o catálogo', text: 'Tente novamente em instantes. Se continuar assim, publique o catálogo de novo em “Pedidos online”.' };
+      return { title: 'Não foi possível carregar o catálogo', text: 'Tente novamente em instantes. Se continuar assim, publique o catálogo novamente no sistema interno.' };
     },
 
     getOrderErrorMessage(error) {
