@@ -15,80 +15,50 @@
         ctx.resume().catch(() => {});
       }
       const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1046.5, now);
-      osc.frequency.exponentialRampToValueAtTime(1318.5, now + 0.08);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.018, now + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.15);
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.045, now + 0.012);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+      master.connect(ctx.destination);
+
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      const gain2 = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc2.type = 'triangle';
+      osc1.frequency.setValueAtTime(783.99, now);
+      osc1.frequency.exponentialRampToValueAtTime(1174.66, now + 0.12);
+      osc2.frequency.setValueAtTime(523.25, now + 0.01);
+      osc2.frequency.exponentialRampToValueAtTime(880, now + 0.16);
+
+      gain1.gain.setValueAtTime(0.0001, now);
+      gain1.gain.exponentialRampToValueAtTime(0.55, now + 0.018);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      gain2.gain.setValueAtTime(0.0001, now + 0.01);
+      gain2.gain.exponentialRampToValueAtTime(0.25, now + 0.04);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+      osc1.connect(gain1).connect(master);
+      osc2.connect(gain2).connect(master);
+      osc1.start(now);
+      osc2.start(now + 0.01);
+      osc1.stop(now + 0.19);
+      osc2.stop(now + 0.23);
     } catch (_error) {}
   }
 
   function bindClickSounds() {
     let last = 0;
     document.addEventListener('click', (event) => {
-      const trigger = event.target.closest('button, .btn, a.nav-item, .mobile-menu-btn');
+      const trigger = event.target.closest('button, .btn, a.nav-item, .mobile-menu-btn, .husky-home-action');
       if (!trigger) return;
       const now = Date.now();
       if (now - last < 120) return;
       last = now;
       pleasantClickDing();
     }, true);
-  }
-
-  function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const button = document.getElementById('mobile-menu-btn');
-    if (!sidebar || !button) return;
-
-    let overlay = document.getElementById('sidebar-overlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'sidebar-overlay';
-      document.body.appendChild(overlay);
-    }
-
-    const open = () => {
-      sidebar.classList.add('is-open');
-      document.body.classList.add('sidebar-visible');
-      overlay.style.display = 'block';
-      requestAnimationFrame(() => overlay.classList.add('is-visible'));
-    };
-
-    const close = () => {
-      sidebar.classList.remove('is-open');
-      document.body.classList.remove('sidebar-visible');
-      overlay.classList.remove('is-visible');
-      setTimeout(() => {
-        if (!document.body.classList.contains('sidebar-visible')) {
-          overlay.style.display = 'none';
-        }
-      }, 220);
-    };
-
-    button.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (sidebar.classList.contains('is-open')) close();
-      else open();
-    });
-
-    overlay.addEventListener('click', close);
-    sidebar.querySelectorAll('a.nav-item').forEach((link) => {
-      link.addEventListener('click', () => {
-        if (window.innerWidth <= 1024) close();
-      });
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') close();
-    });
   }
 
   function cleanupDisabledFeatures() {
@@ -109,7 +79,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     cleanupDisabledFeatures();
     rethemeBrand();
-    toggleSidebar();
     bindClickSounds();
     document.body.classList.add('husky-premium-ready');
     document.body.dataset.pageName = currentPage().replace('.html', '');

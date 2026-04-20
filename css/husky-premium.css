@@ -845,3 +845,102 @@ button[type="submit"] {
   color: #193654 !important;
   border-color: rgba(25,54,84,.14) !important;
 }
+
+
+/* ===== Fix menu visibility + stylish sidebar ===== */
+#sidebar {
+  left: 16px !important;
+  z-index: 9999 !important;
+}
+body.sidebar-visible #sidebar,
+#sidebar.is-open {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(0) !important;
+}
+#sidebar-overlay {
+  z-index: 9990 !important;
+}
+.sidebar {
+  color: #f6f9ff !important;
+  background:
+    linear-gradient(180deg, rgba(10,33,58,.98) 0%, rgba(21,62,103,.97) 45%, rgba(34,91,146,.96) 100%),
+    url('../assets/img/pattern-husky.svg') !important;
+  background-size: cover, 210px !important;
+  background-blend-mode: soft-light;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: 0 26px 70px rgba(4, 16, 31, .45) !important;
+}
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  pointer-events: none;
+  background: linear-gradient(145deg, rgba(255,255,255,.12), transparent 28%, transparent 72%, rgba(255,255,255,.08));
+}
+.sidebar-top,
+.sidebar-nav,
+.sidebar-bottom {
+  position: relative;
+  z-index: 1;
+}
+.sidebar .brand-box,
+.sidebar .operator-box,
+.sidebar .cloud-box {
+  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08)) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow: 0 10px 24px rgba(6, 18, 35, .18) !important;
+}
+.sidebar .nav-item {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  color: #f8fbff !important;
+}
+.sidebar .nav-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,.08), transparent 35%, transparent 70%, rgba(255,255,255,.05));
+  opacity: .5;
+  pointer-events: none;
+}
+.sidebar .nav-item:hover,
+.sidebar .nav-item.active {
+  transform: translateX(6px) !important;
+  background: linear-gradient(90deg, rgba(94,162,229,.42), rgba(231,207,166,.20)) !important;
+  box-shadow: 0 12px 22px rgba(7, 22, 43, .2) !important;
+}
+.sidebar .nav-item,
+.sidebar .nav-item strong,
+.sidebar .nav-item small,
+.sidebar .brand-text strong,
+.sidebar .brand-text span,
+.sidebar .operator-info strong,
+.sidebar .operator-info span,
+.sidebar .cloud-box strong,
+.sidebar .cloud-box small,
+.sidebar .nav-group-label {
+  color: #f8fbff !important;
+}
+body[data-theme-mode='dark'] .sidebar {
+  background:
+    linear-gradient(180deg, rgba(6,17,29,.98) 0%, rgba(11,28,47,.98) 46%, rgba(17,43,72,.98) 100%),
+    url('../assets/img/pattern-husky.svg') !important;
+}
+.mobile-menu-btn {
+  background: linear-gradient(180deg, rgba(249,241,228,.98), rgba(233,214,183,.96)) !important;
+  color: #17385a !important;
+  box-shadow: 0 12px 24px rgba(8, 28, 52, .16) !important;
+}
+.mobile-menu-btn:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+@media (min-width: 993px) {
+  .mobile-menu-btn {
+    display: inline-flex !important;
+  }
+}
