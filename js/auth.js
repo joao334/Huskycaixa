@@ -504,18 +504,29 @@
             return;
           }
 
+          const authUser = data?.user || data?.session?.user || null;
+          if (!authUser) {
+            this.notify('O login foi aceito, mas a sessão não retornou usuário. Tente novamente.', 'danger');
+            return;
+          }
+
           if (remember) {
             this.setRememberedUser({ email });
           } else {
             this.clearRememberedUser();
           }
 
-          await this.handleAuthenticatedUser(data.user, false);
+          try {
+            await this.handleAuthenticatedUser(authUser, false);
+          } catch (profileError) {
+            console.error('[Auth] erro ao preparar perfil após login', profileError);
+          }
+
           this.notify('Login realizado com sucesso.', 'success');
           setTimeout(() => window.location.replace(this.getHomePage()), 180);
         } catch (error) {
           console.error('[Auth] erro no login', error);
-          this.notify('Não foi possível realizar o login.', 'danger');
+          this.notify(this.getSupabaseErrorMessage(error), 'danger');
         } finally {
           this.isSubmittingLogin = false;
           if (loginButton) loginButton.disabled = false;

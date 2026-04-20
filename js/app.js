@@ -134,7 +134,6 @@
       this.syncUsersFromAuthStorage();
       this.applySettingsToUI();
       this.injectSidebarOverlay();
-      this.initUiControls();
       this.bindGlobalEvents();
       this.bindStorageSync();
       this.refreshShell();
@@ -156,7 +155,6 @@
   });
 
   this.applySettingsToUI();
-  this.updateThemeButtons?.();
   this.showToast(
     next === 'dark' ? 'Tema escuro ativado.' : 'Tema claro ativado.',
     'success'
@@ -178,26 +176,12 @@
       };
     },
 
-    initUiControls() {
-      if (this.dom.mobileMenuButton) {
-        this.dom.mobileMenuButton.onclick = (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          this.toggleSidebar();
-        };
-      }
-
-      document.querySelectorAll('#btn-toggle-theme, .theme-toggle-btn').forEach((button) => {
-        button.onclick = (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          this.toggleThemeMode();
-        };
-      });
-    },
-
     bindGlobalEvents() {
-      // clique do menu é controlado por initUiControls/bindShellButtons para evitar toggle duplicado.
+      this.dom.mobileMenuButton?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.toggleSidebar();
+      });
 
       window.addEventListener('resize', () => {
         });
@@ -208,13 +192,8 @@
         }
       });
 
-      this.dom.sidebarOverlay?.addEventListener('click', () => {
-        this.closeSidebar();
-      });
-
       document.addEventListener('click', (event) => {
         const target = event.target;
-        if (!(target instanceof Element)) return;
 
         const logoutTrigger = target.closest('[data-action="logout"], #btn-logout');
         if (logoutTrigger) {
@@ -230,22 +209,13 @@
         }
 
         const themeTrigger = target.closest('[data-action="toggle-theme"], #btn-toggle-theme');
-        if (themeTrigger) {
-          event.preventDefault();
-          this.toggleThemeMode();
-          return;
-        }
+if (themeTrigger) {
+  event.preventDefault();
+  this.toggleThemeMode();
+  return;
+}
 
-        const clickedMenuToggle = target.closest('#mobile-menu-btn, [data-action="open-menu"], [data-mobile-dock-action="menu"]');
-        const clickedInsideSidebar = target.closest('#sidebar');
-        const clickedSidebarItem = target.closest('.sidebar .nav-item');
-
-        if (clickedSidebarItem) {
-          setTimeout(() => this.closeSidebar(), 120);
-          return;
-        }
-
-        if (this.dom.body?.classList.contains('menu-open') && !clickedInsideSidebar && !clickedMenuToggle) {
+        if (target.closest('.sidebar .nav-item')) {
           this.closeSidebar();
         }
       });
@@ -312,33 +282,18 @@
 
     openSidebar() {
       if (!this.dom.sidebar) return;
-      this.dom.body?.classList.add('menu-open');
       this.dom.sidebar.classList.add('is-open');
       this.dom.sidebar.style.pointerEvents = 'auto';
-      this.dom.sidebar.style.zIndex = '1005';
-      if (this.dom.sidebarOverlay) {
-        this.dom.sidebarOverlay.style.display = 'block';
-        requestAnimationFrame(() => this.dom.sidebarOverlay.classList.add('is-visible'));
-      }
-      document.body.style.overflow = window.innerWidth <= 992 ? 'hidden' : '';
+      this.dom.sidebar.style.zIndex = '9999';
+      document.body.style.overflow = 'hidden';
     },
 
     closeSidebar() {
-      this.dom.body?.classList.remove('menu-open');
       this.dom.sidebar?.classList.remove('is-open');
 
       if (this.dom.sidebar) {
         this.dom.sidebar.style.pointerEvents = '';
         this.dom.sidebar.style.zIndex = '';
-      }
-
-      if (this.dom.sidebarOverlay) {
-        this.dom.sidebarOverlay.classList.remove('is-visible');
-        window.setTimeout(() => {
-          if (this.dom.sidebarOverlay && !this.dom.sidebar?.classList.contains('is-open')) {
-            this.dom.sidebarOverlay.style.display = 'none';
-          }
-        }, 220);
       }
 
       document.body.style.overflow = '';
@@ -498,19 +453,11 @@
 
     applySettingsToUI() {
       const settings = this.getSettings();
-      const themeMode = settings.visual?.themeMode || 'husky-default';
-      const isDark = themeMode === 'dark';
       document.title = `${settings.company?.tradeName || APP_NAME} | ${this.getPageTitleFallback()}`;
 
       if (this.dom.body) {
-        this.dom.body.dataset.themeMode = themeMode;
+        this.dom.body.dataset.themeMode = settings.visual?.themeMode || 'husky-default';
         this.dom.body.dataset.accentStyle = settings.visual?.accentStyle || 'original';
-      }
-
-      if (this.dom.html) {
-        this.dom.html.dataset.themeMode = themeMode;
-        this.dom.html.dataset.theme = isDark ? 'dark' : 'light';
-        this.dom.html.style.colorScheme = isDark ? 'dark' : 'light';
       }
 
       document.querySelectorAll('.app-pattern').forEach((el) => {
@@ -1422,63 +1369,16 @@
     footer.textContent = `${APP_NAME} • versão ${APP_VERSION} • ambiente elegante e rápido`;
   };
 
-
-
-  HuskyApp.ensureOnlineOrdersNavLink = function () {
-    const selectors = [
-      '.nav-item[href="pedidos-online.html"]',
-      '.nav-item[href="app-cliente.html"]',
-      '[data-href="pedidos-online.html"]',
-      '[data-target-page="pedidos-online"]',
-      '[data-target-page="app-cliente"]',
-      'a[href="pedidos-online.html"]',
-      'a[href="app-cliente.html"]'
-    ];
-
-    selectors.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((node) => {
-        const holder = node.closest('.nav-item, .quick-link-card, .summary-card, .husky-home-action, .husky-mobile-dock__item, li, article, .panel-action') || node;
-        if (holder && holder !== document.body && holder !== document.documentElement) {
-          holder.remove();
-        } else {
-          node.remove();
-        }
-      });
-    });
-  };
-
-  HuskyApp.bindShellButtons = function () {
-    const menuButtons = document.querySelectorAll('#mobile-menu-btn, [data-action="open-menu"], [data-mobile-dock-action="menu"]');
-    menuButtons.forEach((button) => {
-      button.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        this.toggleSidebar();
-      };
-    });
-
-    const themeButtons = document.querySelectorAll('#btn-toggle-theme, .theme-toggle-btn, [data-action="toggle-theme"]');
-    themeButtons.forEach((button) => {
-      button.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        this.toggleThemeMode();
-      };
-    });
-  };
-
   const __huskyOriginalInit = HuskyApp.init.bind(HuskyApp);
   HuskyApp.init = function () {
     __huskyOriginalInit();
     this.injectWorkspaceEnhancements();
-    this.bindShellButtons();
   };
 
   const __huskyOriginalRefreshShell = HuskyApp.refreshShell.bind(HuskyApp);
   HuskyApp.refreshShell = function () {
     __huskyOriginalRefreshShell();
     this.injectWorkspaceEnhancements();
-    this.bindShellButtons();
   };
 
   const __huskyOriginalLogout = HuskyApp.logout.bind(HuskyApp);
@@ -1827,7 +1727,6 @@
   const __huskyOriginalInitPWA = HuskyApp.init.bind(HuskyApp);
   HuskyApp.init = function () {
     __huskyOriginalInitPWA();
-    this.bindShellButtons?.();
   };
 
   const __huskyOriginalRefreshShellInstall = HuskyApp.refreshShell.bind(HuskyApp);

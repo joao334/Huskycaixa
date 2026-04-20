@@ -688,3 +688,45 @@ button.btn-primary {
 @media (max-width: 640px) {
   .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
+
+
+/* ===== Uploaded Husky brand assets ===== */
+.storefront-shell::before,
+.storefront-shell::after,
+.app-cliente-page::before,
+.app-cliente-page::after {
+  pointer-events: none;
+}
+.storefront-shell {
+  position: relative;
+}
+.storefront-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0)),
+    url('../assets/img/brand/custom/pattern-brand.jpg') center/320px repeat;
+  opacity: .08;
+  z-index: 0;
+}
+.storefront-shell::after {
+  content: "";
+  position: fixed;
+  right: 10px;
+  bottom: 16px;
+  width: 96px;
+  height: 96px;
+  background: url('../assets/img/brand/custom/sticker-cup.png') center/contain no-repeat;
+  opacity: .14;
+  z-index: 0;
+}
+.storefront-shell > * {
+  position: relative;
+  z-index: 1;
+}
+.storefront-header__brand img,
+.storefront-logo,
+.app-brand-logo {
+  content: url('../assets/img/brand/custom/logo-horizontal.png');
+}
