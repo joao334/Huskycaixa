@@ -46,64 +46,61 @@
 
   function bindClickSounds() {
     let last = 0;
-    document.addEventListener('pointerdown', (event) => {
-      const trigger = event.target.closest('button, .btn, a, .nav-item, .husky-quick-chip, .theme-toggle-btn, #btn-toggle-theme');
-      if (!trigger || trigger.disabled) return;
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('button, .btn, a, .nav-item, .husky-quick-chip');
+      if (!trigger) return;
+      const tag = trigger.tagName;
+      if (tag === 'A' && (trigger.getAttribute('href') || '').startsWith('#')) return;
       const now = Date.now();
       if (now - last < 120) return;
       last = now;
       pleasantClickDing();
-    }, { passive: true, capture: true });
+    }, true);
   }
 
   function enhanceSidebarAndTopbar() {
     const sidebar = document.getElementById('sidebar');
     const btn = document.getElementById('mobile-menu-btn');
+    const body = document.body;
     if (!sidebar || !btn) return;
 
     btn.setAttribute('aria-label', 'Abrir menu');
     btn.innerHTML = '<span>☰</span>';
 
-    let overlay = document.getElementById('sidebar-overlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'sidebar-overlay';
-      overlay.style.display = 'none';
-      document.body.appendChild(overlay);
-    }
+    const overlay = document.getElementById('sidebar-overlay') || (() => {
+      const el = document.createElement('div');
+      el.id = 'sidebar-overlay';
+      document.body.appendChild(el);
+      return el;
+    })();
 
-    const syncOverlay = () => {
-      const visible = document.body.classList.contains('sidebar-visible') || sidebar.classList.contains('is-open');
-      overlay.style.display = visible ? 'block' : 'none';
-      overlay.classList.toggle('is-visible', visible);
+    const open = () => {
+      sidebar.classList.add('is-open');
+      body.classList.add('sidebar-visible');
+      overlay.style.display = 'block';
+      requestAnimationFrame(() => overlay.classList.add('is-visible'));
+    };
+    const close = () => {
+      sidebar.classList.remove('is-open');
+      body.classList.remove('sidebar-visible');
+      overlay.classList.remove('is-visible');
+      setTimeout(() => { if (!body.classList.contains('sidebar-visible')) overlay.style.display = 'none'; }, 220);
     };
 
-    btn.addEventListener('click', () => {
-      setTimeout(syncOverlay, 30);
-    }, { passive: true });
-
-    overlay.addEventListener('click', () => {
-      sidebar.classList.remove('is-open');
-      document.body.classList.remove('sidebar-visible');
-      syncOverlay();
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (sidebar.classList.contains('is-open')) close(); else open();
     });
-
-    sidebar.querySelectorAll('.nav-item').forEach((item) => item.addEventListener('click', () => {
-      setTimeout(syncOverlay, 20);
-    }));
-
+    overlay.addEventListener('click', close);
+    sidebar.querySelectorAll('.nav-item').forEach((item) => item.addEventListener('click', close));
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        sidebar.classList.remove('is-open');
-        document.body.classList.remove('sidebar-visible');
-        syncOverlay();
-      }
+      if (event.key === 'Escape') close();
     });
-
-    syncOverlay();
   }
 
   function cleanupUI() {
+    if (currentPage() === 'index.html') return;
     document.querySelectorAll('a[href="pedidos-online.html"], .husky-workspace-strip, .husky-mobile-dock, #husky-mobile-primary, #husky-mobile-focus-toggle, #husky-mobile-filter-toggle, #husky-install-shortcut, script[src*="pedidos-online.js"], link[href*="pedidos-online.css"]').forEach((el) => el.remove());
     document.querySelectorAll('#ifood-settings-form').forEach((form) => form.closest('.panel, .panel-subsection, section, article')?.remove());
     document.querySelectorAll('#home-ifood-status, #home-ifood-detail').forEach((el) => el.closest('.husky-home-mini-stat, .status-box, .panel, article, .summary-card')?.remove());
@@ -152,5 +149,16 @@
     injectDecor();
     enhanceSidebarAndTopbar();
     bindClickSounds();
+  });
+
+  window.addEventListener('storage', () => {
+    const raw = localStorage.getItem('husky_system:state');
+    if (!raw || !document.body) return;
+    try {
+      const parsed = JSON.parse(raw);
+      const mode = parsed?.settings?.visual?.themeMode || 'husky-default';
+      document.body.dataset.themeMode = mode;
+      document.documentElement.style.colorScheme = mode === 'dark' ? 'dark' : 'light';
+    } catch (_error) {}
   });
 })();
