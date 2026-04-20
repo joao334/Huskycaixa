@@ -682,217 +682,166 @@ body.sidebar-visible #sidebar,
 }
 
 
-/* === Ajustes restaurados usando o design v3 como base === */
-.husky-decor-layer,
-.husky-decor-layer *,
-.husky-floating,
-.husky-gradient-orb {
-  pointer-events: none !important;
+/* ===== Correções de contraste, menu e tema ===== */
+body.husky-premium-ready {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(94,162,229,.18), transparent 18%),
+    radial-gradient(circle at 88% 8%, rgba(231,207,166,.12), transparent 18%),
+    linear-gradient(155deg, #133b68 0%, #1f5d9b 42%, #2b74b6 100%) !important;
 }
 
-.sidebar,
-.sidebar * {
-  box-sizing: border-box;
+body[data-theme-mode="dark"],
+html[data-theme-mode="dark"] body {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(94,162,229,.10), transparent 18%),
+    radial-gradient(circle at 88% 8%, rgba(231,207,166,.05), transparent 18%),
+    linear-gradient(155deg, #081321 0%, #102338 42%, #143150 100%) !important;
+  color: #eaf2ff !important;
+}
+
+body[data-theme-mode="dark"] .topbar,
+body[data-theme-mode="dark"] .panel,
+body[data-theme-mode="dark"] .metric-card,
+body[data-theme-mode="dark"] .summary-card,
+body[data-theme-mode="dark"] .table-wrapper,
+body[data-theme-mode="dark"] .hero-panel,
+body[data-theme-mode="dark"] .hero-panel-compact,
+body[data-theme-mode="dark"] .alert-list-card,
+body[data-theme-mode="dark"] .chart-area,
+body[data-theme-mode="dark"] .receipt-preview,
+body[data-theme-mode="dark"] .print-receipt-template,
+body[data-theme-mode="dark"] .checkbox-card,
+body[data-theme-mode="dark"] .upload-preview-box,
+body[data-theme-mode="dark"] .quick-link-card,
+body[data-theme-mode="dark"] .catalog-mini-card,
+body[data-theme-mode="dark"] .product-preview-card,
+body[data-theme-mode="dark"] .status-box,
+body[data-theme-mode="dark"] .summary-line,
+body[data-theme-mode="dark"] .status-row,
+body[data-theme-mode="dark"] .pix-proof-card {
+  background: linear-gradient(180deg, rgba(13,23,36,.96), rgba(20,32,48,.92)) !important;
+  color: #eaf2ff !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+
+body[data-theme-mode="dark"] .page-heading h1,
+body[data-theme-mode="dark"] .page-heading h2,
+body[data-theme-mode="dark"] .panel h2,
+body[data-theme-mode="dark"] .panel h3,
+body[data-theme-mode="dark"] .metric-value,
+body[data-theme-mode="dark"] th,
+body[data-theme-mode="dark"] td,
+body[data-theme-mode="dark"] label,
+body[data-theme-mode="dark"] .form-group label,
+body[data-theme-mode="dark"] .section-title,
+body[data-theme-mode="dark"] .summary-title {
+  color: #eef5ff !important;
+}
+
+body[data-theme-mode="dark"] p,
+body[data-theme-mode="dark"] small,
+body[data-theme-mode="dark"] .muted,
+body[data-theme-mode="dark"] .panel-subtitle,
+body[data-theme-mode="dark"] .summary-subtitle {
+  color: rgba(234,242,255,.78) !important;
+}
+
+.sidebar {
+  background:
+    linear-gradient(180deg, rgba(10,31,55,.98), rgba(19,56,92,.96)),
+    url('../assets/img/pattern-husky.svg') !important;
+  background-size: cover, 210px !important;
+}
+
+.sidebar .brand-box,
+.sidebar .operator-box,
+.sidebar .cloud-box {
+  background: rgba(255,255,255,.08) !important;
+  color: #f8fbff !important;
 }
 
 .sidebar .brand-text strong,
 .sidebar .operator-info strong,
 .sidebar .cloud-box strong,
-.sidebar .nav-item,
-.sidebar .nav-item span,
-.sidebar .nav-item small,
+.sidebar .nav-item strong,
+.sidebar .nav-group-label {
+  color: #f8fbff !important;
+}
+
+.sidebar .brand-text span,
 .sidebar .operator-info span,
-.sidebar .cloud-box small {
-  color: #f6efe5 !important;
+.sidebar .cloud-box small,
+.sidebar .nav-item small {
+  color: rgba(248,251,255,.76) !important;
 }
 
 .sidebar .nav-item {
-  font-weight: 800;
-  letter-spacing: -.01em;
+  background: rgba(255,255,255,.06) !important;
+  color: #f8fbff !important;
 }
 
 .sidebar .nav-item:hover,
 .sidebar .nav-item.active {
-  color: #ffffff !important;
+  background: linear-gradient(90deg, rgba(94,162,229,.32), rgba(231,207,166,.16)) !important;
 }
 
-.sidebar .nav-item::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: .45;
-  background: linear-gradient(90deg, rgba(94,162,229,.12), rgba(232,215,177,.04));
+.sidebar .nav-item-icon {
+  background: rgba(255,255,255,.12) !important;
 }
 
-.sidebar .nav-item > * {
-  position: relative;
-  z-index: 1;
-}
-
-.mobile-menu-btn,
-.theme-toggle-btn,
-#btn-toggle-theme {
-  background: linear-gradient(135deg, rgba(20,70,120,.96), rgba(54,117,185,.92)) !important;
-  color: #fff8ef !important;
-  border: 1px solid rgba(255,255,255,.14) !important;
-  box-shadow: 0 10px 20px rgba(14,42,82,.18) !important;
-}
-
+body:not([data-theme-mode="dark"]) .topbar,
 body:not([data-theme-mode="dark"]) .panel,
 body:not([data-theme-mode="dark"]) .metric-card,
 body:not([data-theme-mode="dark"]) .summary-card,
+body:not([data-theme-mode="dark"]) .table-wrapper {
+  background: linear-gradient(180deg, rgba(252,247,239,.96), rgba(240,229,213,.93)) !important;
+}
+
+body:not([data-theme-mode="dark"]) .panel,
 body:not([data-theme-mode="dark"]) .table-wrapper,
-body:not([data-theme-mode="dark"]) .chart-area,
-body:not([data-theme-mode="dark"]) .status-box,
-body:not([data-theme-mode="dark"]) .status-row,
-body:not([data-theme-mode="dark"]) .summary-line,
-body:not([data-theme-mode="dark"]) .quick-link-card,
-body:not([data-theme-mode="dark"]) .catalog-mini-card,
-body:not([data-theme-mode="dark"]) .product-preview-card,
-body:not([data-theme-mode="dark"]) .husky-home-shell,
-body:not([data-theme-mode="dark"]) .husky-home-card,
-body:not([data-theme-mode="dark"]) .husky-home-metric,
-body:not([data-theme-mode="dark"]) .husky-home-action {
-  background: linear-gradient(180deg, rgba(255,248,238,.96), rgba(244,234,219,.9)) !important;
-  color: #16314d !important;
+body:not([data-theme-mode="dark"]) .metric-card,
+body:not([data-theme-mode="dark"]) td,
+body:not([data-theme-mode="dark"]) th,
+body:not([data-theme-mode="dark"]) label,
+body:not([data-theme-mode="dark"]) .form-group label,
+body:not([data-theme-mode="dark"]) .summary-title,
+body:not([data-theme-mode="dark"]) .summary-subtitle {
+  color: #193654 !important;
 }
 
-body[data-theme-mode="dark"] {
-  background:
-    radial-gradient(circle at 10% 8%, rgba(94,162,229,.1), transparent 18%),
-    radial-gradient(circle at 92% 18%, rgba(232,215,177,.08), transparent 16%),
-    linear-gradient(145deg, #0d1520 0%, #132231 45%, #1b3146 100%) !important;
-  color: #edf4fc !important;
+body:not([data-theme-mode="dark"]) input,
+body:not([data-theme-mode="dark"]) select,
+body:not([data-theme-mode="dark"]) textarea {
+  background: rgba(255,255,255,.92) !important;
+  color: #193654 !important;
+  border-color: rgba(25,54,84,.12) !important;
 }
 
-body[data-theme-mode="dark"]::before {
-  opacity: .08;
+.mobile-menu-btn,
+.btn,
+button[type="button"],
+button[type="submit"] {
+  cursor: pointer;
 }
 
-body[data-theme-mode="dark"] .topbar,
-body[data-theme-mode="dark"] .hero-panel,
-body[data-theme-mode="dark"] .hero-panel-compact,
-body[data-theme-mode="dark"] .husky-home-banner {
-  background: linear-gradient(135deg, rgba(13,24,36,.95), rgba(29,56,84,.94)) !important;
-  color: #f2f7fd !important;
+.husky-login-page .husky-login-card,
+.husky-login-page .husky-login-brand,
+.husky-login-page .husky-login-brand-card {
+  box-shadow: 0 18px 42px rgba(10, 28, 50, .24) !important;
 }
 
-body[data-theme-mode="dark"] .topbar .page-heading,
-body[data-theme-mode="dark"] .topbar .page-heading *,
-body[data-theme-mode="dark"] .page-heading h1,
-body[data-theme-mode="dark"] .page-heading h2,
-body[data-theme-mode="dark"] .page-heading p,
-body[data-theme-mode="dark"] .page-heading .subtitle {
-  color: #eef5fd !important;
+.husky-login-page .husky-login-card {
+  background: linear-gradient(180deg, rgba(247,240,228,.98), rgba(235,223,202,.95)) !important;
 }
 
-body[data-theme-mode="dark"] .panel,
-body[data-theme-mode="dark"] .metric-card,
-body[data-theme-mode="dark"] .summary-card,
-body[data-theme-mode="dark"] .table-wrapper,
-body[data-theme-mode="dark"] .chart-area,
-body[data-theme-mode="dark"] .alert-list-card,
-body[data-theme-mode="dark"] .status-box,
-body[data-theme-mode="dark"] .status-row,
-body[data-theme-mode="dark"] .summary-line,
-body[data-theme-mode="dark"] .receipt-preview,
-body[data-theme-mode="dark"] .print-receipt-template,
-body[data-theme-mode="dark"] .quick-link-card,
-body[data-theme-mode="dark"] .catalog-mini-card,
-body[data-theme-mode="dark"] .product-preview-card,
-body[data-theme-mode="dark"] .husky-home-shell,
-body[data-theme-mode="dark"] .husky-home-card,
-body[data-theme-mode="dark"] .husky-home-metric,
-body[data-theme-mode="dark"] .husky-home-action,
-body[data-theme-mode="dark"] .checkbox-card,
-body[data-theme-mode="dark"] .upload-preview-box,
-body[data-theme-mode="dark"] .pix-proof-card {
-  background: linear-gradient(180deg, rgba(18,31,45,.96), rgba(23,39,58,.92)) !important;
-  color: #edf4fc !important;
-  border-color: rgba(255,255,255,.08) !important;
-  box-shadow: 0 18px 40px rgba(0,0,0,.26) !important;
+.husky-login-page .husky-login-form label,
+.husky-login-page .husky-login-status strong,
+.husky-login-page .husky-login-mini-item {
+  color: #193654 !important;
 }
 
-body[data-theme-mode="dark"] input,
-body[data-theme-mode="dark"] select,
-body[data-theme-mode="dark"] textarea,
-body[data-theme-mode="dark"] .input,
-body[data-theme-mode="dark"] .form-control {
-  background: rgba(255,255,255,.06) !important;
-  color: #eef4fb !important;
-  border: 1px solid rgba(255,255,255,.1) !important;
-}
-
-body[data-theme-mode="dark"] input::placeholder,
-body[data-theme-mode="dark"] textarea::placeholder {
-  color: rgba(214,225,238,.6) !important;
-}
-
-body[data-theme-mode="dark"] .data-table,
-body[data-theme-mode="dark"] .data-table td,
-body[data-theme-mode="dark"] .data-table th,
-body[data-theme-mode="dark"] .report-table td,
-body[data-theme-mode="dark"] .report-table th,
-body[data-theme-mode="dark"] .table-wrapper table {
-  color: #eef4fb !important;
-}
-
-body[data-theme-mode="dark"] .data-table thead th,
-body[data-theme-mode="dark"] .report-table thead th {
-  background: rgba(255,255,255,.05) !important;
-}
-
-body[data-theme-mode="dark"] .data-table tbody tr:nth-child(even),
-body[data-theme-mode="dark"] .report-table tbody tr:nth-child(even) {
-  background: rgba(255,255,255,.025) !important;
-}
-
-body[data-theme-mode="dark"] .btn,
-body[data-theme-mode="dark"] button[type="button"],
-body[data-theme-mode="dark"] button[type="submit"] {
-  color: #f8fbff !important;
-}
-
-body[data-theme-mode="dark"] .btn-secondary,
-body[data-theme-mode="dark"] .btn-light,
-body[data-theme-mode="dark"] .btn-ghost,
-body[data-theme-mode="dark"] .btn-outline {
-  background: rgba(255,255,255,.06) !important;
-  color: #eef4fb !important;
-  border: 1px solid rgba(255,255,255,.12) !important;
-}
-
-body[data-theme-mode="dark"] .sidebar {
-  background:
-    linear-gradient(180deg, rgba(9,15,23,.98), rgba(15,28,41,.96)),
-    url('../assets/img/pattern-husky.svg') !important;
-  background-size: cover, 210px !important;
-  border-color: rgba(255,255,255,.08) !important;
-}
-
-body[data-theme-mode="dark"] .sidebar .brand-text strong,
-body[data-theme-mode="dark"] .sidebar .operator-info strong,
-body[data-theme-mode="dark"] .sidebar .cloud-box strong,
-body[data-theme-mode="dark"] .sidebar .nav-item,
-body[data-theme-mode="dark"] .sidebar .nav-item span,
-body[data-theme-mode="dark"] .sidebar .operator-info span,
-body[data-theme-mode="dark"] .sidebar .cloud-box small {
-  color: #edf4fc !important;
-}
-
-body[data-theme-mode="dark"] .sidebar .nav-item {
-  background: rgba(255,255,255,.04) !important;
-  border-color: rgba(255,255,255,.06) !important;
-}
-
-body[data-theme-mode="dark"] .sidebar .nav-item:hover,
-body[data-theme-mode="dark"] .sidebar .nav-item.active {
-  background: linear-gradient(90deg, rgba(94,162,229,.24), rgba(232,215,177,.1)) !important;
-}
-
-.login-page-body .app-pattern,
-.login-page-body body::before {
-  display: none !important;
+.husky-login-page .husky-login-form input {
+  background: rgba(255,255,255,.94) !important;
+  color: #193654 !important;
+  border-color: rgba(25,54,84,.14) !important;
 }
