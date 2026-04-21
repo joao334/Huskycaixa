@@ -299,6 +299,18 @@ if (themeTrigger) {
       document.body.style.overflow = '';
     },
 
+    ensureOnlineOrdersNavLink() {
+      const onlineOrdersLink = document.querySelector('.nav-item[href="pedidos-online.html"]');
+      if (onlineOrdersLink) {
+        const listItem = onlineOrdersLink.closest('li, .nav-group, .nav-entry');
+        if (listItem && listItem !== onlineOrdersLink) {
+          listItem.remove();
+        } else {
+          onlineOrdersLink.remove();
+        }
+      }
+    },
+
     markActiveLinksByPath() {
       this.ensureOnlineOrdersNavLink();
       const currentFile = window.location.pathname.split('/').pop() || 'index.html';
